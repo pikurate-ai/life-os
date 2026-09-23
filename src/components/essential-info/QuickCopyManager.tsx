@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { 
   Copy, Check, Plus, Edit2, Trash2, Sparkles, Building2, MapPin, Car, Shield, 
-  CreditCard, Hash, Phone, Mail, User, Globe, RotateCcw, ChevronDown, ChevronUp, 
+  CreditCard, Hash, Phone, Mail, User as UserIcon, Globe, RotateCcw, ChevronDown, ChevronUp, 
   Settings2, Briefcase, Heart, Home, Clock, ArrowUpRight
 } from "lucide-react";
 import { EssentialInfoItem } from "@/types/database";
+import { onAuthChanged, loadEssentialInfoFromCloud, saveEssentialInfoToCloud } from "@/lib/firebase/client";
+import type { User } from "firebase/auth";
 
 // 카테고리 인터페이스
 export interface CategoryMeta {
@@ -240,14 +242,16 @@ export const QuickCopyManager: React.FC = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Load from LocalStorage
+  // Firebase User Auth State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Load from LocalStorage and Cloud
   useEffect(() => {
     try {
       const savedItems = localStorage.getItem(ITEMS_STORAGE_KEY);
       if (savedItems) {
         const parsed = JSON.parse(savedItems);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // 최신 클릭 순 정렬 유지
           parsed.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
           setItems(parsed);
         }
@@ -263,15 +267,34 @@ export const QuickCopyManager: React.FC = () => {
     } catch {
       // ignore
     }
+
+    // Google Auth & Cloud Sync
+    const unsubscribe = onAuthChanged(async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        const cloudData = await loadEssentialInfoFromCloud(user.uid);
+        if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+          cloudData.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
+          setItems(cloudData);
+          try {
+            localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(cloudData));
+          } catch {}
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // Save items helper
+  // Save items helper (Local + Cloud DB)
   const updateItems = (newItems: EssentialInfoItem[]) => {
     setItems(newItems);
     try {
       localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(newItems));
-    } catch {
-      // ignore
+    } catch {}
+
+    if (currentUser) {
+      saveEssentialInfoToCloud(currentUser.uid, newItems);
     }
   };
 
