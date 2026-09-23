@@ -1,34 +1,159 @@
 "use client";
 
-import React, { useState } from "react";
-import { AlertCircle, Flame, CheckCircle2, Circle, Clock, Save, BellRing, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Flame,
+  CheckCircle2,
+  Circle,
+  Clock,
+  Save,
+  BellRing,
+  Settings,
+  Volume2,
+  VolumeX,
+  Play,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
+import {
+  AlarmConfig,
+  getAlarmConfig,
+  saveAlarmConfig,
+  scheduleRuthlessAlarm,
+  triggerTestAlarm,
+  playAlarmChime,
+  requestAlarmPermission,
+} from "@/lib/notifications/ruthlessAlarm";
+import { onAuthChanged, saveArchivedDiariesToCloud, loadArchivedDiariesFromCloud } from "@/lib/firebase/client";
+import type { User } from "firebase/auth";
 
 export const RuthlessDiarySkeleton: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [diaryText, setDiaryText] = useState("");
   const [isSavedToday, setIsSavedToday] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string>("good");
+  const [showSettings, setShowSettings] = useState(false);
+  const [alarmConfig, setAlarmConfig] = useState<AlarmConfig>(getAlarmConfig());
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
   const [routines, setRoutines] = useState([
-    { id: 1, title: "기상 후 미온수 한 잔", completed: true, streak: 14 },
-    { id: 2, title: "오메가3 & 멀티비타민 섭취", completed: true, streak: 12 },
-    { id: 3, title: "3대 운동 or 40분 유산소 러닝", completed: false, streak: 5 },
-    { id: 4, title: "지독한 하루 감사 일기 작성", completed: isSavedToday, streak: 9 },
+    { id: 1, title: "기상 후 미온수 한 잔", completed: true, streak: 15 },
+    { id: 2, title: "오메가3 & 멀티비타민 섭취", completed: true, streak: 13 },
+    { id: 3, title: "3대 운동 or 40분 유산소 러닝", completed: false, streak: 6 },
+    { id: 4, title: "지독한 하루 감사 일기 작성", completed: false, streak: 10 },
   ]);
+
+  // Load today's diary state from localStorage
+  useEffect(() => {
+    const todayKey = `life_os_diary_${new Date().toISOString().split("T")[0]}`;
+    const saved = localStorage.getItem(todayKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setDiaryText(parsed.text || "");
+        setSelectedMood(parsed.mood || "good");
+        setIsSavedToday(true);
+        setRoutines((prev) =>
+          prev.map((r) => (r.id === 4 ? { ...r, completed: true } : r))
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const unsubscribe = onAuthChanged(async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        const cloudDiaries = await loadArchivedDiariesFromCloud(user.uid);
+        if (cloudDiaries && Array.isArray(cloudDiaries)) {
+          const todayEntry = cloudDiaries.find((d: { date: string }) => d.date === new Date().toISOString().split("T")[0]);
+          if (todayEntry) {
+            setDiaryText(todayEntry.text || "");
+            setSelectedMood(todayEntry.mood || "good");
+            setIsSavedToday(true);
+            setRoutines((prev) =>
+              prev.map((r) => (r.id === 4 ? { ...r, completed: true } : r))
+            );
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync alarm status on mount or when isSavedToday changes
+  useEffect(() => {
+    scheduleRuthlessAlarm(isSavedToday).then((res) => {
+      if (res.message) setStatusMessage(res.message);
+    });
+  }, [isSavedToday]);
 
   const toggleRoutine = (id: number) => {
     setRoutines(
       routines.map((r) =>
-        r.id === id ? { ...r, completed: !r.completed, streak: !r.completed ? r.streak + 1 : r.streak - 1 } : r
+        r.id === id
+          ? {
+              ...r,
+              completed: !r.completed,
+              streak: !r.completed ? r.streak + 1 : Math.max(0, r.streak - 1),
+            }
+          : r
       )
     );
   };
 
-  const handleSaveDiary = () => {
+  const handleSaveDiary = async () => {
     if (!diaryText.trim()) return;
+
+    const todayDate = new Date().toISOString().split("T")[0];
+    const todayKey = `life_os_diary_${todayDate}`;
+    const diaryEntry = {
+      date: todayDate,
+      text: diaryText,
+      mood: selectedMood,
+      savedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(todayKey, JSON.stringify(diaryEntry));
     setIsSavedToday(true);
-    // 루틴 중 일기 항목도 완료 처리
-    setRoutines(
-      routines.map((r) => (r.id === 4 ? { ...r, completed: true } : r))
+    playAlarmChime("success");
+
+    // Mark routine 4 as completed
+    setRoutines((prev) =>
+      prev.map((r) => (r.id === 4 ? { ...r, completed: true, streak: r.streak + 1 } : r))
     );
+
+    // Sync to Firestore cloud archive
+    if (currentUser) {
+      try {
+        const existing = await loadArchivedDiariesFromCloud(currentUser.uid) || [];
+        const updated = [
+          diaryEntry,
+          ...existing.filter((d: { date: string }) => d.date !== todayDate),
+        ];
+        await saveArchivedDiariesToCloud(currentUser.uid, updated);
+        setStatusMessage("일기가 클라우드 & 로컬에 안전하게 저장되었습니다! 스누즈 알람이 해제되었습니다.");
+      } catch {
+        setStatusMessage("일기 저장 완료 (오프라인 모드). 스누즈 알람이 해제되었습니다.");
+      }
+    } else {
+      setStatusMessage("일기 저장 완료 (로컬 보관). 스누즈 알람이 해제되었습니다.");
+    }
+
+    setTimeout(() => setStatusMessage(null), 5000);
+  };
+
+  const handleUpdateConfig = (newCfg: AlarmConfig) => {
+    setAlarmConfig(newCfg);
+    saveAlarmConfig(newCfg);
+    scheduleRuthlessAlarm(isSavedToday);
+  };
+
+  const handleTestChime = async () => {
+    const res = await triggerTestAlarm();
+    setStatusMessage(res.message);
+    setTimeout(() => setStatusMessage(null), 4000);
   };
 
   const moods = [
@@ -41,30 +166,141 @@ export const RuthlessDiarySkeleton: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Ruthless Alarm Warning Banner */}
+      {/* Ruthless Alarm Banner */}
       <div
-        className={`p-4 rounded-2xl border transition-all ${
+        className={`p-4 rounded-3xl border transition-all ${
           isSavedToday
             ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-            : "bg-rose-500/10 border-rose-500/30 text-rose-300 animate-pulse"
+            : "bg-gradient-to-r from-rose-950/40 via-red-950/30 to-[#12141c] border-rose-500/40 text-rose-300 shadow-lg shadow-rose-950/20"
         }`}
       >
-        <div className="flex items-center gap-2.5 mb-1">
-          {isSavedToday ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <BellRing className="w-5 h-5 text-rose-400 shrink-0 animate-bounce" />
-          )}
-          <h3 className="text-sm font-bold">
-            {isSavedToday ? "오늘의 지독한 일기 작성 완료!" : "지독한 알람 작동 중: 일기 미작성"}
-          </h3>
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2.5">
+            {isSavedToday ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            ) : (
+              <BellRing className="w-5 h-5 text-rose-400 shrink-0 animate-bounce" />
+            )}
+            <h3 className="text-sm font-bold text-white">
+              {isSavedToday ? "오늘의 지독한 일기 작성 완료" : "지독한 알람 가동 중 : 일기 미작성"}
+            </h3>
+          </div>
+
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 text-xs flex items-center gap-1 transition-all"
+            title="알람 환경설정"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-mono">
+              {alarmConfig.targetHour.toString().padStart(2, "0")}:{alarmConfig.targetMinute.toString().padStart(2, "0")}
+            </span>
+          </button>
         </div>
-        <p className="text-xs text-zinc-300 pl-7.5">
+
+        <p className="text-xs text-zinc-300 leading-relaxed">
           {isSavedToday
             ? "오늘 하루 기록이 안전하게 보관되었습니다. 스트릭 +1 달성!"
-            : "단 한 줄이라도 작성하여 저장하기 전까지 5분 간격 스누즈 알람이 지속됩니다."}
+            : `매일 밤 ${alarmConfig.targetHour}시 ${alarmConfig.targetMinute}분에 일기 쓸 때까지 5분 간격 무한 스누즈 알람이 작동합니다.`}
         </p>
+
+        {statusMessage && (
+          <div className="mt-2.5 text-[11px] text-zinc-300 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>{statusMessage}</span>
+          </div>
+        )}
       </div>
+
+      {/* Alarm Settings Modal / Drawer */}
+      {showSettings && (
+        <div className="bg-[#12141c] border border-indigo-500/30 rounded-3xl p-4 space-y-4 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+              <Settings className="w-4 h-4 text-indigo-400" />
+              지독한 알람 & 스누즈 상세 설정
+            </h4>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="text-xs text-zinc-400 hover:text-white"
+            >
+              닫기
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] text-zinc-400 block mb-1">목표 알람 시간 (시)</label>
+              <input
+                type="number"
+                min={0}
+                max={23}
+                value={alarmConfig.targetHour}
+                onChange={(e) =>
+                  handleUpdateConfig({ ...alarmConfig, targetHour: parseInt(e.target.value) || 0 })
+                }
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] text-zinc-400 block mb-1">목표 알람 시간 (분)</label>
+              <input
+                type="number"
+                min={0}
+                max={59}
+                value={alarmConfig.targetMinute}
+                onChange={(e) =>
+                  handleUpdateConfig({ ...alarmConfig, targetMinute: parseInt(e.target.value) || 0 })
+                }
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs cursor-pointer">
+              <span className="text-zinc-200 font-medium">5분 간격 무한 스누즈 (작성할 때까지)</span>
+              <input
+                type="checkbox"
+                checked={alarmConfig.ruthlessMode}
+                onChange={(e) => handleUpdateConfig({ ...alarmConfig, ruthlessMode: e.target.checked })}
+                className="rounded accent-indigo-600"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs cursor-pointer">
+              <span className="text-zinc-200 font-medium">신시사이저 차임벨 사운드</span>
+              <input
+                type="checkbox"
+                checked={alarmConfig.soundEnabled}
+                onChange={(e) => handleUpdateConfig({ ...alarmConfig, soundEnabled: e.target.checked })}
+                className="rounded accent-indigo-600"
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={handleTestChime}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 rounded-xl border border-zinc-700 transition-all"
+            >
+              <Play className="w-3 h-3 text-indigo-400" />
+              <span>알람 소리 & 알림 즉시 테스트</span>
+            </button>
+
+            <button
+              onClick={async () => {
+                const granted = await requestAlarmPermission();
+                setStatusMessage(granted ? "알림 권한이 허용되었습니다." : "알림 권한이 거부되었거나 지원되지 않습니다.");
+              }}
+              className="text-[11px] text-indigo-400 underline hover:text-indigo-300"
+            >
+              알림 권한 확인
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Diary Input Section */}
       <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
@@ -101,7 +337,7 @@ export const RuthlessDiarySkeleton: React.FC = () => {
           rows={4}
           value={diaryText}
           onChange={(e) => setDiaryText(e.target.value)}
-          placeholder="오늘 하루의 가장 중요한 성취와 반성을 기록하세요. (한 글자라도 저장하면 지독한 스누즈 알람이 해제됩니다)"
+          placeholder="오늘 하루의 가장 중요한 성취와 반성을 기록하세요. (저장 즉시 지독한 스누즈 알람이 해제되고 스트릭이 갱신됩니다)"
           className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl p-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
         />
 

@@ -8,6 +8,7 @@ import { QuickCopyManager } from "@/components/essential-info/QuickCopyManager";
 import { RuthlessDiarySkeleton } from "@/components/diary/RuthlessDiarySkeleton";
 import { PasswordVaultManager } from "@/components/vault/PasswordVaultManager";
 import { FinanceHub } from "@/components/finance/FinanceHub";
+import { HealthHub } from "@/components/health/HealthHub";
 import { Activity } from "lucide-react";
 
 export default function Home() {
@@ -24,7 +25,7 @@ export default function Home() {
       case "vault":
         return "암호화 Vault 매니저";
       case "health":
-        return "헬스 & 1RM (Phase 3)";
+        return "헬스 1RM & 라이프 아카이브";
       default:
         return "Life-OS";
     }
@@ -41,7 +42,7 @@ export default function Home() {
       case "vault":
         return "Web Crypto AES-256 Zero-Knowledge";
       case "health":
-        return "Apple HealthKit & 1RM 포뮬러";
+        return "3대 1RM Epley 공식 & 신체 지표 & 일기 아카이브 & 인생샷";
       default:
         return "Single View Personal Operating System";
     }
@@ -64,22 +65,7 @@ export default function Home() {
 
         {activeTab === "vault" && <PasswordVaultManager />}
 
-        {activeTab === "health" && (
-          <div className="p-6 rounded-3xl bg-[#12141c] border border-zinc-800 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
-              <Activity className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-white">헬스 & 1RM 트래커</h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Phase 3에서 구현될 모듈입니다. 3대 운동 1RM 자동 계산 공식($1RM = W \times (1 + r/30)$) 및 시각화 차트, Apple HealthKit 동기화 파이프라인이 탑재됩니다.
-            </p>
-            <div className="pt-2">
-              <span className="px-3 py-1 rounded-full text-[11px] font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-                Phase 3 준비 중
-              </span>
-            </div>
-          </div>
-        )}
+        {activeTab === "health" && <HealthHub />}
       </main>
 
       <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />

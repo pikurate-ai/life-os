@@ -159,3 +159,120 @@ export async function loadVaultFromCloud(userId: string): Promise<any[] | null> 
   }
 }
 
+// Cloud Database: 1RM Workout Logs Sync
+export async function saveWorkout1RMToCloud(userId: string, workouts: any[]) {
+  try {
+    const userDocRef = doc(db, "users_workout_1rm", userId);
+    await setDoc(userDocRef, {
+      workouts,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("1RM 운동 기록 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadWorkout1RMFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_workout_1rm", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.workouts || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("1RM 운동 기록 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
+// Cloud Database: Health Metrics Sync
+export async function saveHealthMetricsToCloud(userId: string, metrics: any[]) {
+  try {
+    const userDocRef = doc(db, "users_health_metrics", userId);
+    await setDoc(userDocRef, {
+      metrics,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("건강 지표 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadHealthMetricsFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_health_metrics", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.metrics || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("건강 지표 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
+// Cloud Database: Archived Diaries Sync
+export async function saveArchivedDiariesToCloud(userId: string, diaries: any[]) {
+  try {
+    const userDocRef = doc(db, "users_archived_diaries", userId);
+    await setDoc(userDocRef, {
+      diaries,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("과거 일기 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadArchivedDiariesFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_archived_diaries", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.diaries || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("과거 일기 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
+// Cloud Database: Life Photos Sync
+export async function savePhotosToCloud(userId: string, photos: any[]) {
+  try {
+    const userDocRef = doc(db, "users_life_photos", userId);
+    await setDoc(userDocRef, {
+      photos,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("인생샷 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadPhotosFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_life_photos", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.photos || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("인생샷 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
+

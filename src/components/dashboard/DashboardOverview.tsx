@@ -28,9 +28,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
         <div className="mt-4 pt-3 border-t border-indigo-500/10 flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
             <ShieldCheck className="w-4 h-4" />
-            <span>AES-256 Zero-Knowledge 준비 완료</span>
+            <span>AES-256 Zero-Knowledge 활성화</span>
           </div>
-          <span className="text-zinc-500">Phase 1 구동 중</span>
+          <span className="text-indigo-400 font-mono text-[11px] bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">Phase 3 완비 / Phase 4</span>
         </div>
       </div>
 
@@ -84,16 +84,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
         {/* Health 1RM Preview (Phase 3) */}
         <div
           onClick={() => onNavigateTab("health")}
-          className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] active:scale-[0.98] border border-[#1f2433] rounded-2xl p-4 transition-all"
+          className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] active:scale-[0.98] border border-[#1f2433] hover:border-emerald-500/40 rounded-2xl p-4 transition-all"
         >
           <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3">
             <Activity className="w-4 h-4" />
           </div>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white">헬스 & 1RM</h3>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">Phase 3</span>
+            <h3 className="text-sm font-bold text-white group-hover:text-emerald-300">헬스 & 1RM</h3>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">가동 중</span>
           </div>
-          <p className="text-[11px] text-zinc-400 mt-1">3대 운동 및 건강 지표</p>
+          <p className="text-[11px] text-zinc-400 mt-1">3대 1RM & 신체지표 & 아카이브</p>
         </div>
       </div>
 
