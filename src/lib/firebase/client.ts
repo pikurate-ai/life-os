@@ -64,3 +64,98 @@ export async function loadEssentialInfoFromCloud(userId: string): Promise<Essent
     return null;
   }
 }
+
+// Cloud Database: Financial Logs Sync
+export async function saveFinancialLogsToCloud(userId: string, logs: any[]) {
+  try {
+    const userDocRef = doc(db, "users_financial_logs", userId);
+    await setDoc(userDocRef, {
+      logs,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("가계부 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadFinancialLogsFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_financial_logs", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.logs || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("가계부 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
+// Cloud Database: Assets Sync
+export async function saveAssetsToCloud(userId: string, assets: any[]) {
+  try {
+    const userDocRef = doc(db, "users_assets", userId);
+    await setDoc(userDocRef, {
+      assets,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("자산 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadAssetsFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_assets", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.assets || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("자산 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
+// Cloud Database: Encrypted Vault Sync (Zero-Knowledge: 저장소에는 암호문, IV, Salt만 저장)
+export async function saveVaultToCloud(userId: string, vaultEntries: any[]) {
+  try {
+    const userDocRef = doc(db, "users_encrypted_vault", userId);
+    // 평문 비밀번호(decryptedPassword)는 서버로 절대 전송하지 않음!
+    const sanitized = vaultEntries.map((e) => ({
+      id: e.id,
+      siteName: e.siteName,
+      username: e.username,
+      encrypted: e.encrypted,
+    }));
+    await setDoc(userDocRef, {
+      entries: sanitized,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("암호 금고 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadVaultFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_encrypted_vault", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.entries || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("암호 금고 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
