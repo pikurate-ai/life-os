@@ -9,9 +9,12 @@ export type Json =
 export interface EssentialInfoItem {
   id: string;
   user_id: string;
-  category: 'account' | 'address' | 'vehicle' | 'id_number' | 'insurance' | 'custom';
+  category: string; // 유연한 카테고리 ('business', 'finance', 'vehicle', 'family', 'health', 'daily' 등)
   title: string;
   value: string;
+  memo?: string; // 추가 메모 필드 (클릭 시 토글 표시)
+  click_count?: number; // 클릭 횟수
+  last_clicked_at?: number; // 가장 최근 클릭 타임스탬프 (최상단 정렬용)
   is_masked?: boolean;
   display_order?: number;
   created_at?: string;
