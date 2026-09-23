@@ -24,66 +24,43 @@
 
 | 단계 | 주요 범위 | 진행 상태 |
 | :--- | :--- | :---: |
-| **Phase 1: 프레임워크 구축 & 핵심 데일리 UI** | Next.js + Tailwind + Supabase Auth 기본 구축, `PROJECT_STATE.md` 수립, 필수 정보 1초 복사 UI, 지독한 일기/루틴 기본 스켈레톤 | **진행 중 (In Progress)** |
-| **Phase 2: 자산, 가계부 & 암호 매니저** | LastPass/Google CSV Import 파서, Client AES-256 Vault, SMS 문자 파싱 가계부, 총자산 대시보드 | 대기 (Pending) |
+| **Phase 1: 프레임워크 구축 & 핵심 데일리 UI** | Next.js + Tailwind + Supabase Auth 기본 구축, `PROJECT_STATE.md` 수립, 필수 정보 1초 복사 UI, 지독한 일기/루틴 기본 스켈레톤 | **완료 (Completed)** |
+| **Phase 2: 자산, 가계부 & 암호 매니저** | LastPass/Google CSV Import 파서, Client AES-256 Vault, SMS 문자 파싱 가계부, 총자산 대시보드 | **완료 (Completed)** |
+| **Phase 2+ 스프레드시트 싱크 & CRUD** | 구글 시트 2종(사업자/법인/주소/계좌/인증번호) 중복 제거 싱크, 신규 등록 & 기존 항목 수정(Edit) & 삭제 & LocalStorage 영구 보존 | **완료 (Completed)** |
 | **Phase 3: 헬스, 1RM & 인생샷 갤러리** | 1RM 자동 계산/그래프, Supabase Storage 기반 갤러리, 과거 일기 대량 이관 타임라인 | 대기 (Pending) |
 | **Phase 4: iOS 앱 패키징 & HealthKit** | Capacitor 래핑 및 iOS 빌드, iOS Local Notification (스누즈 연동), HealthKit API 파이프라인 | 대기 (Pending) |
 
 ---
 
-## 🗄️ 4. 데이터베이스 스키마 (Supabase / PostgreSQL)
+## 🗄️ 4. 기본 정보 메모장 싱크 데이터셋 (구글 시트 연동)
 
-DDL 파일 위치: `supabase/schema.sql`
+두 개의 구글 스프레드시트에서 중복 항목(여러 개 주소/계좌)을 1개씩 선별 정제하여 구축 완료:
+1. **사업자등록번호**: `276-88-01467`
+2. **법인등록번호**: `110111-7222964`
+3. **본사 주소 (단일 대표)**: `경기도 김포시 김포한강8로 410, 1001-343호(구래동, 스타프라자) [10071]`
+4. **주거래 법인 계좌 (단일 대표)**: `기업은행 047-116828-01-015 (주식회사 피큐레잇)`
+5. **사용 중인 법인카드 (단일 대표)**: `우리은행 마스터 5532-0800-1231-6491 (09/29, CVC 574)`
+6. **대표자 성명/직위**: `송석규 대표`
+7. **대표 휴대전화**: `010-8871-6102`
+8. **대표 이메일**: `leo.song@pikurate.com`
+9. **차량 번호 (단일 대표)**: `48보5508`
+10. **개인통관고유번호**: `P811151508155`
+11. **벤처기업확인서 번호**: `20251022010021` (2025.11.24~2028.11.23)
+12. **중소기업확인서 번호**: `0010-2025-356786`
+13. **과학기술인등록번호**: `12555772`
+14. **지적재산권 출원인 코드**: `1-2020-014440-6`
+15. **공식 홈페이지**: `https://www.pikurate.com/`
 
-1. **`essential_info`**: 필수 정보 (계좌, 주소, 차번호, 주민번호 마스킹 등 1초 복사 데이터)
-2. **`vault_passwords`**: 비밀번호 매니저 (클라이언트 단에서 AES-256으로 암호화된 `encrypted_password` 저장)
-3. **`diaries`**: 지독한 일기 및 과거 아카이브 (`entry_date`, `is_archived_from_past`, `source_type`)
-4. **`health_logs`**: 체중, 골격근량, 체지방률, 혈압 기록
-5. **`workout_1rm`**: 3대 운동 및 주요 종목 1RM 계산 일지 ($1RM = W \times (1 + r/30)$)
-6. **`financial_logs`**: 파싱 기반 가계부 지출/수입 내역
-
-*모든 테이블에는 Row Level Security(RLS)가 적용되어 `auth.uid() = user_id` 조건으로 1인 데이터가 철저히 격리됩니다.*
-
----
-
-## 📂 5. 디렉토리 구조 (Directory Structure)
-
-```text
-C:\Users\JU\life-os\
-├── .env.local.example       # Supabase 환경변수 템플릿
-├── .env.local               # 로컬 환경변수 (Git 제외)
-├── PROJECT_STATE.md         # 프로젝트 상태 및 계정 인계 마스터 문서
-├── capacitor.config.ts      # Capacitor 모바일 설정
-├── package.json
-├── tsconfig.json
-├── next.config.ts
-├── supabase/
-│   └── schema.sql           # PostgreSQL 전체 DDL 및 RLS 정책
-└── src/
-    ├── app/
-    │   ├── layout.tsx       # 모바일 퍼스트 레이아웃 & 폰트
-    │   ├── page.tsx         # 메인 대시보드 뷰
-    │   ├── auth/            # Supabase 로그인/회원가입
-    │   └── globals.css      # Tailwind v4 스타일
-    ├── components/
-    │   ├── layout/          # 헤더, 하단 탭 내비게이션(BottomNav)
-    │   ├── essential-info/  # 필수 정보 1초 Quick-Copy UI
-    │   ├── diary/           # 지독한 일기 & 스누즈 알람 스켈레톤
-    │   └── routines/        # 일별 루틴 체크리스트 & 스트릭
-    └── lib/
-        ├── supabase/        # Supabase SSR 클라이언트 (client, server, middleware)
-        └── crypto/          # Web Crypto AES-256 유틸리티
-```
+*모든 항목은 브라우저에서 '수정(Edit)', '추가(Add)', '삭제(Delete)'가 가능하며 `localStorage`에 영구 반영됩니다.*
 
 ---
 
-## 🔑 6. 다음 세션 / 계정 작업자를 위한 인계 사항 (Handoff Note)
+## 🔑 5. 다음 세션 / 계정 작업자를 위한 인계 사항 (Handoff Note)
 - **현재 구현 완료 항목**: 
-  - 독립 프로젝트 디렉토리 세팅 및 의존성 구성
-  - `supabase/schema.sql` 스키마 및 RLS 완성
-  - Supabase SSR 클라이언트 헬퍼 구성
-  - 모바일 퍼스트 하단 탭바 & Quick-Copy 1초 복사 컴포넌트
-  - 지독한 일기 & 루틴 기본 컴포넌트
+  - 기본 정보 메모장: 구글 시트 싱크 및 원클릭 복사 + 추가/수정/삭제/로컬스토리지 보존
+  - 문자 파싱 가계부 (`SmsLedgerParser.tsx`): 카드사 SMS/알림톡 0.1초 파싱
+  - 총자산 대시보드 (`AssetDashboard.tsx`): 순자산 실시간 계산 및 포트폴리오 비중
+  - 암호 금고 (`PasswordVaultManager.tsx`): Web Crypto AES-256-GCM Zero-Knowledge Vault 및 CSV Import
+  - 개발 서버 구동 중: `http://localhost:3000`
 - **다음 착수 권장 항목**:
-  - Supabase 환경변수 연동 및 Auth 로그인/회원가입 플로우 실서버 연결
-  - Phase 2: 비밀번호 매니저(Client AES-256 암호화 모듈) 및 SMS 가계부 파서 착수
+  - Phase 3: 헬스 & 3대 운동 1RM 계산기 ($1RM = W \times (1 + r/30)$) 및 시각화 차트 구축

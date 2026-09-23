@@ -66,19 +66,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
           <p className="text-[11px] text-zinc-400 mt-1">스누즈 알람 & 루틴 스트릭</p>
         </div>
 
-        {/* Vault Preview (Phase 2) */}
+        {/* Vault Card */}
         <div
           onClick={() => onNavigateTab("vault")}
-          className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] active:scale-[0.98] border border-[#1f2433] rounded-2xl p-4 transition-all"
+          className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] active:scale-[0.98] border border-[#1f2433] hover:border-amber-500/40 rounded-2xl p-4 transition-all"
         >
           <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3">
             <KeyRound className="w-4 h-4" />
           </div>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white">암호 금고</h3>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">Phase 2</span>
+            <h3 className="text-sm font-bold text-white group-hover:text-amber-300">암호 금고</h3>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">가동 중</span>
           </div>
-          <p className="text-[11px] text-zinc-400 mt-1">클라이언트 암호화 Vault</p>
+          <p className="text-[11px] text-zinc-400 mt-1">AES-256 클라이언트 금고</p>
         </div>
 
         {/* Health 1RM Preview (Phase 3) */}
@@ -97,19 +97,25 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
         </div>
       </div>
 
-      {/* Financial Status Summary Preview */}
-      <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4">
-        <div className="flex items-center justify-between mb-3">
+      {/* Financial Status Summary */}
+      <div
+        onClick={() => onNavigateTab("finance")}
+        className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] border border-[#1f2433] hover:border-purple-500/40 rounded-3xl p-4 transition-all"
+      >
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Wallet className="w-4 h-4 text-purple-400" />
-            <h3 className="text-sm font-bold text-white">자산 & 파싱 가계부 (준비 중)</h3>
+            <h3 className="text-sm font-bold text-white group-hover:text-purple-300 flex items-center gap-1.5">
+              자산 & 파싱 가계부
+              <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
+            </h3>
           </div>
-          <span className="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-            SMS 복사 붙여넣기 연동 예정
+          <span className="text-[10px] text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+            SMS 0.1초 파싱 가능
           </span>
         </div>
         <p className="text-xs text-zinc-400 leading-relaxed">
-          결제 문자나 카카오톡 알림을 붙여넣으면 날짜, 금액, 카테고리를 자동 파싱하여 총자산 추이를 시각화합니다.
+          카드 결제 문자나 카카오톡 알림을 복사해 붙여넣으면 금액과 가맹점을 자동 파싱하고 순자산을 한눈에 집계합니다.
         </p>
       </div>
     </div>
