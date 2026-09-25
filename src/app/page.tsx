@@ -9,12 +9,18 @@ import { RuthlessDiarySkeleton } from "@/components/diary/RuthlessDiarySkeleton"
 import { PasswordVaultManager } from "@/components/vault/PasswordVaultManager";
 import { FinanceHub } from "@/components/finance/FinanceHub";
 import { HealthHub } from "@/components/health/HealthHub";
-import { Activity } from "lucide-react";
+import { DataSyncHub } from "@/components/sync/DataSyncHub";
+import { IosInstallGuideModal } from "@/components/pwa/IosInstallGuideModal";
+import { ArrowLeft } from "lucide-react";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
+  const [showSyncHub, setShowSyncHub] = useState<boolean>(false);
+  const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
 
   const getHeaderTitle = () => {
+    if (showSyncHub) return "데이터 싱크 & 적재 센터";
+
     switch (activeTab) {
       case "quickcopy":
         return "필수 정보 1초 복사";
@@ -32,6 +38,8 @@ export default function Home() {
   };
 
   const getHeaderSubtitle = () => {
+    if (showSyncHub) return "구글 시트·닥스 & 카카오톡 실시간 연동";
+
     switch (activeTab) {
       case "quickcopy":
         return "터치 즉시 클립보드에 복사";
@@ -48,27 +56,62 @@ export default function Home() {
     }
   };
 
+  const handleTabChange = (tab: TabType) => {
+    setShowSyncHub(false);
+    setActiveTab(tab);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title={getHeaderTitle()} subtitle={getHeaderSubtitle()} />
+      <Header
+        title={getHeaderTitle()}
+        subtitle={getHeaderSubtitle()}
+        onOpenSyncHub={() => setShowSyncHub(true)}
+        onOpenInstallGuide={() => setShowInstallGuide(true)}
+      />
 
       <main className="flex-1 max-w-md w-full mx-auto p-4 pb-24">
-        {activeTab === "dashboard" && (
-          <DashboardOverview onNavigateTab={(tab) => setActiveTab(tab)} />
+        {showSyncHub ? (
+          <div className="space-y-3">
+            <button
+              onClick={() => setShowSyncHub(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>메인 화면으로 돌아가기</span>
+            </button>
+            <DataSyncHub />
+          </div>
+        ) : (
+          <>
+            {activeTab === "dashboard" && (
+              <DashboardOverview
+                onNavigateTab={(tab) => handleTabChange(tab)}
+                onOpenSyncHub={() => setShowSyncHub(true)}
+                onOpenInstallGuide={() => setShowInstallGuide(true)}
+              />
+            )}
+
+            {activeTab === "quickcopy" && <QuickCopyManager />}
+
+            {activeTab === "diary" && <RuthlessDiarySkeleton />}
+
+            {activeTab === "finance" && <FinanceHub />}
+
+            {activeTab === "vault" && <PasswordVaultManager />}
+
+            {activeTab === "health" && <HealthHub />}
+          </>
         )}
-
-        {activeTab === "quickcopy" && <QuickCopyManager />}
-
-        {activeTab === "diary" && <RuthlessDiarySkeleton />}
-
-        {activeTab === "finance" && <FinanceHub />}
-
-        {activeTab === "vault" && <PasswordVaultManager />}
-
-        {activeTab === "health" && <HealthHub />}
       </main>
 
-      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+      <BottomNav activeTab={activeTab} onChangeTab={handleTabChange} />
+
+      {/* iOS PWA Install Guide Modal */}
+      <IosInstallGuideModal
+        isOpen={showInstallGuide}
+        onClose={() => setShowInstallGuide(false)}
+      />
     </div>
   );
 }

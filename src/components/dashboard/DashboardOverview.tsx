@@ -1,14 +1,32 @@
 "use client";
 
 import React from "react";
-import { Copy, BookOpen, KeyRound, Activity, Wallet, ChevronRight, TrendingUp, ShieldCheck } from "lucide-react";
+import {
+  Copy,
+  BookOpen,
+  KeyRound,
+  Activity,
+  Wallet,
+  ChevronRight,
+  Database,
+  Smartphone,
+  ShieldCheck,
+  FileSpreadsheet,
+  MessageSquare,
+} from "lucide-react";
 import { TabType } from "@/components/layout/BottomNav";
 
 interface DashboardOverviewProps {
   onNavigateTab: (tab: TabType) => void;
+  onOpenSyncHub?: () => void;
+  onOpenInstallGuide?: () => void;
 }
 
-export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigateTab }) => {
+export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
+  onNavigateTab,
+  onOpenSyncHub,
+  onOpenInstallGuide,
+}) => {
   return (
     <div className="space-y-4">
       {/* Hero Welcome Card */}
@@ -30,9 +48,50 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
             <ShieldCheck className="w-4 h-4" />
             <span>AES-256 Zero-Knowledge 활성화</span>
           </div>
-          <span className="text-indigo-400 font-mono text-[11px] bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">Phase 3 완비 / Phase 4</span>
+          <span className="text-indigo-400 font-mono text-[11px] bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+            1인 전용 Super App
+          </span>
         </div>
       </div>
+
+      {/* Raw Data Sync Center Action Banner */}
+      {onOpenSyncHub && (
+        <div
+          onClick={onOpenSyncHub}
+          className="group cursor-pointer bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-[#12141c] hover:border-purple-500/50 border border-purple-500/30 rounded-3xl p-4 transition-all shadow-lg shadow-purple-950/10"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300 flex items-center justify-center">
+                <Database className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white group-hover:text-purple-300 flex items-center gap-1.5">
+                  로우 데이터 통합 싱크 & 적재 센터
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
+                </h3>
+                <p className="text-[11px] text-zinc-400">구글 드라이브(시트·닥스) & 카톡 데이터 실시간 연동</p>
+              </div>
+            </div>
+            <span className="text-[10px] text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20 shrink-0">
+              실시간 동기화
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-zinc-400 pt-1 border-t border-purple-500/10">
+            <span className="flex items-center gap-1">
+              <FileSpreadsheet className="w-3 h-3 text-emerald-400" />
+              구글 시트 2개 프리셋
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <MessageSquare className="w-3 h-3 text-amber-400" />
+              카톡 계좌/주소 파싱
+            </span>
+            <span>•</span>
+            <span>JSON 원본 백업</span>
+          </div>
+        </div>
+      )}
 
       {/* Quick Action Bento Grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -118,6 +177,27 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
           카드 결제 문자나 카카오톡 알림을 복사해 붙여넣으면 금액과 가맹점을 자동 파싱하고 순자산을 한눈에 집계합니다.
         </p>
       </div>
+
+      {/* iPhone PWA Install Guide Banner */}
+      {onOpenInstallGuide && (
+        <div
+          onClick={onOpenInstallGuide}
+          className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] border border-[#1f2433] hover:border-indigo-500/40 rounded-2xl p-3.5 flex items-center justify-between transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+              <Smartphone className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white group-hover:text-indigo-300 block">
+                아이폰 1인 전용 앱으로 다운로드하기
+              </span>
+              <span className="text-[10px] text-zinc-400">사파리 공유 버튼 → [홈 화면에 추가] 1초 안내</span>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
+        </div>
+      )}
     </div>
   );
 };

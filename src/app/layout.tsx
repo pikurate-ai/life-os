@@ -3,8 +3,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Life-OS | 인생 Super App",
-  description: "단 하나의 개인 전용 라이프 운영체제 (Life Operating System)",
+  description: "단 하나의 개인 전용 1인 라이프 운영체제 (Life Operating System)",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Life-OS",
+  },
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
 };
 
 export const viewport: Viewport = {

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#090a0f" />
+    </linearGradient>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="192" height="192" rx="42" fill="url(#bgGrad)" />
+  <rect x="2" y="2" width="188" height="188" rx="40" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+  
+  <!-- Life OS Symbol: Dynamic L & Compass Core -->
+  <g transform="translate(46, 42)" stroke="url(#iconGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M12 8 L12 88 L68 88" />
+    <circle cx="68" cy="28" r="16" fill="#38bdf8" stroke="none" />
+    <path d="M50 48 L86 48" stroke="#818cf8" stroke-width="6" />
+  </g>
+  <text x="96" y="156" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="20" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="2">LIFE-OS</text>
+</svg>
