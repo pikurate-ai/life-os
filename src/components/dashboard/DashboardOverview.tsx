@@ -107,7 +107,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             1초 정보 복사
             <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
           </h3>
-          <p className="text-[11px] text-zinc-400 mt-1">계좌·주소·차량번호 초고속 복사</p>
+          <p className="text-[11px] text-zinc-400 mt-1">1초 정보 복사 & 자유 메모장</p>
         </div>
 
         {/* Ruthless Diary Card */}

@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import { 
   Copy, Check, Plus, Edit2, Trash2, Sparkles, Building2, MapPin, Car, Shield, 
   CreditCard, Hash, Phone, Mail, User as UserIcon, Globe, RotateCcw, ChevronDown, ChevronUp, 
-  Settings2, Briefcase, Heart, Home, Clock, ArrowUpRight
+  Settings2, Briefcase, Heart, Home, Clock, ArrowUpRight, StickyNote
 } from "lucide-react";
 import { EssentialInfoItem } from "@/types/database";
 import { onAuthChanged, loadEssentialInfoFromCloud, saveEssentialInfoToCloud } from "@/lib/firebase/client";
+import { GeneralMemoManager } from "@/components/memo/GeneralMemoManager";
 import type { User } from "firebase/auth";
 
 // 카테고리 인터페이스
@@ -242,6 +243,9 @@ export const QuickCopyManager: React.FC = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
+  // Sub-tab: Essential Info vs General Memo
+  const [viewMode, setViewMode] = useState<"essential" | "general">("essential");
+
   // Firebase User Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -473,8 +477,39 @@ export const QuickCopyManager: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Top Header */}
-      <div className="flex items-center justify-between">
+      {/* Sub-tab Switcher: Essential Info vs General Memo */}
+      <div className="flex bg-[#12141c] p-1 rounded-2xl border border-[#1f2433] gap-1">
+        <button
+          onClick={() => setViewMode("essential")}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            viewMode === "essential"
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          <Copy className="w-3.5 h-3.5" />
+          <span>1초 필수 정보 복사</span>
+        </button>
+
+        <button
+          onClick={() => setViewMode("general")}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            viewMode === "general"
+              ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          <StickyNote className="w-3.5 h-3.5" />
+          <span>자유 일반 메모</span>
+        </button>
+      </div>
+
+      {viewMode === "general" ? (
+        <GeneralMemoManager />
+      ) : (
+        <>
+          {/* Top Header */}
+          <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-1.5">
             기본 정보 메모장
@@ -889,6 +924,8 @@ export const QuickCopyManager: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

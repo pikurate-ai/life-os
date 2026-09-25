@@ -5,65 +5,53 @@
 ---
 
 ## 📌 1. 프로젝트 기본 정보
-- **프로젝트 명**: Life-OS (인생 Super App)
+- **프로젝트 명**: Life-OS (인생 Super App) — 1인 전용 개인 운영체제
 - **위치**: `C:\Users\JU\life-os` (기존 `quote-memo`와 분리된 전용 독립 디렉토리)
-- **퍼블릭 웹 배포 URL**: `https://temporary-rushing-lilac-ie4r2p2.vercel.app` (모바일/PC 어디서든 즉시 접속 가능)
+- **최신 퍼블릭 배포 URL**: `https://temporary-zippy-cyclone-k4228c2.vercel.app` (아이폰 Safari 및 PC 어디서든 즉시 접속 및 1초 앱 다운로드 가능)
 - **로컬 개발 서버**: `http://localhost:3000` (동일 Wi-Fi 접속: `http://192.168.0.2:3000`)
 - **인증 및 클라우드 DB**: Firebase Google OAuth 팝업 로그인 + Cloud Firestore 7대 도메인 실시간 동기화 (`users_essential_info`, `users_financial_logs`, `users_assets`, `users_encrypted_vault`, `users_workout_1rm`, `users_health_metrics`, `users_archived_diaries`, `users_life_photos`)
 
 ---
 
-## 🛠️ 2. 기술 스택 (Tech Stack)
+## 🛠️ 2. 기술 스택 & 1인 아이폰 최적화
 - **Frontend / Framework**: Next.js 15.2.4 (App Router, Static Export `output: 'export'`), React 19, TypeScript
-- **Styling**: Tailwind CSS v4, Lucide React (아이콘)
-- **Authentication & Cloud DB**: Firebase Auth (Google OAuth 팝업) + Cloud Firestore
-- **Offline / Local Persistence**: 브라우저 `localStorage` 완벽 연동
-- **Mobile Hybrid Engine**: Capacitor CLI 8.5.2 & Core & iOS (`@capacitor/ios`, `@capacitor/local-notifications`)
+- **iOS Standalone PWA**:
+  - `public/manifest.json` (`display: "standalone"`, 테마 컬러 `#090a0f`)
+  - `public/icons/icon-192.svg`, `public/icons/icon-512.svg` 네이티브 앱 아이콘
+  - `appleWebApp` 메타태그 (`apple-touch-icon`, `statusBarStyle: "black-translucent"`)
+  - iOS 전용 안전 영역(`pt-safe`, `pb-safe`) 및 Safari 텍스트 선택 버그 해결
+  - `IosInstallGuideModal`: 사파리 공유 버튼 → [홈 화면에 추가] 1초 안내 탑재
+- **Capacitor iOS 네이티브**:
+  - `ios/App` 프로젝트 완비 (`Package.swift`, `@capacitor/local-notifications` 8.3.1)
+  - `npx cap sync ios` 동기화 파이프라인
+- **데이터 파이프라인 & 싱크 허브**:
+  - `googleDriveSync.ts`: 구글 시트 라이브 CSV 페처 (사용자 2개 시트 프리셋 등록) & 닥스/슬라이드 텍스트 파서
+  - `kakaoParser.ts`: 카카오톡 내보내기/복사 텍스트 분석기 (계좌, 주소, 금액, 연락처 지능형 추출)
+  - `universalBackup.ts`: 7개 도메인 전체 로우 데이터 원클릭 JSON 백업 및 복원
 - **보안/암호화**: Web Crypto API (AES-256-GCM Zero-Knowledge Client-Side Encryption)
-- **사운드/알람**: Web Audio API Synthesizer Chime Engine (무외부 파일 차임벨 생성)
 
 ---
 
-## 🗺️ 3. 4단계 로드맵 및 현재 진행 상황 (Roadmap Progress)
+## 🗺️ 3. 주요 모듈 및 기능 요약
 
-| 단계 | 주요 범위 | 진행 상태 |
-| :--- | :--- | :---: |
-| **Phase 1: 프레임워크 구축 & 핵심 데일리 UI** | Next.js + Tailwind + Supabase/Firebase Auth 구축, `PROJECT_STATE.md` 수립, 필수 정보 1초 복사 UI, 지독한 일기/루틴 기본 스켈레톤 | **완료 (Completed)** |
-| **Phase 2: 자산, 가계부 & 암호 매니저 고도화** | SMS/알림톡 0.1초 파서 + 예산 관리 + 카테고리 지출 비율, 순자산 대시보드(자산/부채 CRUD + 부채비율), Zero-Knowledge AES-256 암호 금고(랜덤 비밀번호 생성기 + Google/LastPass CSV 임포트), 전 도메인 구글 클라우드 DB 동기화 | **완료 (Completed)** |
-| **Phase 3: 헬스, 1RM & 인생샷 갤러리** | 3대 운동 1RM Epley 공식 자동 계산 및 500kg 게이지, 체중/골격근량/체지방/혈압 신체 지표 카드, 과거 일기 대량 텍스트 파싱 & 타임라인 아카이브, 인생샷 사진 갤러리 & 클라우드 동기화 | **완료 (Completed)** |
-| **Phase 4: iOS 앱 패키징 & Ruthless Alarm & HealthKit** | Capacitor iOS 패키징(`ios/` 프로젝트 및 `Package.swift`), 일기 쓸 때까지 울리는 5분 스누즈 Ruthless 알람 엔진(`ruthlessAlarm.ts`), Web Audio API 신시사이저 차임벨, Apple HealthKit 브릿지(`healthKitBridge.ts`) 실시간 걸음/칼로리 연동 | **완료 (Completed)** |
+### 1) 로우 데이터 통합 싱크 & 적재 센터 (`DataSyncHub.tsx`)
+- **구글 드라이브/시트 탭**:
+  - 사용자 보유 2개 시트(주민/계좌/주소 시트, 차량/가족 시트) 원클릭 라이브 싱크
+  - 임의의 공유 구글 시트 URL 실시간 데이터 수신
+  - 구글 닥스/슬라이드/메모 텍스트 붙여넣기 자동 분류
+  - 1초 복사 메모장(`QuickCopy`)으로 실시간 적재
+- **카카오톡 텍스트 파서 탭**:
+  - 카카오톡 대화방 복사본/내보내기 텍스트 분석
+  - 은행 계좌, 배송/방문 주소, 전화번호, 송금/결제 내역 자동 분류 및 적재
+- **전체 백업 & 복원 탭**:
+  - `life-os-raw-backup-YYYY-MM-DD.json` 1클릭 원본 다운로드
+  - 백업 파일 업로드 시 7개 전 도메인 즉시 복원 및 클라우드 동기화
 
----
+### 2) 아이폰 1인 앱 다운로드 지원 (`IosInstallGuideModal.tsx`)
+- 아이폰 Safari에서 접속 후 [공유] → [홈 화면에 추가] 클릭 시 앱스토어 심사나 비용 없이 네이티브 전체화면 앱으로 구동.
+- 헤더 및 대시보드에서 1초 설치 안내 모달 상시 제공.
 
-## 🗄️ 4. Phase 3 & 4 도메인별 상세 명세
-
-### 1) 3대 1RM 트래커 & 신체 지표 (`Workout1RMTracker.tsx`, `BodyMetricsCard.tsx`)
-- Epley 1RM 공식 ($1RM = W \times (1 + r/30)$) 기반 벤치프레스, 스쿼트, 데드리프트 계산
-- 3대 합계 500kg 목표 달성률 게이지 시각화 및 최근 갱신일 추적
-- 체중, 골격근량, 체지방률, 수축기/이완기 혈압 기록 및 클라우드 동기화
-
-### 2) Apple HealthKit 브릿지 (`healthKitBridge.ts`)
-- iOS Native 및 웹 겸용 하이브리드 어댑터
-- 일일 걸음 수, 활동 소모 칼로리(kcal), 보행 거리(km), 안정시 심박수(BPM) 실시간 집계
-
-### 3) 지독한 일기 & Ruthless 스누즈 알람 (`RuthlessDiarySkeleton.tsx`, `ruthlessAlarm.ts`)
-- 목표 시간(기본 22:30) 설정 및 일기 미작성 시 5분 간격 무한 스누즈 알람 예약
-- Web Audio API 신시사이저 기반의 즉각적인 차임벨 사운드 (외부 mp3 파일 불필요)
-- 일기 저장 즉시 알람 자동 취소, 스트릭 갱신, Cloud Firestore 및 LocalStorage 영구 보관
-
-### 4) 과거 일기 타임라인 & 인생샷 갤러리 (`DiaryArchiveTimeline.tsx`, `LifePhotoGallery.tsx`)
-- 복사한 과거 일기 텍스트를 날짜별로 한 번에 자동 파싱하는 대량 임포터
-- 중요한 추억과 인생 사진을 캡션/태그와 함께 보관하는 전용 갤러리
-
-### 5) Capacitor iOS 패키징
-- `ios/App` 프로젝트 완비
-- `@capacitor/local-notifications` 플러그인 통합
-- 정적 배포본(`out/`)과 iOS 웹 애셋 간 자동 동기화 (`npx cap sync ios`)
-
----
-
-## 🔑 5. 배포 및 구동 명령어 요약
-- **로컬 개발 서버**: `npm run dev`
-- **정적 빌드**: `npm run build`
-- **Capacitor iOS 동기화**: `npx cap sync ios`
-- **Vercel 임시 배포**: `npx vercel out --temporary --yes`
+### 3) 3인의 전문 개발자 교차 검수 완료 내역
+1. 프론트엔드: `manifest.json` 부재 404 해결, `globals.css` 텍스트 선택 버그 해결, PWA 아이콘 생성.
+2. iOS 모바일 & 보안: `apple-touch-icon`, `viewport-fit=cover` 노치/홈바 안전 영역 보정, 원본 백업 파이프라인.
+3. 데이터 파이프라인: 구글 시트/닥스 & 카카오톡 로우 데이터 실시간 추출 및 클라우드 적재 센터 완비.

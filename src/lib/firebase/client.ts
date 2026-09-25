@@ -275,5 +275,34 @@ export async function loadPhotosFromCloud(userId: string): Promise<any[] | null>
   }
 }
 
+// Cloud Database: General Memos Sync (LRU top-order)
+export async function saveGeneralMemosToCloud(userId: string, memos: any[]) {
+  try {
+    const userDocRef = doc(db, "users_general_memos", userId);
+    await setDoc(userDocRef, {
+      memos,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("일반 메모 클라우드 저장 실패:", error);
+    return false;
+  }
+}
+
+export async function loadGeneralMemosFromCloud(userId: string): Promise<any[] | null> {
+  try {
+    const userDocRef = doc(db, "users_general_memos", userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return snap.data()?.memos || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("일반 메모 클라우드 조회 실패:", error);
+    return null;
+  }
+}
+
 
 
