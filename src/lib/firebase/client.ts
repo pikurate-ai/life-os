@@ -1,5 +1,14 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult, 
+  signOut, 
+  onAuthStateChanged, 
+  User 
+} from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { EssentialInfoItem } from "@/types/database";
 
@@ -18,21 +27,112 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
+// Local 1-Person Master User (allows seamless login even when offline or domain is unauthorized)
+const LOCAL_USER_KEY = "life_os_local_master_user";
+
+export interface MasterProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  isLocalMaster?: boolean;
+}
+
+export function getLocalMasterUser(): MasterProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLocalMasterUser(user: MasterProfile | null): void {
+  if (typeof window === "undefined") return;
+  if (!user) {
+    localStorage.removeItem(LOCAL_USER_KEY);
+  } else {
+    localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+  }
+  window.dispatchEvent(new CustomEvent("life_os_auth_change"));
+}
+
 // Google Sign-In with Popup
 export async function signInWithGoogle(): Promise<User> {
   googleProvider.setCustomParameters({ prompt: "select_account" });
   const result = await signInWithPopup(auth, googleProvider);
+  if (result.user) {
+    setLocalMasterUser({
+      uid: result.user.uid,
+      displayName: result.user.displayName || "Life-OS 사용자",
+      email: result.user.email || "user@gmail.com",
+      photoURL: result.user.photoURL || undefined,
+    });
+  }
   return result.user;
+}
+
+// Google Sign-In with Redirect (for mobile browsers where popups get blocked)
+export async function signInWithGoogleRedirect(): Promise<void> {
+  googleProvider.setCustomParameters({ prompt: "select_account" });
+  await signInWithRedirect(auth, googleProvider);
 }
 
 // Sign-Out
 export async function signOutUser(): Promise<void> {
-  await signOut(auth);
+  setLocalMasterUser(null);
+  try {
+    await signOut(auth);
+  } catch (e) {
+    console.warn("Firebase sign out error:", e);
+  }
 }
 
-// Auth State Listener
-export function onAuthChanged(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+// Auth State Listener (Binds both Firebase Auth & Local Master User)
+export function onAuthChanged(callback: (user: any | null) => void) {
+  // Capture potential redirect sign-in result on page load
+  if (typeof window !== "undefined") {
+    getRedirectResult(auth)
+      .then((res) => {
+        if (res?.user) {
+          setLocalMasterUser({
+            uid: res.user.uid,
+            displayName: res.user.displayName || "Life-OS 사용자",
+            email: res.user.email || "user@gmail.com",
+            photoURL: res.user.photoURL || undefined,
+          });
+          callback(res.user);
+        }
+      })
+      .catch((e) => console.log("Redirect check:", e));
+  }
+
+  const unsubscribeFirebase = onAuthStateChanged(auth, (fbUser) => {
+    if (fbUser) {
+      callback(fbUser);
+    } else {
+      const local = getLocalMasterUser();
+      callback(local);
+    }
+  });
+
+  const handleCustomEvent = () => {
+    if (!auth.currentUser) {
+      callback(getLocalMasterUser());
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("life_os_auth_change", handleCustomEvent);
+  }
+
+  return () => {
+    unsubscribeFirebase();
+    if (typeof window !== "undefined") {
+      window.removeEventListener("life_os_auth_change", handleCustomEvent);
+    }
+  };
 }
 
 // Cloud Database: Save Essential Info for User
