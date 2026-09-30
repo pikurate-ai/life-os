@@ -3,8 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { parseSms, ParsedTransaction } from "@/lib/parser/smsParser";
 import { Receipt, Sparkles, Plus, Trash2, ArrowDownRight, Tag, CreditCard, PieChart, Target, Calendar, Check } from "lucide-react";
-import { onAuthChanged, saveFinancialLogsToCloud, loadFinancialLogsFromCloud } from "@/lib/firebase/client";
-import type { User } from "firebase/auth";
+import {
+  onAuthChanged,
+  saveFinancialLogsToCloud,
+  loadFinancialLogsFromCloud,
+  subscribeFinancialLogsFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 
 const SAMPLE_TRANSACTIONS: ParsedTransaction[] = [
   {
@@ -58,7 +63,7 @@ const FINANCE_STORAGE_KEY = "life_os_financial_logs_v2";
 const BUDGET_STORAGE_KEY = "life_os_monthly_budget_v2";
 
 export const SmsLedgerParser: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [transactions, setTransactions] = useState<ParsedTransaction[]>(SAMPLE_TRANSACTIONS);
   const [monthlyBudget, setMonthlyBudget] = useState<number>(1500000); // 150만원 기본 예산
   const [isEditingBudget, setIsEditingBudget] = useState(false);
@@ -92,20 +97,53 @@ export const SmsLedgerParser: React.FC = () => {
       }
     } catch {}
 
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribe = onAuthChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudLogs = await loadFinancialLogsFromCloud(user.uid);
-        if (cloudLogs && Array.isArray(cloudLogs) && cloudLogs.length > 0) {
-          setTransactions(cloudLogs);
-          try {
-            localStorage.setItem(FINANCE_STORAGE_KEY, JSON.stringify(cloudLogs));
-          } catch {}
+        try {
+          // 1. Initial Two-Way Merge on Login
+          const cloudLogs = await loadFinancialLogsFromCloud(user);
+          const currentSaved = localStorage.getItem(FINANCE_STORAGE_KEY);
+          const localList: ParsedTransaction[] = currentSaved ? JSON.parse(currentSaved) : SAMPLE_TRANSACTIONS;
+
+          const merged = mergeItemsById<ParsedTransaction>(localList, cloudLogs || []);
+          if (merged.length > 0) {
+            setTransactions(merged);
+            try {
+              localStorage.setItem(FINANCE_STORAGE_KEY, JSON.stringify(merged));
+            } catch {}
+            await saveFinancialLogsToCloud(user, merged);
+          }
+
+          // 2. Real-Time Live Sync (Mobile <-> Web)
+          unsubscribeSnapshot = subscribeFinancialLogsFromCloud(user, (realtimeLogs) => {
+            if (realtimeLogs && Array.isArray(realtimeLogs)) {
+              setTransactions((prevLocal) => {
+                const updated = mergeItemsById<ParsedTransaction>(prevLocal, realtimeLogs);
+                try {
+                  localStorage.setItem(FINANCE_STORAGE_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Financial logs sync error:", e);
         }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const updateTransactions = (newTx: ParsedTransaction[]) => {
@@ -114,7 +152,7 @@ export const SmsLedgerParser: React.FC = () => {
       localStorage.setItem(FINANCE_STORAGE_KEY, JSON.stringify(newTx));
     } catch {}
     if (currentUser) {
-      saveFinancialLogsToCloud(currentUser.uid, newTx);
+      saveFinancialLogsToCloud(currentUser, newTx);
     }
   };
 

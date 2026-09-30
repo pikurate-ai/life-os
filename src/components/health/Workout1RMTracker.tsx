@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Dumbbell, Flame, Trophy, Plus, Trash2, TrendingUp, Calendar, Check, Sparkles } from "lucide-react";
-import { onAuthChanged, saveWorkout1RMToCloud, loadWorkout1RMFromCloud } from "@/lib/firebase/client";
+import {
+  onAuthChanged,
+  saveWorkout1RMToCloud,
+  subscribeWorkout1RMFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 import type { User } from "firebase/auth";
 
 export interface WorkoutRecord {
@@ -13,6 +18,7 @@ export interface WorkoutRecord {
   calculated1RM: number;
   date: string;
   notes?: string;
+  updatedAt?: string;
 }
 
 const DEFAULT_EXERCISES = ["벤치프레스", "스쿼트", "데드리프트", "오버헤드프레스", "바벨로우"];
@@ -36,32 +42,51 @@ export const Workout1RMTracker: React.FC = () => {
   const [reps, setReps] = useState<number>(5);
   const [notes, setNotes] = useState("");
 
-  // Load from local & cloud
+  // Load from local & live Firestore sync
   useEffect(() => {
+    let localItems: WorkoutRecord[] = SAMPLE_RECORDS;
     try {
       const saved = localStorage.getItem(WORKOUT_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          localItems = parsed;
           setRecords(parsed);
         }
       }
     } catch {}
 
-    const unsubscribe = onAuthChanged(async (user) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthChanged((user) => {
       setCurrentUser(user);
+
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudWorkouts = await loadWorkout1RMFromCloud(user.uid);
-        if (cloudWorkouts && Array.isArray(cloudWorkouts) && cloudWorkouts.length > 0) {
-          setRecords(cloudWorkouts);
-          try {
-            localStorage.setItem(WORKOUT_STORAGE_KEY, JSON.stringify(cloudWorkouts));
-          } catch {}
-        }
+        unsubscribeSnapshot = subscribeWorkout1RMFromCloud(user.uid, (cloudWorkouts) => {
+          if (cloudWorkouts && cloudWorkouts.length > 0) {
+            setRecords((prev) => {
+              const merged = mergeItemsById(prev, cloudWorkouts);
+              try {
+                localStorage.setItem(WORKOUT_STORAGE_KEY, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          } else if (localItems && localItems.length > 0) {
+            saveWorkout1RMToCloud(user.uid, localItems);
+          }
+        });
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const updateRecords = (newRecords: WorkoutRecord[]) => {
@@ -102,6 +127,7 @@ export const Workout1RMTracker: React.FC = () => {
       calculated1RM: currentCalc1RM,
       date: new Date().toISOString().split("T")[0],
       notes: notes.trim() || undefined,
+      updatedAt: new Date().toISOString(),
     };
 
     updateRecords([newRecord, ...records]);

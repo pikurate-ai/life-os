@@ -3,8 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Lock, Unlock, KeyRound, Copy, Check, Upload, Plus, Eye, EyeOff, ShieldCheck, Search, Trash2, RefreshCw, Wand2 } from "lucide-react";
 import { encryptData, decryptData, EncryptedData } from "@/lib/crypto/aes";
-import { onAuthChanged, saveVaultToCloud, loadVaultFromCloud } from "@/lib/firebase/client";
-import type { User } from "firebase/auth";
+import {
+  onAuthChanged,
+  saveVaultToCloud,
+  loadVaultFromCloud,
+  subscribeVaultFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 
 interface VaultEntry {
   id: string;
@@ -18,7 +23,7 @@ interface VaultEntry {
 const VAULT_STORAGE_KEY = "life_os_encrypted_vault_v2";
 
 export const PasswordVaultManager: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [masterPassword, setMasterPassword] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [unlockError, setUnlockError] = useState("");
@@ -45,20 +50,53 @@ export const PasswordVaultManager: React.FC = () => {
       }
     } catch {}
 
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribe = onAuthChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudVault = await loadVaultFromCloud(user.uid);
-        if (cloudVault && Array.isArray(cloudVault) && cloudVault.length > 0) {
-          setEntries(cloudVault);
-          try {
-            localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(cloudVault));
-          } catch {}
+        try {
+          // 1. Initial Two-Way Merge on Login
+          const cloudVault = await loadVaultFromCloud(user);
+          const currentSaved = localStorage.getItem(VAULT_STORAGE_KEY);
+          const localList: VaultEntry[] = currentSaved ? JSON.parse(currentSaved) : [];
+
+          const merged = mergeItemsById<VaultEntry>(localList, cloudVault || []);
+          if (merged.length > 0) {
+            setEntries(merged);
+            try {
+              localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(merged));
+            } catch {}
+            await saveVaultToCloud(user, merged);
+          }
+
+          // 2. Real-Time Live Sync (Mobile <-> Web)
+          unsubscribeSnapshot = subscribeVaultFromCloud(user, (realtimeVault) => {
+            if (realtimeVault && Array.isArray(realtimeVault)) {
+              setEntries((prevLocal) => {
+                const updated = mergeItemsById<VaultEntry>(prevLocal, realtimeVault);
+                try {
+                  localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Vault sync error:", e);
         }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const updateEntries = (newEntries: VaultEntry[]) => {
@@ -67,7 +105,7 @@ export const PasswordVaultManager: React.FC = () => {
       localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(newEntries));
     } catch {}
     if (currentUser) {
-      saveVaultToCloud(currentUser.uid, newEntries);
+      saveVaultToCloud(currentUser, newEntries);
     }
   };
 

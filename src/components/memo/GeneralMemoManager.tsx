@@ -18,8 +18,13 @@ import {
   Clock,
   CheckCircle2,
 } from "lucide-react";
-import { onAuthChanged, saveGeneralMemosToCloud, loadGeneralMemosFromCloud } from "@/lib/firebase/client";
-import type { User } from "firebase/auth";
+import {
+  onAuthChanged,
+  saveGeneralMemosToCloud,
+  loadGeneralMemosFromCloud,
+  subscribeGeneralMemosFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 
 export interface MemoItem {
   id: string;
@@ -124,7 +129,7 @@ const CATEGORIES = ["전체", "중요", "업무", "아이디어", "할일", "일
 
 export const GeneralMemoManager: React.FC = () => {
   const [memos, setMemos] = useState<MemoItem[]>(INITIAL_MEMOS);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   // New Memo Composer State
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -154,33 +159,68 @@ export const GeneralMemoManager: React.FC = () => {
     });
   };
 
-  // Load from LocalStorage and Cloud
+  // Load from LocalStorage and Cloud with Intelligent Two-Way Sync & Live Real-time Listener
   useEffect(() => {
+    let initialLocal: MemoItem[] = [];
     try {
       const saved = localStorage.getItem(MEMOS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setMemos(sortMemos(parsed));
+          initialLocal = sortMemos(parsed);
+          setMemos(initialLocal);
         }
       }
     } catch {}
 
-    const unsubscribe = onAuthChanged(async (user) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudMemos = await loadGeneralMemosFromCloud(user.uid);
-        if (cloudMemos && Array.isArray(cloudMemos) && cloudMemos.length > 0) {
-          const sorted = sortMemos(cloudMemos);
-          setMemos(sorted);
-          try {
-            localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(sorted));
-          } catch {}
+        try {
+          // 1. Initial Two-Way Merge on Login
+          const cloudMemos = await loadGeneralMemosFromCloud(user);
+          const currentSaved = localStorage.getItem(MEMOS_STORAGE_KEY);
+          const localList: MemoItem[] = currentSaved ? JSON.parse(currentSaved) : initialLocal;
+
+          const merged = sortMemos(mergeItemsById<MemoItem>(localList, cloudMemos || []));
+          if (merged.length > 0) {
+            setMemos(merged);
+            try {
+              localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(merged));
+            } catch {}
+            // Push merged back to cloud so both devices have all items
+            await saveGeneralMemosToCloud(user, merged);
+          }
+
+          // 2. Real-Time Live Listener (Mobile <-> Web 0.1s instant sync)
+          unsubscribeSnapshot = subscribeGeneralMemosFromCloud(user, (realtimeMemos) => {
+            if (realtimeMemos && Array.isArray(realtimeMemos)) {
+              setMemos((prevLocal) => {
+                const updated = sortMemos(mergeItemsById<MemoItem>(prevLocal, realtimeMemos));
+                try {
+                  localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Memo sync initialization error:", e);
         }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const saveMemos = (newMemos: MemoItem[]) => {
@@ -190,7 +230,7 @@ export const GeneralMemoManager: React.FC = () => {
       localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(sorted));
     } catch {}
     if (currentUser) {
-      saveGeneralMemosToCloud(currentUser.uid, sorted);
+      saveGeneralMemosToCloud(currentUser, sorted);
     }
   };
 

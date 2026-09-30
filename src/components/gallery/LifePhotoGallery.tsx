@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Image as ImageIcon, Plus, Trash2, Calendar, Sparkles, X, Heart } from "lucide-react";
-import { onAuthChanged, savePhotosToCloud, loadPhotosFromCloud } from "@/lib/firebase/client";
+import {
+  onAuthChanged,
+  savePhotosToCloud,
+  subscribePhotosFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 import type { User } from "firebase/auth";
 
 export interface PhotoItem {
@@ -11,6 +16,7 @@ export interface PhotoItem {
   title: string;
   date: string;
   tag?: string;
+  updatedAt?: string;
 }
 
 const SAMPLE_PHOTOS: PhotoItem[] = [
@@ -50,28 +56,49 @@ export const LifePhotoGallery: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>("");
 
   useEffect(() => {
+    let localItems: PhotoItem[] = SAMPLE_PHOTOS;
     try {
       const saved = localStorage.getItem(PHOTO_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) setPhotos(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localItems = parsed;
+          setPhotos(parsed);
+        }
       }
     } catch {}
 
-    const unsubscribe = onAuthChanged(async (user) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthChanged((user) => {
       setCurrentUser(user);
+
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudPhotos = await loadPhotosFromCloud(user.uid);
-        if (cloudPhotos && Array.isArray(cloudPhotos) && cloudPhotos.length > 0) {
-          setPhotos(cloudPhotos);
-          try {
-            localStorage.setItem(PHOTO_STORAGE_KEY, JSON.stringify(cloudPhotos));
-          } catch {}
-        }
+        unsubscribeSnapshot = subscribePhotosFromCloud(user.uid, (cloudPhotos) => {
+          if (cloudPhotos && cloudPhotos.length > 0) {
+            setPhotos((prev) => {
+              const merged = mergeItemsById(prev, cloudPhotos);
+              try {
+                localStorage.setItem(PHOTO_STORAGE_KEY, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          } else if (localItems && localItems.length > 0) {
+            savePhotosToCloud(user.uid, localItems);
+          }
+        });
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const updatePhotos = (newPhotos: PhotoItem[]) => {
@@ -105,6 +132,7 @@ export const LifePhotoGallery: React.FC = () => {
       title: title.trim(),
       date: new Date().toISOString().split("T")[0].replace(/-/g, "."),
       tag: tag.trim(),
+      updatedAt: new Date().toISOString(),
     };
 
     updatePhotos([newPhoto, ...photos]);

@@ -2,9 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Activity, Heart, Scale, Plus, RefreshCw, Footprints, Flame, Check } from "lucide-react";
-import { onAuthChanged, saveHealthMetricsToCloud, loadHealthMetricsFromCloud } from "@/lib/firebase/client";
+import {
+  onAuthChanged,
+  saveHealthMetricsToCloud,
+  loadHealthMetricsFromCloud,
+  subscribeHealthMetricsFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 import { HealthKitData, getStoredHealthData, syncHealthKit } from "@/lib/healthkit/healthKitBridge";
-import type { User } from "firebase/auth";
 
 export interface BodyMetric {
   id: string;
@@ -24,7 +29,7 @@ const DEFAULT_METRICS: BodyMetric[] = [
 const METRICS_STORAGE_KEY = "life_os_body_metrics_v1";
 
 export const BodyMetricsCard: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [metrics, setMetrics] = useState<BodyMetric[]>(DEFAULT_METRICS);
   const [healthKitData, setHealthKitData] = useState<HealthKitData>(getStoredHealthData());
   const [isSyncing, setIsSyncing] = useState(false);
@@ -47,20 +52,53 @@ export const BodyMetricsCard: React.FC = () => {
       }
     } catch {}
 
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribe = onAuthChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudMetrics = await loadHealthMetricsFromCloud(user.uid);
-        if (cloudMetrics && Array.isArray(cloudMetrics) && cloudMetrics.length > 0) {
-          setMetrics(cloudMetrics);
-          try {
-            localStorage.setItem(METRICS_STORAGE_KEY, JSON.stringify(cloudMetrics));
-          } catch {}
+        try {
+          // 1. Initial Two-Way Merge on Login
+          const cloudMetrics = await loadHealthMetricsFromCloud(user);
+          const currentSaved = localStorage.getItem(METRICS_STORAGE_KEY);
+          const localList: BodyMetric[] = currentSaved ? JSON.parse(currentSaved) : DEFAULT_METRICS;
+
+          const merged = mergeItemsById<BodyMetric>(localList, cloudMetrics || []);
+          if (merged.length > 0) {
+            setMetrics(merged);
+            try {
+              localStorage.setItem(METRICS_STORAGE_KEY, JSON.stringify(merged));
+            } catch {}
+            await saveHealthMetricsToCloud(user, merged);
+          }
+
+          // 2. Real-Time Live Sync (Mobile <-> Web)
+          unsubscribeSnapshot = subscribeHealthMetricsFromCloud(user, (realtimeMetrics) => {
+            if (realtimeMetrics && Array.isArray(realtimeMetrics)) {
+              setMetrics((prevLocal) => {
+                const updated = mergeItemsById<BodyMetric>(prevLocal, realtimeMetrics);
+                try {
+                  localStorage.setItem(METRICS_STORAGE_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Health metrics sync error:", e);
         }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const handleSyncHealthKit = async () => {
@@ -78,7 +116,7 @@ export const BodyMetricsCard: React.FC = () => {
       localStorage.setItem(METRICS_STORAGE_KEY, JSON.stringify(newMetrics));
     } catch {}
     if (currentUser) {
-      saveHealthMetricsToCloud(currentUser.uid, newMetrics);
+      saveHealthMetricsToCloud(currentUser, newMetrics);
     }
   };
 

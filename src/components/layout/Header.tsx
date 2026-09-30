@@ -84,7 +84,17 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* User Profile / Google Login */}
             {currentUser ? (
-              <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-2 py-1 rounded-xl shadow-sm shrink-0">
+              <div
+                onClick={() => setShowAuthModal(true)}
+                title="클릭하여 클라우드 동기화 상태 및 계정 확인"
+                className="flex items-center gap-1.5 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-indigo-500/40 px-2 py-1 rounded-xl shadow-sm shrink-0 cursor-pointer transition-all"
+              >
+                {/* Live Sync Pulse */}
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
@@ -98,7 +108,10 @@ export const Header: React.FC<HeaderProps> = ({
                   {currentUser.displayName || currentUser.email?.split("@")[0]}
                 </span>
                 <button
-                  onClick={handleLogout}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
                   title="로그아웃"
                   className="text-zinc-500 hover:text-rose-400 p-0.5 ml-0.5 transition-colors shrink-0"
                 >

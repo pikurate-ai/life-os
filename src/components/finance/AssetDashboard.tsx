@@ -2,8 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Wallet, TrendingUp, Building, DollarSign, Bitcoin, Landmark, Edit3, Check, Plus, Trash2, ShieldAlert, ArrowUpRight } from "lucide-react";
-import { onAuthChanged, saveAssetsToCloud, loadAssetsFromCloud } from "@/lib/firebase/client";
-import type { User } from "firebase/auth";
+import {
+  onAuthChanged,
+  saveAssetsToCloud,
+  loadAssetsFromCloud,
+  subscribeAssetsFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 
 export interface AssetCategory {
   id: string;
@@ -24,7 +29,7 @@ const DEFAULT_ASSETS: AssetCategory[] = [
 const ASSET_STORAGE_KEY = "life_os_assets_v2";
 
 export const AssetDashboard: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [assets, setAssets] = useState<AssetCategory[]>(DEFAULT_ASSETS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tempAmount, setTempAmount] = useState<number>(0);
@@ -47,20 +52,53 @@ export const AssetDashboard: React.FC = () => {
       }
     } catch {}
 
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribe = onAuthChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudAssets = await loadAssetsFromCloud(user.uid);
-        if (cloudAssets && Array.isArray(cloudAssets) && cloudAssets.length > 0) {
-          setAssets(cloudAssets);
-          try {
-            localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(cloudAssets));
-          } catch {}
+        try {
+          // 1. Initial Two-Way Merge on Login
+          const cloudAssets = await loadAssetsFromCloud(user);
+          const currentSaved = localStorage.getItem(ASSET_STORAGE_KEY);
+          const localList: AssetCategory[] = currentSaved ? JSON.parse(currentSaved) : DEFAULT_ASSETS;
+
+          const merged = mergeItemsById<AssetCategory>(localList, cloudAssets || []);
+          if (merged.length > 0) {
+            setAssets(merged);
+            try {
+              localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(merged));
+            } catch {}
+            await saveAssetsToCloud(user, merged);
+          }
+
+          // 2. Real-Time Live Sync (Mobile <-> Web)
+          unsubscribeSnapshot = subscribeAssetsFromCloud(user, (realtimeAssets) => {
+            if (realtimeAssets && Array.isArray(realtimeAssets)) {
+              setAssets((prevLocal) => {
+                const updated = mergeItemsById<AssetCategory>(prevLocal, realtimeAssets);
+                try {
+                  localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Assets sync error:", e);
         }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const updateAssets = (newAssets: AssetCategory[]) => {
@@ -69,7 +107,7 @@ export const AssetDashboard: React.FC = () => {
       localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(newAssets));
     } catch {}
     if (currentUser) {
-      saveAssetsToCloud(currentUser.uid, newAssets);
+      saveAssetsToCloud(currentUser, newAssets);
     }
   };
 

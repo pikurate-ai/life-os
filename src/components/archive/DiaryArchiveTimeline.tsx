@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { BookOpen, Upload, Calendar, Search, Sparkles, ChevronDown, ChevronUp, Trash2, Plus, Clock } from "lucide-react";
-import { onAuthChanged, saveArchivedDiariesToCloud, loadArchivedDiariesFromCloud } from "@/lib/firebase/client";
+import {
+  onAuthChanged,
+  saveArchivedDiariesToCloud,
+  subscribeArchivedDiariesFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 import type { User } from "firebase/auth";
 
 export interface ArchivedDiary {
@@ -11,6 +16,7 @@ export interface ArchivedDiary {
   title: string;
   content: string;
   source: string; // 'google_docs', 'notion', 'email', 'direct'
+  updatedAt?: string;
 }
 
 const SAMPLE_ARCHIVES: ArchivedDiary[] = [
@@ -48,28 +54,49 @@ export const DiaryArchiveTimeline: React.FC = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
+    let localItems: ArchivedDiary[] = SAMPLE_ARCHIVES;
     try {
       const saved = localStorage.getItem(ARCHIVE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) setDiaries(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localItems = parsed;
+          setDiaries(parsed);
+        }
       }
     } catch {}
 
-    const unsubscribe = onAuthChanged(async (user) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthChanged((user) => {
       setCurrentUser(user);
+
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudDiaries = await loadArchivedDiariesFromCloud(user.uid);
-        if (cloudDiaries && Array.isArray(cloudDiaries) && cloudDiaries.length > 0) {
-          setDiaries(cloudDiaries);
-          try {
-            localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(cloudDiaries));
-          } catch {}
-        }
+        unsubscribeSnapshot = subscribeArchivedDiariesFromCloud(user.uid, (cloudDiaries) => {
+          if (cloudDiaries && cloudDiaries.length > 0) {
+            setDiaries((prev) => {
+              const merged = mergeItemsById(prev, cloudDiaries);
+              try {
+                localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          } else if (localItems && localItems.length > 0) {
+            saveArchivedDiariesToCloud(user.uid, localItems);
+          }
+        });
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const updateDiaries = (newDiaries: ArchivedDiary[]) => {

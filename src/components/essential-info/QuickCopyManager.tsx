@@ -7,9 +7,14 @@ import {
   Settings2, Briefcase, Heart, Home, Clock, ArrowUpRight, StickyNote
 } from "lucide-react";
 import { EssentialInfoItem } from "@/types/database";
-import { onAuthChanged, loadEssentialInfoFromCloud, saveEssentialInfoToCloud } from "@/lib/firebase/client";
+import {
+  onAuthChanged,
+  loadEssentialInfoFromCloud,
+  saveEssentialInfoToCloud,
+  subscribeEssentialInfoFromCloud,
+  mergeItemsById,
+} from "@/lib/firebase/client";
 import { GeneralMemoManager } from "@/components/memo/GeneralMemoManager";
-import type { User } from "firebase/auth";
 
 // 카테고리 인터페이스
 export interface CategoryMeta {
@@ -247,7 +252,7 @@ export const QuickCopyManager: React.FC = () => {
   const [viewMode, setViewMode] = useState<"essential" | "general">("essential");
 
   // Firebase User Auth State
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   // Load from LocalStorage and Cloud
   useEffect(() => {
@@ -272,33 +277,66 @@ export const QuickCopyManager: React.FC = () => {
       // ignore
     }
 
-    // Google Auth & Cloud Sync
+    // Google Auth & Cloud Sync with Live Real-time Listener & Two-Way Merge
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribe = onAuthChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (user) {
-        const cloudData = await loadEssentialInfoFromCloud(user.uid);
-        if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-          cloudData.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
-          setItems(cloudData);
+        try {
+          // 1. Initial Two-Way Merge on Login
+          const cloudData = await loadEssentialInfoFromCloud(user);
+          const currentSaved = localStorage.getItem(ITEMS_STORAGE_KEY);
+          const localList: EssentialInfoItem[] = currentSaved ? JSON.parse(currentSaved) : INITIAL_ITEMS;
+
+          const merged = mergeItemsById<EssentialInfoItem>(localList, cloudData || []);
+          merged.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
+          setItems(merged);
           try {
-            localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(cloudData));
+            localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(merged));
           } catch {}
+          await saveEssentialInfoToCloud(user, merged);
+
+          // 2. Real-Time Live Sync (Mobile <-> Web)
+          unsubscribeSnapshot = subscribeEssentialInfoFromCloud(user, (realtimeItems) => {
+            if (realtimeItems && Array.isArray(realtimeItems)) {
+              setItems((prevLocal) => {
+                const updated = mergeItemsById<EssentialInfoItem>(prevLocal, realtimeItems);
+                updated.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
+                try {
+                  localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          });
+        } catch (e) {
+          console.error("Essential info sync error:", e);
         }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   // Save items helper (Local + Cloud DB)
   const updateItems = (newItems: EssentialInfoItem[]) => {
+    newItems.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
     setItems(newItems);
     try {
       localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(newItems));
     } catch {}
 
     if (currentUser) {
-      saveEssentialInfoToCloud(currentUser.uid, newItems);
+      saveEssentialInfoToCloud(currentUser, newItems);
     }
   };
 
