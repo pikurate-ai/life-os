@@ -92,7 +92,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
   };
 
   const handleCopyVercelDomain = () => {
-    navigator.clipboard.writeText("vercel.app");
+    const host = typeof window !== "undefined" ? window.location.hostname : "pikurate-ai.github.io";
+    navigator.clipboard.writeText(host);
     setCopiedDomain(true);
     setTimeout(() => setCopiedDomain(false), 2000);
   };
@@ -236,7 +237,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
             </span>
           </div>
           <p className="text-[11px] text-zinc-300 leading-relaxed">
-            Firebase Console의 승인된 도메인에 <strong className="text-white">vercel.app</strong>을 추가하시면 모든 Vercel 배포 사이트에서 구글 팝업 로그인이 즉시 100% 작동합니다.
+            Firebase Console의 승인된 도메인에 <strong className="text-white">현재 접속 도메인(pikurate-ai.github.io 등)</strong>을 추가하시면 구글 팝업/리다이렉트 로그인이 즉시 100% 작동합니다.
           </p>
 
           <div className="flex items-center gap-2 pt-1">
@@ -245,7 +246,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
               className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg border border-zinc-700 text-[11px] font-mono flex items-center justify-center gap-1"
             >
               {copiedDomain ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedDomain ? "복사됨!" : "vercel.app 복사"}</span>
+              <span>{copiedDomain ? "복사됨!" : "접속 도메인 복사"}</span>
             </button>
 
             <a

@@ -1,18 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+const basePath = process.env.GITHUB_PAGES === "true" ? "/life-os" : "";
+
 export const metadata: Metadata = {
   title: "Life-OS | 인생 Super App",
   description: "단 하나의 개인 전용 1인 라이프 운영체제 (Life Operating System)",
-  manifest: "/manifest.json",
+  manifest: `${basePath}/manifest.json`,
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Life-OS",
   },
   icons: {
-    icon: "/icons/icon-192.svg",
-    apple: "/icons/icon-192.svg",
+    icon: `${basePath}/icons/icon-192.svg`,
+    apple: `${basePath}/icons/icon-192.svg`,
   },
 };
 
