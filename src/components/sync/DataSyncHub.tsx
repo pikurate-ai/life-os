@@ -247,38 +247,38 @@ export const DataSyncHub: React.FC = () => {
       <div className="flex bg-[#12141c] p-1 rounded-2xl border border-[#1f2433] gap-1">
         <button
           onClick={() => setActiveTab("google")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 ${
             activeTab === "google"
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <FileSpreadsheet className="w-3.5 h-3.5" />
-          <span>구글 드라이브/시트</span>
+          <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap truncate">구글 시트/드라이브</span>
         </button>
 
         <button
           onClick={() => setActiveTab("kakao")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 ${
             activeTab === "kakao"
               ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>카톡 텍스트 파서</span>
+          <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap truncate">카톡 파서</span>
         </button>
 
         <button
           onClick={() => setActiveTab("backup")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 ${
             activeTab === "backup"
               ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <Cloud className="w-3.5 h-3.5" />
-          <span>전체 백업 & 복원</span>
+          <Cloud className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap truncate">백업 & 복원</span>
         </button>
       </div>
 
@@ -452,7 +452,7 @@ export const DataSyncHub: React.FC = () => {
               <button
                 onClick={handleParseKakao}
                 disabled={!kakaoRawText.trim()}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 active:scale-95 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-600/30 flex items-center gap-1.5"
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 active:scale-95 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-600/30 flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>지능형 데이터 추출</span>

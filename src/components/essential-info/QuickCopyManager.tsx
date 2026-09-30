@@ -603,53 +603,25 @@ export const QuickCopyManager: React.FC = () => {
               onClick={() => handleCopyAndPromote(item)}
               className="group relative cursor-pointer bg-[#12141c] hover:bg-[#181b26] active:scale-[0.99] border border-[#1f2433] hover:border-indigo-500/50 rounded-2xl p-3.5 transition-all shadow-sm"
             >
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="p-2 rounded-xl bg-zinc-900/90 border border-zinc-800 shrink-0">
+              {/* Card Header: Icon, Category, Title, TOP1 on left; Compact Action Buttons on right */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="p-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 shrink-0 text-indigo-400">
                     {renderCategoryIcon(item.category)}
                   </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[11px] font-semibold text-zinc-400 truncate">
-                        {item.title}
-                      </span>
-                      {categoryMeta && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 font-medium">
-                          {categoryMeta.name}
-                        </span>
-                      )}
-                      {index === 0 && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">
-                          TOP 1
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-sm font-semibold text-white tracking-wide break-all font-mono leading-snug">
-                      {item.value}
-                    </p>
-
-                    {/* Memo Trigger Indicator */}
-                    {item.memo && (
-                      <button
-                        type="button"
-                        onClick={(e) => toggleMemo(item.id, e)}
-                        className="mt-1.5 text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium"
-                      >
-                        <span>{isExpanded ? "메모 닫기" : "추가 메모 보기"}</span>
-                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      </button>
-                    )}
-
-                    {/* Expanded Memo Content (클릭했을 때만 표시) */}
-                    {isExpanded && item.memo && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-zinc-900/90 border border-indigo-500/30 text-xs text-zinc-300 leading-relaxed font-sans animate-in fade-in slide-in-from-top-1">
-                        <span className="text-[10px] text-indigo-400 font-bold block mb-0.5">💡 추가 메모:</span>
-                        {item.memo}
-                      </div>
-                    )}
-                  </div>
+                  {categoryMeta && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800/80 text-zinc-400 font-medium shrink-0">
+                      {categoryMeta.name}
+                    </span>
+                  )}
+                  <span className="text-xs font-bold text-white truncate min-w-0">
+                    {item.title}
+                  </span>
+                  {index === 0 && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30 shrink-0">
+                      TOP 1
+                    </span>
+                  )}
                 </div>
 
                 {/* Right Action Buttons */}
@@ -673,7 +645,7 @@ export const QuickCopyManager: React.FC = () => {
                   </button>
 
                   <div
-                    className={`ml-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all ${
+                    className={`ml-1 px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all ${
                       isCopied
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                         : "bg-zinc-800/80 text-zinc-300 group-hover:bg-indigo-600 group-hover:text-white"
@@ -682,17 +654,45 @@ export const QuickCopyManager: React.FC = () => {
                     {isCopied ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        <span>복사됨</span>
+                        <span className="whitespace-nowrap font-bold">복사됨</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>복사</span>
+                        <span className="whitespace-nowrap">복사</span>
                       </>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Card Value: Dedicated 100% Full-Width Container (Never Squished on iPhone 13 Pro) */}
+              <div className="mt-2.5 p-3 rounded-xl bg-black/40 border border-white/5 group-hover:border-indigo-500/30 transition-colors w-full">
+                <p className="text-sm font-semibold text-white tracking-wide break-all font-mono leading-relaxed select-all">
+                  {item.value}
+                </p>
+              </div>
+
+              {/* Memo Trigger & Expandable Content */}
+              {item.memo && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={(e) => toggleMemo(item.id, e)}
+                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium"
+                  >
+                    <span>{isExpanded ? "메모 닫기" : "추가 메모 보기"}</span>
+                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-2 p-2.5 rounded-xl bg-zinc-900/90 border border-indigo-500/30 text-xs text-zinc-300 leading-relaxed font-sans animate-in fade-in slide-in-from-top-1">
+                      <span className="text-[10px] text-indigo-400 font-bold block mb-0.5">💡 추가 메모:</span>
+                      {item.memo}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

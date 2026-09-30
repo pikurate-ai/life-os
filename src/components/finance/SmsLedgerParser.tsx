@@ -197,7 +197,7 @@ export const SmsLedgerParser: React.FC = () => {
           </div>
           <button
             onClick={() => setIsEditingBudget(!isEditingBudget)}
-            className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg"
+            className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg shrink-0 whitespace-nowrap"
           >
             <Target className="w-3 h-3 text-indigo-400" />
             <span>예산 설정</span>
@@ -288,7 +288,7 @@ export const SmsLedgerParser: React.FC = () => {
           </div>
           <button
             onClick={() => setShowManualModal(true)}
-            className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-zinc-800 rounded-lg flex items-center gap-1"
+            className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-zinc-800 rounded-lg flex items-center gap-1 shrink-0 whitespace-nowrap"
           >
             <Plus className="w-3 h-3" />
             <span>직접 입력</span>
@@ -313,7 +313,7 @@ export const SmsLedgerParser: React.FC = () => {
           <button
             onClick={handleParse}
             disabled={!inputText.trim()}
-            className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition-all"
+            className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition-all shrink-0 whitespace-nowrap"
           >
             파싱 분석
           </button>
@@ -355,18 +355,18 @@ export const SmsLedgerParser: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium shrink-0">
                   {parsedPreview.category}
                 </span>
-                <span className="text-[11px] text-zinc-400 font-mono">
+                <span className="text-[11px] text-zinc-400 font-mono truncate">
                   {parsedPreview.paymentMethod}
                 </span>
               </div>
 
               <button
                 onClick={handleSaveParsed}
-                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30"
+                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 shrink-0 whitespace-nowrap"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>가계부에 추가</span>

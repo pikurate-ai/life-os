@@ -508,20 +508,20 @@ export const GeneralMemoManager: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     {/* Copy Button */}
                     <button
                       onClick={(e) => handleCopyContent(memo, e)}
                       title="클립보드 전체 복사"
-                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all flex items-center gap-1"
+                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all flex items-center gap-1 shrink-0"
                     >
                       {isCopied ? (
                         <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-[10px] text-emerald-400 font-bold">복사됨!</span>
+                          <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <span className="text-[10px] text-emerald-400 font-bold whitespace-nowrap">복사됨!</span>
                         </>
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <Copy className="w-3 h-3 shrink-0" />
                       )}
                     </button>
 
@@ -529,7 +529,7 @@ export const GeneralMemoManager: React.FC = () => {
                     <button
                       onClick={(e) => handleTogglePin(memo, e)}
                       title={memo.isPinned ? "상단 고정 해제" : "상단 고정"}
-                      className={`p-1.5 rounded-lg border transition-all ${
+                      className={`p-1.5 rounded-lg border transition-all shrink-0 ${
                         memo.isPinned
                           ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
                           : "bg-zinc-900/80 hover:bg-zinc-800 border-zinc-700/60 text-zinc-400"
@@ -545,7 +545,7 @@ export const GeneralMemoManager: React.FC = () => {
                         setEditingMemo(memo);
                       }}
                       title="메모 수정"
-                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-white transition-all"
+                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-white transition-all shrink-0"
                     >
                       <Edit3 className="w-3 h-3" />
                     </button>
@@ -554,7 +554,7 @@ export const GeneralMemoManager: React.FC = () => {
                     <button
                       onClick={(e) => handleDeleteMemo(memo.id, e)}
                       title="메모 삭제"
-                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-rose-400 transition-all"
+                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-rose-400 transition-all shrink-0"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -563,13 +563,13 @@ export const GeneralMemoManager: React.FC = () => {
 
                 {/* Title (if present) */}
                 {memo.title && (
-                  <h4 className="text-xs font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors">
+                  <h4 className="text-xs font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors break-words">
                     {memo.title}
                   </h4>
                 )}
 
                 {/* Content */}
-                <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap selectable-text">
+                <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap selectable-text break-words w-full">
                   {memo.content}
                 </p>
 

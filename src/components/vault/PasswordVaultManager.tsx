@@ -259,17 +259,17 @@ export const PasswordVaultManager: React.FC = () => {
         /* Unlocked Screen */
         <div className="space-y-4">
           {/* Controls Bar */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-sm whitespace-nowrap shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>계정 추가</span>
               </button>
 
-              <label className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded-xl cursor-pointer border border-zinc-700">
+              <label className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded-xl cursor-pointer border border-zinc-700 whitespace-nowrap shrink-0">
                 <Upload className="w-3.5 h-3.5" />
                 <span>CSV 임포트</span>
                 <input
@@ -283,7 +283,7 @@ export const PasswordVaultManager: React.FC = () => {
 
             <button
               onClick={handleLock}
-              className="flex items-center gap-1 px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white text-xs rounded-xl"
+              className="flex items-center gap-1 px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white text-xs rounded-xl whitespace-nowrap shrink-0"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>금고 잠그기</span>
@@ -350,7 +350,7 @@ export const PasswordVaultManager: React.FC = () => {
                       {entry.username && (
                         <button
                           onClick={() => handleCopy(`user-${entry.id}`, entry.username)}
-                          className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-zinc-800 rounded-lg"
+                          className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-zinc-800 rounded-lg whitespace-nowrap shrink-0"
                         >
                           아이디 복사
                         </button>
@@ -365,7 +365,7 @@ export const PasswordVaultManager: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           onClick={() =>
                             setShowPasswordMap({
@@ -373,7 +373,7 @@ export const PasswordVaultManager: React.FC = () => {
                               [entry.id]: !isPasswordVisible,
                             })
                           }
-                          className="p-1 text-zinc-400 hover:text-white"
+                          className="p-1 text-zinc-400 hover:text-white shrink-0"
                         >
                           {isPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
@@ -381,7 +381,7 @@ export const PasswordVaultManager: React.FC = () => {
                         <button
                           onClick={() => handleCopy(entry.id, entry.decryptedPassword || "")}
                           disabled={!entry.decryptedPassword}
-                          className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold rounded-lg shadow-sm"
+                          className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold rounded-lg shadow-sm whitespace-nowrap shrink-0"
                         >
                           <Copy className="w-3 h-3" />
                           <span>복사</span>

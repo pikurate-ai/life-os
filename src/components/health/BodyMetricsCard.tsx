@@ -104,19 +104,19 @@ export const BodyMetricsCard: React.FC = () => {
     <div className="space-y-4">
       {/* Apple HealthKit Sync Live Panel */}
       <div className="p-4 rounded-3xl bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-[#12141c] border border-indigo-500/20 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 shrink-0">
               <Heart className="w-4 h-4" />
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                Apple HealthKit 실시간 연동
-                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20">
+            <div className="min-w-0">
+              <h4 className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                <span className="truncate">Apple HealthKit 실시간 연동</span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20 shrink-0 whitespace-nowrap">
                   {healthKitData.source === "apple_healthkit" ? "iOS Native" : "동기화 모듈"}
                 </span>
               </h4>
-              <p className="text-[10px] text-zinc-400">
+              <p className="text-[10px] text-zinc-400 truncate">
                 마지막 동기화: {healthKitData.lastSyncTime}
               </p>
             </div>
@@ -125,7 +125,7 @@ export const BodyMetricsCard: React.FC = () => {
           <button
             onClick={handleSyncHealthKit}
             disabled={isSyncing}
-            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl border border-indigo-400/20 active:scale-95 transition-all disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl border border-indigo-400/20 active:scale-95 transition-all disabled:opacity-50 shrink-0 whitespace-nowrap"
           >
             <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
             <span>{isSyncing ? "동기화 중..." : "동기화"}</span>
@@ -216,7 +216,7 @@ export const BodyMetricsCard: React.FC = () => {
 
           <button
             onClick={() => setShowInputModal(true)}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm"
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>지표 기록</span>

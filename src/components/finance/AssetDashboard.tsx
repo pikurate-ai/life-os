@@ -210,7 +210,7 @@ export const AssetDashboard: React.FC = () => {
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-sm"
+            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-sm shrink-0 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>항목 추가</span>
@@ -224,25 +224,25 @@ export const AssetDashboard: React.FC = () => {
             return (
               <div
                 key={cat.id}
-                className="flex items-center justify-between p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 hover:border-zinc-700 transition-all"
+                className="flex items-center justify-between p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 hover:border-zinc-700 transition-all gap-2"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
                     {cat.type === "asset" ? (
                       <Landmark className="w-4 h-4 text-emerald-400" />
                     ) : (
                       <DollarSign className="w-4 h-4 text-rose-400" />
                     )}
                   </div>
-                  <div>
-                    <span className="text-xs font-semibold text-white block">{cat.name}</span>
-                    <span className="text-[10px] text-zinc-500">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-semibold text-white block truncate">{cat.name}</span>
+                    <span className="text-[10px] text-zinc-500 block">
                       {cat.type === "asset" ? "자산 (+)" : "부채 (-)"}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {isEditing ? (
                     <div className="flex items-center gap-1">
                       <input
