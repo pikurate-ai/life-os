@@ -280,6 +280,23 @@ export const QuickCopyManager: React.FC = () => {
     // Google Auth & Cloud Sync with Live Real-time Listener & Two-Way Merge
     let unsubscribeSnapshot: (() => void) | null = null;
 
+    const handleDataSynced = () => {
+      try {
+        const saved = localStorage.getItem(ITEMS_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            parsed.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
+            setItems(parsed);
+          }
+        }
+      } catch {}
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("life_os_data_synced", handleDataSynced);
+    }
+
     const unsubscribe = onAuthChanged(async (user) => {
       setCurrentUser(user);
       if (unsubscribeSnapshot) {
@@ -305,14 +322,11 @@ export const QuickCopyManager: React.FC = () => {
           // 2. Real-Time Live Sync (Mobile <-> Web)
           unsubscribeSnapshot = subscribeEssentialInfoFromCloud(user, (realtimeItems) => {
             if (realtimeItems && Array.isArray(realtimeItems)) {
-              setItems((prevLocal) => {
-                const updated = mergeItemsById<EssentialInfoItem>(prevLocal, realtimeItems);
-                updated.sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
-                try {
-                  localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(updated));
-                } catch {}
-                return updated;
-              });
+              const sorted = [...realtimeItems].sort((a, b) => (b.last_clicked_at || 0) - (a.last_clicked_at || 0));
+              setItems(sorted);
+              try {
+                localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(sorted));
+              } catch {}
             }
           });
         } catch (e) {
@@ -324,6 +338,9 @@ export const QuickCopyManager: React.FC = () => {
     return () => {
       unsubscribe();
       if (unsubscribeSnapshot) unsubscribeSnapshot();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("life_os_data_synced", handleDataSynced);
+      }
     };
   }, []);
 
@@ -335,9 +352,7 @@ export const QuickCopyManager: React.FC = () => {
       localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(newItems));
     } catch {}
 
-    if (currentUser) {
-      saveEssentialInfoToCloud(currentUser, newItems);
-    }
+    saveEssentialInfoToCloud(currentUser, newItems);
   };
 
   // Save categories helper
@@ -402,7 +417,7 @@ export const QuickCopyManager: React.FC = () => {
       category: newCategory,
       title: newTitle.trim(),
       value: newValue.trim(),
-      memo: newMemo.trim() || undefined,
+      memo: newMemo.trim() || "",
       click_count: 1,
       last_clicked_at: Date.now(),
     };
@@ -435,7 +450,7 @@ export const QuickCopyManager: React.FC = () => {
             ...it,
             title: editTitle.trim(),
             value: editValue.trim(),
-            memo: editMemo.trim() || undefined,
+            memo: editMemo.trim() || "",
             category: editCategory,
           }
         : it

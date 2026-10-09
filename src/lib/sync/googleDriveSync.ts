@@ -140,7 +140,7 @@ export function parseCsvRows(csvText: string, source: "google_sheets" | "google_
         title,
         value,
         category: inferCategory(title, value),
-        memo: extraMemo || undefined,
+        memo: extraMemo || "",
         source,
       });
     }
@@ -230,7 +230,7 @@ export function parseDocsOrSlidesText(rawText: string, source: "google_docs" | "
         title,
         value,
         category: inferCategory(title, value),
-        memo: memo || undefined,
+        memo: memo || "",
         source,
       });
     }

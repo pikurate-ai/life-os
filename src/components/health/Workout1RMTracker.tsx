@@ -126,7 +126,7 @@ export const Workout1RMTracker: React.FC = () => {
       reps,
       calculated1RM: currentCalc1RM,
       date: new Date().toISOString().split("T")[0],
-      notes: notes.trim() || undefined,
+      notes: notes.trim() || "",
       updatedAt: new Date().toISOString(),
     };
 

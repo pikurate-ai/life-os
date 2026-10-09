@@ -161,7 +161,7 @@ export const GeneralMemoManager: React.FC = () => {
 
   // Load from LocalStorage and Cloud with Intelligent Two-Way Sync & Live Real-time Listener
   useEffect(() => {
-    let initialLocal: MemoItem[] = [];
+    let initialLocal: MemoItem[] = INITIAL_MEMOS;
     try {
       const saved = localStorage.getItem(MEMOS_STORAGE_KEY);
       if (saved) {
@@ -174,6 +174,22 @@ export const GeneralMemoManager: React.FC = () => {
     } catch {}
 
     let unsubscribeSnapshot: (() => void) | null = null;
+
+    const handleDataSynced = () => {
+      try {
+        const saved = localStorage.getItem(MEMOS_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMemos(sortMemos(parsed));
+          }
+        }
+      } catch {}
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("life_os_data_synced", handleDataSynced);
+    }
 
     const unsubscribeAuth = onAuthChanged(async (user) => {
       setCurrentUser(user);
@@ -202,13 +218,11 @@ export const GeneralMemoManager: React.FC = () => {
           // 2. Real-Time Live Listener (Mobile <-> Web 0.1s instant sync)
           unsubscribeSnapshot = subscribeGeneralMemosFromCloud(user, (realtimeMemos) => {
             if (realtimeMemos && Array.isArray(realtimeMemos)) {
-              setMemos((prevLocal) => {
-                const updated = sortMemos(mergeItemsById<MemoItem>(prevLocal, realtimeMemos));
-                try {
-                  localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(updated));
-                } catch {}
-                return updated;
-              });
+              const sorted = sortMemos(realtimeMemos);
+              setMemos(sorted);
+              try {
+                localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(sorted));
+              } catch {}
             }
           });
         } catch (e) {
@@ -220,6 +234,9 @@ export const GeneralMemoManager: React.FC = () => {
     return () => {
       unsubscribeAuth();
       if (unsubscribeSnapshot) unsubscribeSnapshot();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("life_os_data_synced", handleDataSynced);
+      }
     };
   }, []);
 
@@ -229,9 +246,7 @@ export const GeneralMemoManager: React.FC = () => {
     try {
       localStorage.setItem(MEMOS_STORAGE_KEY, JSON.stringify(sorted));
     } catch {}
-    if (currentUser) {
-      saveGeneralMemosToCloud(currentUser, sorted);
-    }
+    saveGeneralMemosToCloud(currentUser, sorted);
   };
 
   /**
@@ -312,7 +327,7 @@ export const GeneralMemoManager: React.FC = () => {
 
     const newMemo: MemoItem = {
       id: `memo-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      title: newTitle.trim() || undefined,
+      title: newTitle.trim(),
       content: newContent.trim(),
       category: newCategory,
       color: newColor,
@@ -320,7 +335,7 @@ export const GeneralMemoManager: React.FC = () => {
       clickCount: 1,
       lastClickedAt: Date.now(),
       createdAt: new Date().toLocaleDateString("ko-KR"),
-      updatedAt: new Date().toLocaleDateString("ko-KR"),
+      updatedAt: new Date().toISOString(),
     };
 
     setJustJumpedId(newMemo.id);
@@ -343,7 +358,9 @@ export const GeneralMemoManager: React.FC = () => {
       m.id === editingMemo.id
         ? {
             ...editingMemo,
-            updatedAt: new Date().toLocaleDateString("ko-KR"),
+            title: editingMemo.title?.trim() || "",
+            content: editingMemo.content.trim(),
+            updatedAt: new Date().toISOString(),
             lastClickedAt: Date.now(),
           }
         : m

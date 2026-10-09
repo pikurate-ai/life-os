@@ -24,6 +24,7 @@ import {
   setLocalMasterUser,
   getLocalMasterUser,
   getSyncUserId,
+  syncAllModulesFromCloud,
 } from "@/lib/firebase/client";
 
 interface GoogleAuthModalProps {
@@ -39,7 +40,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
 
   // 1-Person Master Profile form
   const [masterName, setMasterName] = useState("JU (주성빈)");
-  const [masterEmail, setMasterEmail] = useState("user@gmail.com");
+  const [masterEmail, setMasterEmail] = useState("leo.song.life@gmail.com");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -51,6 +52,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
         setMasterEmail(localMaster.email);
       } else if (savedEmail) {
         setMasterEmail(savedEmail);
+      } else {
+        setMasterEmail("leo.song.life@gmail.com");
       }
 
       if (localMaster?.displayName) {
@@ -68,7 +71,10 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
     setLoading(true);
     setErrorMessage(null);
     try {
-      await signInWithGoogle();
+      const user = await signInWithGoogle();
+      if (user?.email) {
+        await syncAllModulesFromCloud(user.email);
+      }
       onClose();
     } catch (err: any) {
       console.error("Popup login error:", err);
@@ -101,9 +107,9 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
   };
 
   // Handle 1-Person Instant Master User Connect
-  const handleInstantMasterLogin = () => {
-    const email = masterEmail.trim().toLowerCase() || "user@gmail.com";
-    const name = masterName.trim() || "Life-OS 사용자";
+  const handleInstantMasterLogin = async () => {
+    const email = masterEmail.trim().toLowerCase() || "leo.song.life@gmail.com";
+    const name = masterName.trim() || "JU (주성빈)";
     const uid = getSyncUserId(email);
 
     if (typeof window !== "undefined") {
@@ -119,14 +125,38 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
       isLocalMaster: true,
     });
 
-    onClose();
+    setLoading(true);
+    setSyncStatus("클라우드 Firestore와 전체 양방향 동기화 중...");
+    try {
+      await syncAllModulesFromCloud(email);
+      setSyncStatus("모든 데이터 동기화 완료! 실시간 연결됨");
+      setTimeout(() => {
+        onClose();
+      }, 700);
+    } catch (e) {
+      console.error("Instant login sync error:", e);
+      onClose();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleForceSync = () => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("life_os_auth_change"));
-      setSyncStatus("클라우드 Firestore와 0.1초 실시간 재연결 완료!");
+  const handleForceSync = async () => {
+    setLoading(true);
+    setSyncStatus("클라우드 Firestore와 강제 전체 재동기화 중...");
+    try {
+      const email = masterEmail.trim().toLowerCase() || "leo.song.life@gmail.com";
+      await syncAllModulesFromCloud(email);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("life_os_auth_change"));
+      }
+      setSyncStatus("클라우드 Firestore와 0.1초 실시간 전체 동기화 완료!");
       setTimeout(() => setSyncStatus(null), 3000);
+    } catch (e) {
+      console.error("Force sync error:", e);
+      setSyncStatus("동기화 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,6 +193,23 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
             </div>
             <h3 className="text-base font-black text-white mt-1">계정 연동 & 클라우드 실시간 동기화</h3>
           </div>
+        </div>
+
+        {/* Active Account & Firestore Document Status */}
+        <div className="p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <div>
+              <span className="text-[10px] text-zinc-400 block">클라우드 Firestore 매핑 키</span>
+              <span className="font-mono text-emerald-400 font-bold text-[11px]">{computedDocId || "usr_leo_song_life_gmail_com"}</span>
+            </div>
+          </div>
+          <span className="text-[9px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">
+            0.1초 실시간 연동
+          </span>
         </div>
 
         {/* Error Alert if any */}

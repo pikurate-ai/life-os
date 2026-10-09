@@ -85,6 +85,15 @@ export function getSyncUserId(userOrId: any): string {
     if (lastEmail && lastEmail.includes("@")) {
       return `usr_${lastEmail.toLowerCase().trim().replace(/[^a-z0-9]/g, "_")}`;
     }
+    const localUserRaw = localStorage.getItem(LOCAL_USER_KEY);
+    if (localUserRaw) {
+      try {
+        const parsed = JSON.parse(localUserRaw);
+        if (parsed?.email && parsed.email.includes("@")) {
+          return `usr_${parsed.email.toLowerCase().trim().replace(/[^a-z0-9]/g, "_")}`;
+        }
+      } catch {}
+    }
   }
 
   // 4. Last resort if no email exists anywhere
@@ -203,6 +212,15 @@ export function onAuthChanged(callback: (user: any | null) => void) {
 }
 
 /**
+ * Deep Sanitizer for Firestore:
+ * Strips all `undefined` values which crash Firestore's setDoc() with "Unsupported field value: undefined".
+ */
+export function cleanForFirestore<T>(data: T): T {
+  if (data === undefined) return null as any;
+  return JSON.parse(JSON.stringify(data));
+}
+
+/**
  * Intelligent Two-Way List Merger:
  * Merges local items and cloud items by ID (or smart key).
  * If an item exists in both, keeps the one with the latest timestamp.
@@ -221,6 +239,15 @@ export function mergeItemsById<T extends Record<string, any>>(
     return JSON.stringify(item);
   };
 
+  const toTimeMs = (val: any): number => {
+    if (typeof val === "number" && !isNaN(val)) return val;
+    if (typeof val === "string") {
+      const parsed = Date.parse(val);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  };
+
   // 1. Add all local items
   for (const item of localList) {
     map.set(getItemKey(item), item);
@@ -233,8 +260,8 @@ export function mergeItemsById<T extends Record<string, any>>(
       map.set(key, item);
     } else {
       const existing = map.get(key)!;
-      const existingTime = existing.updatedAt || existing.last_clicked_at || existing.lastClickedAt || existing.date || 0;
-      const cloudTime = item.updatedAt || item.last_clicked_at || item.lastClickedAt || item.date || 0;
+      const existingTime = toTimeMs(existing.updatedAt || existing.last_clicked_at || existing.lastClickedAt || existing.date);
+      const cloudTime = toTimeMs(item.updatedAt || item.last_clicked_at || item.lastClickedAt || item.date);
       if (cloudTime >= existingTime) {
         map.set(key, item);
       }
@@ -252,10 +279,10 @@ export async function saveGeneralMemosToCloud(userId: any, memos: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_general_memos", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       memos,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("일반 메모 클라우드 저장 실패:", error);
@@ -307,10 +334,10 @@ export async function saveEssentialInfoToCloud(userId: any, items: EssentialInfo
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_essential_info", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       items,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("1초복사 클라우드 저장 실패:", error);
@@ -362,10 +389,10 @@ export async function saveFinancialLogsToCloud(userId: any, logs: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_financial_logs", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       logs,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("가계부 클라우드 저장 실패:", error);
@@ -417,10 +444,10 @@ export async function saveAssetsToCloud(userId: any, assets: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_assets", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       assets,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("자산 클라우드 저장 실패:", error);
@@ -479,10 +506,10 @@ export async function saveVaultToCloud(userId: any, vaultEntries: any[]) {
       username: e.username,
       encrypted: e.encrypted,
     }));
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       entries: sanitized,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("암호 금고 클라우드 저장 실패:", error);
@@ -534,10 +561,10 @@ export async function saveWorkout1RMToCloud(userId: any, workouts: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_workout_1rm", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       workouts,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("1RM 클라우드 저장 실패:", error);
@@ -589,10 +616,10 @@ export async function saveHealthMetricsToCloud(userId: any, metrics: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_health_metrics", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       metrics,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("건강 지표 클라우드 저장 실패:", error);
@@ -644,10 +671,10 @@ export async function saveArchivedDiariesToCloud(userId: any, diaries: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_archived_diaries", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       diaries,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("일기 클라우드 저장 실패:", error);
@@ -699,10 +726,10 @@ export async function savePhotosToCloud(userId: any, photos: any[]) {
   if (!docId) return false;
   try {
     const userDocRef = doc(db, "users_life_photos", docId);
-    await setDoc(userDocRef, {
+    await setDoc(userDocRef, cleanForFirestore({
       photos,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    }), { merge: true });
     return true;
   } catch (error) {
     console.error("사진 클라우드 저장 실패:", error);
@@ -744,5 +771,148 @@ export function subscribePhotosFromCloud(
     },
     (err) => console.error("Firestore photos snapshot error:", err)
   );
+}
+
+/* =========================================================================
+ * 10. UNIVERSAL SYNC-ALL ENGINE (전체 모듈 즉시 양방향 병합 및 클라우드 적재)
+ * ========================================================================= */
+export async function syncAllModulesFromCloud(userId: any): Promise<boolean> {
+  const docId = getSyncUserId(userId);
+  if (!docId) return false;
+  try {
+    // 1. General Memos
+    try {
+      const cloudMemos = await loadGeneralMemosFromCloud(docId);
+      const localMemosRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_general_memos_v1") : null;
+      const localMemos = localMemosRaw ? JSON.parse(localMemosRaw) : [];
+      const mergedMemos = mergeItemsById(localMemos, cloudMemos || []);
+      if (mergedMemos.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_general_memos_v1", JSON.stringify(mergedMemos));
+        await saveGeneralMemosToCloud(docId, mergedMemos);
+      }
+    } catch (e) {
+      console.warn("Memo sync warning:", e);
+    }
+
+    // 2. Essential Info
+    try {
+      const cloudInfo = await loadEssentialInfoFromCloud(docId);
+      const localInfoRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_essential_info_v3") : null;
+      const localInfo = localInfoRaw ? JSON.parse(localInfoRaw) : [];
+      const mergedInfo = mergeItemsById(localInfo, cloudInfo || []);
+      if (mergedInfo.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_essential_info_v3", JSON.stringify(mergedInfo));
+        await saveEssentialInfoToCloud(docId, mergedInfo);
+      }
+    } catch (e) {
+      console.warn("Info sync warning:", e);
+    }
+
+    // 3. Financial Logs
+    try {
+      const cloudFinance = await loadFinancialLogsFromCloud(docId);
+      const localFinanceRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_financial_logs_v2") : null;
+      const localFinance = localFinanceRaw ? JSON.parse(localFinanceRaw) : [];
+      const mergedFinance = mergeItemsById(localFinance, cloudFinance || []);
+      if (mergedFinance.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_financial_logs_v2", JSON.stringify(mergedFinance));
+        await saveFinancialLogsToCloud(docId, mergedFinance);
+      }
+    } catch (e) {
+      console.warn("Finance sync warning:", e);
+    }
+
+    // 4. Assets
+    try {
+      const cloudAssets = await loadAssetsFromCloud(docId);
+      const localAssetsRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_assets_v2") : null;
+      const localAssets = localAssetsRaw ? JSON.parse(localAssetsRaw) : [];
+      const mergedAssets = mergeItemsById(localAssets, cloudAssets || []);
+      if (mergedAssets.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_assets_v2", JSON.stringify(mergedAssets));
+        await saveAssetsToCloud(docId, mergedAssets);
+      }
+    } catch (e) {
+      console.warn("Assets sync warning:", e);
+    }
+
+    // 5. Encrypted Vault
+    try {
+      const cloudVault = await loadVaultFromCloud(docId);
+      const localVaultRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_encrypted_vault_v2") : null;
+      const localVault = localVaultRaw ? JSON.parse(localVaultRaw) : [];
+      const mergedVault = mergeItemsById(localVault, cloudVault || []);
+      if (mergedVault.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_encrypted_vault_v2", JSON.stringify(mergedVault));
+        await saveVaultToCloud(docId, mergedVault);
+      }
+    } catch (e) {
+      console.warn("Vault sync warning:", e);
+    }
+
+    // 6. Workout 1RM
+    try {
+      const cloudWorkouts = await loadWorkout1RMFromCloud(docId);
+      const localWorkoutsRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_workout_1rm_v1") : null;
+      const localWorkouts = localWorkoutsRaw ? JSON.parse(localWorkoutsRaw) : [];
+      const mergedWorkouts = mergeItemsById(localWorkouts, cloudWorkouts || []);
+      if (mergedWorkouts.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_workout_1rm_v1", JSON.stringify(mergedWorkouts));
+        await saveWorkout1RMToCloud(docId, mergedWorkouts);
+      }
+    } catch (e) {
+      console.warn("Workout sync warning:", e);
+    }
+
+    // 7. Health Metrics
+    try {
+      const cloudHealth = await loadHealthMetricsFromCloud(docId);
+      const localHealthRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_body_metrics_v1") : null;
+      const localHealth = localHealthRaw ? JSON.parse(localHealthRaw) : [];
+      const mergedHealth = mergeItemsById(localHealth, cloudHealth || []);
+      if (mergedHealth.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_body_metrics_v1", JSON.stringify(mergedHealth));
+        await saveHealthMetricsToCloud(docId, mergedHealth);
+      }
+    } catch (e) {
+      console.warn("Health sync warning:", e);
+    }
+
+    // 8. Archived Diaries
+    try {
+      const cloudDiaries = await loadArchivedDiariesFromCloud(docId);
+      const localDiariesRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_archived_diaries_v1") : null;
+      const localDiaries = localDiariesRaw ? JSON.parse(localDiariesRaw) : [];
+      const mergedDiaries = mergeItemsById(localDiaries, cloudDiaries || []);
+      if (mergedDiaries.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_archived_diaries_v1", JSON.stringify(mergedDiaries));
+        await saveArchivedDiariesToCloud(docId, mergedDiaries);
+      }
+    } catch (e) {
+      console.warn("Diary sync warning:", e);
+    }
+
+    // 9. Photos
+    try {
+      const cloudPhotos = await loadPhotosFromCloud(docId);
+      const localPhotosRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_photos_v1") : null;
+      const localPhotos = localPhotosRaw ? JSON.parse(localPhotosRaw) : [];
+      const mergedPhotos = mergeItemsById(localPhotos, cloudPhotos || []);
+      if (mergedPhotos.length > 0 && typeof window !== "undefined") {
+        localStorage.setItem("life_os_photos_v1", JSON.stringify(mergedPhotos));
+        await savePhotosToCloud(docId, mergedPhotos);
+      }
+    } catch (e) {
+      console.warn("Photos sync warning:", e);
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("life_os_data_synced"));
+    }
+    return true;
+  } catch (error) {
+    console.error("전체 모듈 클라우드 동기화 실패:", error);
+    return false;
+  }
 }
 
