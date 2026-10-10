@@ -150,7 +150,7 @@ export const BodyMetricsCard: React.FC = () => {
             <div className="min-w-0">
               <h4 className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
                 <span className="truncate">Apple HealthKit 실시간 연동</span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20 shrink-0 whitespace-nowrap">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20 shrink-0 whitespace-nowrap">
                   {healthKitData.source === "apple_healthkit" ? "iOS Native" : "동기화 모듈"}
                 </span>
               </h4>
@@ -264,11 +264,15 @@ export const BodyMetricsCard: React.FC = () => {
 
       {/* Input Modal */}
       {showInputModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">신체 건강 지표 기록</h3>
-              <button onClick={() => setShowInputModal(false)} className="text-xs text-zinc-400">
+              <button
+                type="button"
+                onClick={() => setShowInputModal(false)}
+                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>

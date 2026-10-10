@@ -200,7 +200,7 @@ export const DiaryArchiveTimeline: React.FC = () => {
 
       {/* Search */}
       <div className="relative">
-        <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-2.5" />
+        <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text"
           placeholder="과거 일기 내용, 키워드, 날짜(예: 2024) 검색..."
@@ -230,13 +230,13 @@ export const DiaryArchiveTimeline: React.FC = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleDelete(diary.id)}
-                    className="p-1 text-zinc-600 hover:text-rose-400"
+                    className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-zinc-500 hover:text-rose-400 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : diary.id)}
-                    className="p-1 text-zinc-400 hover:text-white"
+                    className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-white transition-colors"
                   >
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -258,11 +258,15 @@ export const DiaryArchiveTimeline: React.FC = () => {
 
       {/* Bulk Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">과거 일기 텍스트 대량 임포터</h3>
-              <button onClick={() => setShowImportModal(false)} className="text-xs text-zinc-400">
+              <button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>
@@ -276,7 +280,7 @@ export const DiaryArchiveTimeline: React.FC = () => {
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
               placeholder="예시:&#10;2024.03.15 창업 멤버들과 첫 회의&#10;오늘은 지식 큐레이션 서비스 기획을 구체화했다...&#10;&#10;2024.08.20 투자 IR 미팅&#10;본격적인 시드 라운드 미팅을 진행했다..."
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none font-mono"
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-3 text-sm sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none font-mono"
             />
 
             <div className="pt-2 flex gap-2">

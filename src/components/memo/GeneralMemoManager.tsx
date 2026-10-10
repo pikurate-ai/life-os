@@ -391,7 +391,7 @@ export const GeneralMemoManager: React.FC = () => {
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
                 자유 일반 메모장
-                <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 px-2 py-0.2 rounded-full border border-amber-500/20">
+                <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                   클릭 시 최상단 자동 이동
                 </span>
               </h3>
@@ -440,15 +440,15 @@ export const GeneralMemoManager: React.FC = () => {
 
             {/* Color & Category & Pin options */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="text-[11px] text-zinc-400">색상:</span>
                 {(["indigo", "emerald", "amber", "rose", "purple", "zinc"] as const).map((color) => (
                   <button
                     key={color}
                     type="button"
                     onClick={() => setNewColor(color)}
-                    className={`w-5 h-5 rounded-full transition-transform ${COLOR_MAP[color].dot} ${
-                      newColor === color ? "scale-125 ring-2 ring-white" : "opacity-60 hover:opacity-100"
+                    className={`w-6 h-6 rounded-full transition-transform ${COLOR_MAP[color].dot} ${
+                      newColor === color ? "scale-110 ring-2 ring-white" : "opacity-60 hover:opacity-100"
                     }`}
                   />
                 ))}
@@ -551,14 +551,14 @@ export const GeneralMemoManager: React.FC = () => {
               >
                 {/* Top Row: Category, Pin, and Action Controls */}
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono ${style.badge}`}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono shrink-0 ${style.badge}`}
                     >
                       {memo.category}
                     </span>
                     {memo.isPinned && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                      <span className="flex items-center gap-0.5 text-[10px] text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0">
                         <Pin className="w-3 h-3 fill-amber-400" />
                         <span>고정됨</span>
                       </span>
@@ -570,7 +570,7 @@ export const GeneralMemoManager: React.FC = () => {
                     <button
                       onClick={(e) => handleCopyContent(memo, e)}
                       title="클립보드 전체 복사"
-                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all flex items-center gap-1 shrink-0"
+                      className="px-2 py-1 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all flex items-center justify-center gap-1 shrink-0 min-h-[30px]"
                     >
                       {isCopied ? (
                         <>
@@ -578,7 +578,10 @@ export const GeneralMemoManager: React.FC = () => {
                           <span className="text-[10px] text-emerald-400 font-bold whitespace-nowrap">복사됨!</span>
                         </>
                       ) : (
-                        <Copy className="w-3 h-3 shrink-0" />
+                        <>
+                          <Copy className="w-3 h-3 shrink-0" />
+                          <span className="text-[10px] whitespace-nowrap text-zinc-400">복사</span>
+                        </>
                       )}
                     </button>
 
@@ -586,13 +589,13 @@ export const GeneralMemoManager: React.FC = () => {
                     <button
                       onClick={(e) => handleTogglePin(memo, e)}
                       title={memo.isPinned ? "상단 고정 해제" : "상단 고정"}
-                      className={`p-1.5 rounded-lg border transition-all shrink-0 ${
+                      className={`p-1.5 rounded-xl border transition-all shrink-0 min-w-[30px] min-h-[30px] flex items-center justify-center ${
                         memo.isPinned
                           ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
                           : "bg-zinc-900/80 hover:bg-zinc-800 border-zinc-700/60 text-zinc-400"
                       }`}
                     >
-                      {memo.isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                      {memo.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
                     </button>
 
                     {/* Edit Button */}
@@ -602,18 +605,18 @@ export const GeneralMemoManager: React.FC = () => {
                         setEditingMemo(memo);
                       }}
                       title="메모 수정"
-                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-white transition-all shrink-0"
+                      className="p-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-white transition-all shrink-0 min-w-[30px] min-h-[30px] flex items-center justify-center"
                     >
-                      <Edit3 className="w-3 h-3" />
+                      <Edit3 className="w-3.5 h-3.5" />
                     </button>
 
                     {/* Delete Button */}
                     <button
                       onClick={(e) => handleDeleteMemo(memo.id, e)}
                       title="메모 삭제"
-                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-rose-400 transition-all shrink-0"
+                      className="p-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-rose-400 transition-all shrink-0 min-w-[30px] min-h-[30px] flex items-center justify-center"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -650,15 +653,16 @@ export const GeneralMemoManager: React.FC = () => {
       {/* Edit Memo Modal */}
       {editingMemo && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
               <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                 <Edit3 className="w-4 h-4 text-amber-400" />
                 메모 편집
               </h4>
               <button
+                type="button"
                 onClick={() => setEditingMemo(null)}
-                className="text-xs text-zinc-400 hover:text-white"
+                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
               >
                 닫기
               </button>

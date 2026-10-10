@@ -170,11 +170,12 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
   const computedDocId = getSyncUserId(masterEmail);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-[#12141c] border border-indigo-500/30 rounded-3xl w-full max-w-md p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="bg-[#12141c] border border-indigo-500/30 rounded-3xl w-full max-w-md p-5 sm:p-6 pb-safe space-y-4 sm:space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:text-white"
+          aria-label="닫기"
+          className="absolute top-4 right-4 p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -247,14 +248,14 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
             모바일(아이폰/갤럭시)과 PC 웹에서 <strong className="text-white">동일한 이메일</strong>을 입력하시면, 동일한 Firestore DB 문서로 자동 병합 및 실시간 동기화됩니다.
           </p>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] text-zinc-400 block mb-1">사용자 이름</label>
               <input
                 type="text"
                 value={masterName}
                 onChange={(e) => setMasterName(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-2.5 py-1.5 text-xs text-white"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm sm:text-xs text-white"
               />
             </div>
             <div>
@@ -263,7 +264,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
                 type="email"
                 value={masterEmail}
                 onChange={(e) => setMasterEmail(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-2.5 py-1.5 text-xs text-white"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm sm:text-xs text-white"
               />
             </div>
           </div>

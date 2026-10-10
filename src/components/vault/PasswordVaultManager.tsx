@@ -330,7 +330,7 @@ export const PasswordVaultManager: React.FC = () => {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="사이트명, 아이디 검색..."
@@ -342,7 +342,7 @@ export const PasswordVaultManager: React.FC = () => {
 
           {/* Copied Toast */}
           {copiedId && (
-            <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-2 animate-bounce">
+            <div className="fixed top-20 sm:top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-2 animate-bounce">
               <Check className="w-4 h-4" />
               클립보드에 안전하게 복사되었습니다!
             </div>
@@ -436,11 +436,15 @@ export const PasswordVaultManager: React.FC = () => {
 
       {/* Add Manual Modal with Random Password Generator */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">새 비밀번호 암호화 저장</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-xs text-zinc-400">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>

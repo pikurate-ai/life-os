@@ -39,31 +39,31 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 z-40 bg-[#090a0f]/85 backdrop-blur-md border-b border-[#1f2433] px-3 py-2.5 pt-safe">
-        <div className="max-w-md mx-auto flex items-center justify-between gap-2">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
           {/* Logo and Titles */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 truncate">
-                {title}
-                <span className="text-[9px] uppercase font-semibold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                <span className="truncate">{title}</span>
+                <span className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                   1인 전용
                 </span>
               </h1>
-              <p className="text-[10px] text-zinc-400 leading-tight truncate hidden xs:block">{subtitle}</p>
+              <p className="text-[10px] text-zinc-400 leading-tight truncate hidden sm:block">{subtitle}</p>
             </div>
           </div>
 
           {/* Action Controls */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* iOS App Download Button */}
             {onOpenInstallGuide && (
               <button
                 onClick={onOpenInstallGuide}
                 title="아이폰 앱 다운로드 가이드"
-                className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap"
+                className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap min-h-[36px] min-w-[36px] justify-center"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-bold hidden sm:inline">앱받기</span>
@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenSyncHub}
                 title="로우 데이터 싱크 센터"
-                className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-purple-400 border border-purple-500/20 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap"
+                className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-purple-400 border border-purple-500/20 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap min-h-[36px] min-w-[36px] justify-center"
               >
                 <Database className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-bold hidden sm:inline">싱크</span>
@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div
                 onClick={() => setShowAuthModal(true)}
                 title="클릭하여 클라우드 동기화 상태 및 계정 확인"
-                className="flex items-center gap-1.5 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-indigo-500/40 px-2 py-1 rounded-xl shadow-sm shrink-0 cursor-pointer transition-all"
+                className="flex items-center gap-1.5 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-indigo-500/40 px-2 py-1 rounded-xl shadow-sm shrink-0 cursor-pointer transition-all min-h-[36px]"
               >
                 {/* Live Sync Pulse */}
                 <span className="relative flex h-2 w-2 shrink-0">
@@ -98,22 +98,23 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
-                    alt="Profile"
+                    alt={currentUser.displayName || "User Profile"}
                     className="w-4 h-4 rounded-full border border-indigo-400/40 shrink-0"
                   />
                 ) : (
                   <UserCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 )}
-                <span className="text-[10px] text-zinc-200 font-semibold truncate max-w-[65px] whitespace-nowrap">
+                <span className="text-[10px] text-zinc-200 font-semibold truncate max-w-[55px] sm:max-w-[75px] whitespace-nowrap">
                   {currentUser.displayName || currentUser.email?.split("@")[0]}
                 </span>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleLogout();
                   }}
                   title="로그아웃"
-                  className="text-zinc-500 hover:text-rose-400 p-0.5 ml-0.5 transition-colors shrink-0"
+                  className="text-zinc-500 hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/10 transition-colors shrink-0"
                 >
                   <LogOut className="w-3 h-3" />
                 </button>
@@ -121,9 +122,9 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-[11px] font-bold shadow-md transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-[11px] font-bold shadow-md transition-all active:scale-95 shrink-0 whitespace-nowrap min-h-[36px]"
               >
-                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

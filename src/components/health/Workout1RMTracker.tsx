@@ -304,7 +304,7 @@ export const Workout1RMTracker: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-white">{rec.exercise}</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-300 font-mono font-semibold">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono font-semibold">
                       1RM {rec.calculated1RM}kg
                     </span>
                   </div>
@@ -320,8 +320,9 @@ export const Workout1RMTracker: React.FC = () => {
               </div>
 
               <button
+                type="button"
                 onClick={() => handleDeleteRecord(rec.id)}
-                className="p-1 text-zinc-600 hover:text-rose-400 transition-colors"
+                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-zinc-500 hover:text-rose-400 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

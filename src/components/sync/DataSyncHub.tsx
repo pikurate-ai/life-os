@@ -208,7 +208,7 @@ export const DataSyncHub: React.FC = () => {
                   Data Ingestion Hub
                 </span>
                 {currentUser && (
-                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-full border border-emerald-500/20">
+                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
                     Cloud Connected
                   </span>
                 )}
@@ -404,7 +404,7 @@ export const DataSyncHub: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                           {item.category}
                         </span>
                         <span className="font-bold text-white">{item.title}</span>
@@ -495,7 +495,7 @@ export const DataSyncHub: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                           {item.type.toUpperCase()}
                         </span>
                         <span className="font-bold text-white">{item.title}</span>

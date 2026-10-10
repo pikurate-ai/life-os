@@ -190,7 +190,7 @@ export const LifePhotoGallery: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono text-zinc-400">{item.date}</span>
                 {item.tag && (
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-pink-500/10 text-pink-300 font-medium">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-300 font-medium">
                     {item.tag}
                   </span>
                 )}
@@ -199,10 +199,11 @@ export const LifePhotoGallery: React.FC = () => {
             </div>
 
             <button
+              type="button"
               onClick={(e) => handleDelete(item.id, e)}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-zinc-300 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-2 right-2 p-2 rounded-full bg-black/70 text-zinc-300 hover:text-rose-400 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-w-[32px] min-h-[32px] flex items-center justify-center"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         ))}
@@ -246,11 +247,15 @@ export const LifePhotoGallery: React.FC = () => {
 
       {/* Add Photo Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">새 인생샷 등록</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-xs text-zinc-400">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>

@@ -602,7 +602,7 @@ export const QuickCopyManager: React.FC = () => {
 
       {/* Copy Notification Toast */}
       {copiedId && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-2xl flex items-center gap-2 animate-bounce">
+        <div className="fixed top-20 sm:top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-2xl flex items-center gap-2 animate-bounce">
           <Check className="w-4 h-4" />
           클립보드 복사 완료! 최상단으로 이동되었습니다.
         </div>
@@ -683,7 +683,7 @@ export const QuickCopyManager: React.FC = () => {
                     type="button"
                     onClick={(e) => handleStartEdit(item, e)}
                     title="항목 수정"
-                    className="p-1.5 rounded-lg bg-zinc-800/70 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+                    className="p-1.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors min-w-[30px] min-h-[30px] flex items-center justify-center"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
@@ -692,13 +692,13 @@ export const QuickCopyManager: React.FC = () => {
                     type="button"
                     onClick={(e) => handleDeleteItem(item.id, e)}
                     title="항목 삭제"
-                    className="p-1.5 rounded-lg bg-zinc-800/70 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-colors"
+                    className="p-1.5 rounded-xl bg-zinc-800/70 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-colors min-w-[30px] min-h-[30px] flex items-center justify-center"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
 
                   <div
-                    className={`ml-1 px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all ${
+                    className={`ml-1 w-[60px] py-1 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all shrink-0 ${
                       isCopied
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                         : "bg-zinc-800/80 text-zinc-300 group-hover:bg-indigo-600 group-hover:text-white"
@@ -707,12 +707,12 @@ export const QuickCopyManager: React.FC = () => {
                     {isCopied ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        <span className="whitespace-nowrap font-bold">복사됨</span>
+                        <span className="whitespace-nowrap font-bold text-[11px]">복사됨</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span className="whitespace-nowrap">복사</span>
+                        <span className="whitespace-nowrap text-[11px]">복사</span>
                       </>
                     )}
                   </div>
@@ -754,10 +754,14 @@ export const QuickCopyManager: React.FC = () => {
       {/* Add Item Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">새 기본 정보 등록</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-zinc-400 text-xs px-2 py-1">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="text-zinc-400 hover:text-white text-xs p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>
@@ -836,10 +840,14 @@ export const QuickCopyManager: React.FC = () => {
       {/* Edit Item Modal */}
       {editingItem && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">기본 정보 수정</h3>
-              <button onClick={() => setEditingItem(null)} className="text-zinc-400 text-xs px-2 py-1">
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="text-zinc-400 hover:text-white text-xs p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>
@@ -915,10 +923,14 @@ export const QuickCopyManager: React.FC = () => {
       {/* Category Manager Modal (카테고리 추가/삭제/편집) */}
       {showCategoryModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-white">카테고리 관리</h3>
-              <button onClick={() => setShowCategoryModal(false)} className="text-zinc-400 text-xs px-2 py-1">
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(false)}
+                className="text-zinc-400 hover:text-white text-xs p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>

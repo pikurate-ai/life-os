@@ -12,11 +12,18 @@ export const IosInstallGuideModal: React.FC<IosInstallGuideModalProps> = ({ isOp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-[#12141c] border border-indigo-500/30 rounded-3xl w-full max-w-md p-6 space-y-5 shadow-2xl relative">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#12141c] border border-indigo-500/30 rounded-3xl w-full max-w-md p-5 sm:p-6 pb-safe space-y-4 sm:space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+      >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:text-white"
+          aria-label="닫기"
+          className="absolute top-4 right-4 p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>

@@ -19,7 +19,7 @@ export default function Home() {
   const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
 
   const getHeaderTitle = () => {
-    if (showSyncHub) return "데이터 싱크 & 적재 센터";
+    if (showSyncHub) return "데이터 싱크 센터";
 
     switch (activeTab) {
       case "quickcopy":
@@ -70,7 +70,7 @@ export default function Home() {
         onOpenInstallGuide={() => setShowInstallGuide(true)}
       />
 
-      <main className="flex-1 max-w-md w-full mx-auto p-4 pb-24">
+      <main className="flex-1 max-w-md w-full mx-auto p-4 pb-28">
         {showSyncHub ? (
           <div className="space-y-3">
             <button

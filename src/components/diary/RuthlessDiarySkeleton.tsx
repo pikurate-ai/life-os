@@ -304,7 +304,7 @@ export const RuthlessDiarySkeleton: React.FC = () => {
 
       {/* Diary Input Section */}
       <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-indigo-400" />
             <span className="text-xs font-semibold text-zinc-300">
@@ -316,14 +316,15 @@ export const RuthlessDiarySkeleton: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
             {moods.map((m) => (
               <button
                 key={m.id}
+                type="button"
                 onClick={() => setSelectedMood(m.id)}
-                className={`px-2 py-0.5 rounded-lg text-xs transition-all ${
+                className={`px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-all min-h-[32px] ${
                   selectedMood === m.id
-                    ? "bg-zinc-800 font-bold scale-105 border border-zinc-600"
+                    ? "bg-zinc-800 font-bold scale-105 border border-zinc-600 text-white shadow-sm"
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
