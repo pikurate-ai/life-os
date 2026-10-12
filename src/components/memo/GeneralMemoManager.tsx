@@ -383,25 +383,22 @@ export const GeneralMemoManager: React.FC = () => {
     <div className="space-y-4">
       {/* Header & Quick Memo Trigger */}
       <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+        {/* Row 1: 아이콘 + 타이틀 | + 새메모 버튼 */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
               <StickyNote className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                자유 일반 메모장
-                <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                  클릭 시 최상단 자동 이동
-                </span>
-              </h3>
-              <p className="text-[11px] text-zinc-400">터치하는 카드가 즉시 맨 위로 점프하여 자주 쓰는 메모를 상시 노출합니다.</p>
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-white leading-tight">자유 일반 메모장</h3>
+              <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">터치 카드 → 즉시 최상단 이동</p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsComposerOpen(!isComposerOpen)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+            className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all min-h-[36px] ${
               isComposerOpen
                 ? "bg-zinc-800 text-zinc-300"
                 : "bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/30"
@@ -412,10 +409,18 @@ export const GeneralMemoManager: React.FC = () => {
             ) : (
               <>
                 <Plus className="w-3.5 h-3.5" />
-                <span>새 메모</span>
+                <span className="whitespace-nowrap">+ 새 메모</span>
               </>
             )}
           </button>
+        </div>
+
+        {/* Row 2: 기능 설명 뱃지 */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
+            ⚡ 클릭 시 최상단 자동 이동
+          </span>
+          <span className="text-[10px] text-zinc-500">자주 쓰는 메모가 항상 위에 노출됩니다</span>
         </div>
 
         {/* Expandable Fast Memo Composer */}
@@ -549,9 +554,9 @@ export const GeneralMemoManager: React.FC = () => {
                     : "hover:scale-[1.005]"
                 }`}
               >
-                {/* Top Row: Category, Pin, and Action Controls */}
+                {/* Row 1: 카테고리+핀 뱃지 (좌) | 수정·삭제 버튼 (우) */}
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono shrink-0 ${style.badge}`}
                     >
@@ -565,65 +570,49 @@ export const GeneralMemoManager: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {/* Copy Button */}
-                    <button
-                      onClick={(e) => handleCopyContent(memo, e)}
-                      title="클립보드 전체 복사"
-                      className="px-2 py-1 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all flex items-center justify-center gap-1 shrink-0 min-h-[30px]"
-                    >
-                      {isCopied ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400 shrink-0" />
-                          <span className="text-[10px] text-emerald-400 font-bold whitespace-nowrap">복사됨!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3 shrink-0" />
-                          <span className="text-[10px] whitespace-nowrap text-zinc-400">복사</span>
-                        </>
-                      )}
-                    </button>
-
+                  <div className="flex items-center gap-1.5 shrink-0">
                     {/* Pin Toggle */}
                     <button
+                      type="button"
                       onClick={(e) => handleTogglePin(memo, e)}
                       title={memo.isPinned ? "상단 고정 해제" : "상단 고정"}
-                      className={`p-1.5 rounded-xl border transition-all shrink-0 min-w-[30px] min-h-[30px] flex items-center justify-center ${
+                      className={`p-2 rounded-xl border transition-all min-w-[36px] min-h-[36px] flex items-center justify-center ${
                         memo.isPinned
                           ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
                           : "bg-zinc-900/80 hover:bg-zinc-800 border-zinc-700/60 text-zinc-400"
                       }`}
                     >
-                      {memo.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                      {memo.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
                     </button>
 
                     {/* Edit Button */}
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingMemo(memo);
                       }}
                       title="메모 수정"
-                      className="p-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-white transition-all shrink-0 min-w-[30px] min-h-[30px] flex items-center justify-center"
+                      className="p-2 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-white transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
+                      <Edit3 className="w-4 h-4" />
                     </button>
 
                     {/* Delete Button */}
                     <button
+                      type="button"
                       onClick={(e) => handleDeleteMemo(memo.id, e)}
                       title="메모 삭제"
-                      className="p-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-rose-400 transition-all shrink-0 min-w-[30px] min-h-[30px] flex items-center justify-center"
+                      className="p-2 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-rose-400 transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
                 {/* Title (if present) */}
                 {memo.title && (
-                  <h4 className="text-xs font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors break-words">
+                  <h4 className="text-sm font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors break-words leading-snug">
                     {memo.title}
                   </h4>
                 )}
@@ -633,16 +622,35 @@ export const GeneralMemoManager: React.FC = () => {
                   {memo.content}
                 </p>
 
-                {/* Footer: Click Count & Timestamp */}
-                <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-white/5 text-[10px] text-zinc-400 font-mono">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-zinc-500" />
-                    <span>{memo.updatedAt || memo.createdAt}</span>
-                  </span>
+                {/* Footer: 복사 버튼 + 클릭 수 + 날짜 */}
+                <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-white/5 gap-2">
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono min-w-0">
+                    <Clock className="w-3 h-3 text-zinc-500 shrink-0" />
+                    <span className="truncate">{memo.updatedAt || memo.createdAt}</span>
+                    {memo.clickCount > 0 && (
+                      <span className="text-zinc-500 shrink-0">· {memo.clickCount}회</span>
+                    )}
+                  </div>
 
-                  <span className="text-zinc-500">
-                    {memo.clickCount > 0 ? `${memo.clickCount}회 조회` : "새 메모"}
-                  </span>
+                  {/* 복사 버튼 — 하단 우측으로 이동 */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopyContent(memo, e)}
+                    title="클립보드 전체 복사"
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all flex items-center gap-1 min-h-[32px]"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="text-[10px] text-emerald-400 font-bold whitespace-nowrap">복사됨!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] whitespace-nowrap text-zinc-400">전체 복사</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             );
