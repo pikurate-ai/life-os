@@ -797,11 +797,11 @@ export async function syncAllModulesFromCloud(userId: any): Promise<boolean> {
     // 2. Essential Info
     try {
       const cloudInfo = await loadEssentialInfoFromCloud(docId);
-      const localInfoRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_essential_info_v3") : null;
+      const localInfoRaw = typeof window !== "undefined" ? localStorage.getItem("life_os_essential_items_v2") : null;
       const localInfo = localInfoRaw ? JSON.parse(localInfoRaw) : [];
       const mergedInfo = mergeItemsById(localInfo, cloudInfo || []);
       if (mergedInfo.length > 0 && typeof window !== "undefined") {
-        localStorage.setItem("life_os_essential_info_v3", JSON.stringify(mergedInfo));
+        localStorage.setItem("life_os_essential_items_v2", JSON.stringify(mergedInfo));
         await saveEssentialInfoToCloud(docId, mergedInfo);
       }
     } catch (e) {

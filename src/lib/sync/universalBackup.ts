@@ -56,9 +56,9 @@ export function exportAllLocalData(): LifeOSBackupPackage {
     exportedAt: new Date().toISOString(),
     app: "Life-OS",
     data: {
-      essentialInfo: getParsed("life_os_essential_info_v1"),
-      financialLogs: getParsed("life_os_financial_logs_v1"),
-      assets: getParsed("life_os_assets_v1"),
+      essentialInfo: getParsed("life_os_essential_items_v2"),
+      financialLogs: getParsed("life_os_financial_logs_v2"),
+      assets: getParsed("life_os_assets_v2"),
       encryptedVault: getParsed("life_os_encrypted_vault_v2"),
       workout1RM: getParsed("life_os_workout_1rm_v1"),
       healthMetrics: getParsed("life_os_body_metrics_v1"),
@@ -104,19 +104,19 @@ export async function restoreFromBackup(
 
   try {
     if (Array.isArray(d.essentialInfo) && d.essentialInfo.length > 0) {
-      localStorage.setItem("life_os_essential_info_v1", JSON.stringify(d.essentialInfo));
+      localStorage.setItem("life_os_essential_items_v2", JSON.stringify(d.essentialInfo));
       totalCount += d.essentialInfo.length;
       if (userId) await saveEssentialInfoToCloud(userId, d.essentialInfo);
     }
 
     if (Array.isArray(d.financialLogs) && d.financialLogs.length > 0) {
-      localStorage.setItem("life_os_financial_logs_v1", JSON.stringify(d.financialLogs));
+      localStorage.setItem("life_os_financial_logs_v2", JSON.stringify(d.financialLogs));
       totalCount += d.financialLogs.length;
       if (userId) await saveFinancialLogsToCloud(userId, d.financialLogs);
     }
 
     if (Array.isArray(d.assets) && d.assets.length > 0) {
-      localStorage.setItem("life_os_assets_v1", JSON.stringify(d.assets));
+      localStorage.setItem("life_os_assets_v2", JSON.stringify(d.assets));
       totalCount += d.assets.length;
       if (userId) await saveAssetsToCloud(userId, d.assets);
     }

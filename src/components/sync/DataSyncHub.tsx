@@ -101,7 +101,7 @@ export const DataSyncHub: React.FC = () => {
     if (googleItems.length === 0) return;
 
     try {
-      const storedRaw = localStorage.getItem("life_os_essential_info_v1");
+      const storedRaw = localStorage.getItem("life_os_essential_items_v2");
       const existing = storedRaw ? JSON.parse(storedRaw) : [];
 
       // Deduplicate by title & value
@@ -119,10 +119,10 @@ export const DataSyncHub: React.FC = () => {
         }));
 
       const merged = [...newAdditions, ...existing];
-      localStorage.setItem("life_os_essential_info_v1", JSON.stringify(merged));
+      localStorage.setItem("life_os_essential_items_v2", JSON.stringify(merged));
 
       if (currentUser) {
-        await saveEssentialInfoToCloud(currentUser.uid, merged);
+        await saveEssentialInfoToCloud(currentUser, merged);
       }
 
       setGoogleStatus(`성공: 신규 ${newAdditions.length}개 항목이 1초 복사 메모장에 안전하게 적재되었습니다!`);
@@ -149,7 +149,7 @@ export const DataSyncHub: React.FC = () => {
       // 1. QuickCopy items
       const quickItems = kakaoItems.filter((i) => i.targetModule === "quickcopy");
       if (quickItems.length > 0) {
-        const storedRaw = localStorage.getItem("life_os_essential_info_v1");
+        const storedRaw = localStorage.getItem("life_os_essential_items_v2");
         const existing = storedRaw ? JSON.parse(storedRaw) : [];
         const newAdditions = quickItems.map((item) => ({
           id: `kakao-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
@@ -161,8 +161,8 @@ export const DataSyncHub: React.FC = () => {
           lastClickedAt: new Date().toISOString(),
         }));
         const merged = [...newAdditions, ...existing];
-        localStorage.setItem("life_os_essential_info_v1", JSON.stringify(merged));
-        if (currentUser) await saveEssentialInfoToCloud(currentUser.uid, merged);
+        localStorage.setItem("life_os_essential_items_v2", JSON.stringify(merged));
+        if (currentUser) await saveEssentialInfoToCloud(currentUser, merged);
       }
 
       setKakaoStatus(`성공: ${quickItems.length}개 데이터가 1초 복사 메모장에 적재되었습니다.`);
