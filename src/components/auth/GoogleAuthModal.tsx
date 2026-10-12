@@ -170,7 +170,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
   const computedDocId = getSyncUserId(masterEmail);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-[#12141c] border border-indigo-500/30 rounded-3xl w-full max-w-md p-5 sm:p-6 pb-safe space-y-4 sm:space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}

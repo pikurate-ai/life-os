@@ -247,27 +247,33 @@ export const LifePhotoGallery: React.FC = () => {
 
       {/* Add Photo Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setShowAddModal(false)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">새 인생샷 등록</h3>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+                className="text-zinc-400 hover:text-white text-xs p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
               >
                 닫기
               </button>
             </div>
 
-            <form onSubmit={handleAddPhoto} className="space-y-3">
+            <form onSubmit={handleAddPhoto} className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">사진 파일 선택</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700"
+                  className="w-full text-xs text-zinc-400 file:mr-3 file:py-2.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700"
                   required
                 />
               </div>
@@ -285,7 +291,7 @@ export const LifePhotoGallery: React.FC = () => {
                   placeholder="예: 가족 여름 휴가 제주도, 첫 마라톤 완주"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-pink-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-pink-500"
                   required
                 />
               </div>
@@ -297,23 +303,23 @@ export const LifePhotoGallery: React.FC = () => {
                   placeholder="예: 가족, 피트니스, 사업, 여행"
                   value={tag}
                   onChange={(e) => setTag(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-pink-500"
                 />
               </div>
 
-              <div className="pt-2 flex gap-2">
+              <div className="pt-3 pb-safe flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-pink-600/30"
+                  className="flex-1 py-3 bg-pink-600 hover:bg-pink-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-pink-600/30 transition-all"
                 >
-                  인생샷 저장
+                  사진 저장
                 </button>
               </div>
             </form>

@@ -436,9 +436,15 @@ export const PasswordVaultManager: React.FC = () => {
 
       {/* Add Manual Modal with Random Password Generator */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setShowAddModal(false)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">새 비밀번호 암호화 저장</h3>
               <button
                 type="button"
@@ -449,7 +455,7 @@ export const PasswordVaultManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddManual} className="space-y-3">
+            <form onSubmit={handleAddManual} className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">사이트명 / 서비스</label>
                 <input
@@ -457,7 +463,7 @@ export const PasswordVaultManager: React.FC = () => {
                   placeholder="예: 구글, 네이버, 깃허브"
                   value={newSite}
                   onChange={(e) => setNewSite(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -469,7 +475,7 @@ export const PasswordVaultManager: React.FC = () => {
                   placeholder="예: user@example.com"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
@@ -490,22 +496,22 @@ export const PasswordVaultManager: React.FC = () => {
                   placeholder="보관할 비밀번호 입력 또는 생성"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                   required
                 />
               </div>
 
-              <div className="pt-2 flex gap-2">
+              <div className="pt-3 pb-safe flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30"
+                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
                 >
                   암호화하여 저장
                 </button>

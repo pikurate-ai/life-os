@@ -258,9 +258,15 @@ export const DiaryArchiveTimeline: React.FC = () => {
 
       {/* Bulk Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setShowImportModal(false)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">과거 일기 텍스트 대량 임포터</h3>
               <button
                 type="button"
@@ -271,30 +277,32 @@ export const DiaryArchiveTimeline: React.FC = () => {
               </button>
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              구글 독스, 메모장, 노션에 있던 과거 일기들을 복사해서 한 번에 붙여넣으세요. 날짜(예: 2024.08.15)를 자동 인식하여 날짜별 타임라인으로 흡수합니다.
-            </p>
+            <div className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                구글 독스, 메모장, 노션에 있던 과거 일기들을 복사해서 한 번에 붙여넣으세요. 날짜(예: 2024.08.15)를 자동 인식하여 날짜별 타임라인으로 흡수합니다.
+              </p>
 
-            <textarea
-              rows={8}
-              value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
-              placeholder="예시:&#10;2024.03.15 창업 멤버들과 첫 회의&#10;오늘은 지식 큐레이션 서비스 기획을 구체화했다...&#10;&#10;2024.08.20 투자 IR 미팅&#10;본격적인 시드 라운드 미팅을 진행했다..."
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-3 text-sm sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none font-mono"
-            />
+              <textarea
+                rows={8}
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder="예시:&#10;2024.03.15 창업 멤버들과 첫 회의&#10;오늘은 지식 큐레이션 서비스 기획을 구체화했다...&#10;&#10;2024.08.20 투자 IR 미팅&#10;본격적인 시드 라운드 미팅을 진행했다..."
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-3 text-sm sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 resize-none font-mono"
+              />
+            </div>
 
-            <div className="pt-2 flex gap-2">
+            <div className="p-4 pt-2 pb-safe border-t border-zinc-800/80 flex gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
               >
                 취소
               </button>
               <button
                 type="button"
                 onClick={handleBulkImport}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30"
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
               >
                 분석 및 타임라인 흡수
               </button>

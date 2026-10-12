@@ -467,16 +467,26 @@ export const SmsLedgerParser: React.FC = () => {
 
       {/* Manual Add Modal */}
       {showManualModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setShowManualModal(false)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">직접 지출 등록</h3>
-              <button onClick={() => setShowManualModal(false)} className="text-xs text-zinc-400">
+              <button
+                type="button"
+                onClick={() => setShowManualModal(false)}
+                className="text-xs text-zinc-400 hover:text-white p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-zinc-800 transition-colors"
+              >
                 닫기
               </button>
             </div>
 
-            <form onSubmit={handleManualAdd} className="space-y-3">
+            <form onSubmit={handleManualAdd} className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">사용처 (가맹점명)</label>
                 <input
@@ -530,17 +540,17 @@ export const SmsLedgerParser: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex gap-2">
+              <div className="pt-3 pb-safe flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowManualModal(false)}
-                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30"
+                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
                 >
                   지출 등록
                 </button>

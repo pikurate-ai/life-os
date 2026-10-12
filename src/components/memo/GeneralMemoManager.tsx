@@ -652,10 +652,16 @@ export const GeneralMemoManager: React.FC = () => {
 
       {/* Edit Memo Modal */}
       {editingMemo && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+        <div
+          onClick={() => setEditingMemo(null)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
+              <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
                 <Edit3 className="w-4 h-4 text-amber-400" />
                 메모 편집
               </h4>
@@ -668,32 +674,32 @@ export const GeneralMemoManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="space-y-3">
+            <form onSubmit={handleSaveEdit} className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
               <input
                 type="text"
                 value={editingMemo.title || ""}
                 onChange={(e) => setEditingMemo({ ...editingMemo, title: e.target.value })}
                 placeholder="메모 제목"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white"
               />
 
               <textarea
                 rows={5}
                 value={editingMemo.content}
                 onChange={(e) => setEditingMemo({ ...editingMemo, content: e.target.value })}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-3 text-xs text-white resize-none leading-relaxed"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-3 text-sm text-white resize-none leading-relaxed"
                 required
               />
 
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center justify-between text-xs pt-1">
+                <div className="flex items-center gap-1.5">
                   {(["indigo", "emerald", "amber", "rose", "purple", "zinc"] as const).map((color) => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => setEditingMemo({ ...editingMemo, color })}
-                      className={`w-5 h-5 rounded-full ${COLOR_MAP[color].dot} ${
-                        editingMemo.color === color ? "scale-125 ring-2 ring-white" : "opacity-60"
+                      className={`w-6 h-6 rounded-full transition-transform ${COLOR_MAP[color].dot} ${
+                        editingMemo.color === color ? "scale-110 ring-2 ring-white" : "opacity-60"
                       }`}
                     />
                   ))}
@@ -702,7 +708,7 @@ export const GeneralMemoManager: React.FC = () => {
                 <select
                   value={editingMemo.category}
                   onChange={(e) => setEditingMemo({ ...editingMemo, category: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-700 rounded-xl px-2 py-1 text-xs text-white"
+                  className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white"
                 >
                   {CATEGORIES.filter((c) => c !== "전체").map((cat) => (
                     <option key={cat} value={cat}>
@@ -712,17 +718,17 @@ export const GeneralMemoManager: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="pt-3 pb-safe flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingMemo(null)}
-                  className="flex-1 py-2 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-600/30"
+                  className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-600/30 transition-all"
                 >
                   수정 완료
                 </button>

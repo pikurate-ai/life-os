@@ -533,27 +533,29 @@ export const QuickCopyManager: React.FC = () => {
       {/* Sub-tab Switcher: Essential Info vs General Memo */}
       <div className="flex bg-[#12141c] p-1 rounded-2xl border border-[#1f2433] gap-1">
         <button
+          type="button"
           onClick={() => setViewMode("essential")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap min-w-0 ${
             viewMode === "essential"
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <Copy className="w-3.5 h-3.5" />
-          <span>1초 필수 정보 복사</span>
+          <Copy className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap">1초 복사</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setViewMode("general")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap min-w-0 ${
             viewMode === "general"
               ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <StickyNote className="w-3.5 h-3.5" />
-          <span>자유 일반 메모</span>
+          <StickyNote className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap">자유 일반 메모</span>
         </button>
       </div>
 
@@ -562,43 +564,46 @@ export const QuickCopyManager: React.FC = () => {
       ) : (
         <>
           {/* Top Header */}
-          <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-1.5">
-            기본 정보 메모장
-            <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-          </h2>
-          <p className="text-xs text-zinc-400">
-            대한민국 40대 남성 맞춤형 • 클릭 시 1초 복사 & 최상단 자동 정렬
-          </p>
-        </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1 pr-1">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-1.5 truncate">
+                <span className="truncate">기본 정보 메모장</span>
+                <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse shrink-0" />
+              </h2>
+              <p className="text-[11px] text-zinc-400 truncate">
+                대한민국 40대 남성 맞춤형 • 클릭 시 1초 복사
+              </p>
+            </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={handleReset}
-            title="초기 데이터로 복원"
-            className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleReset}
+                title="초기 데이터로 복원"
+                className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center shrink-0"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
 
-          <button
-            onClick={() => setShowCategoryModal(true)}
-            title="카테고리 관리"
-            className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-          </button>
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(true)}
+                title="카테고리 관리"
+                className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center shrink-0"
+              >
+                <Settings2 className="w-3.5 h-3.5" />
+              </button>
 
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-indigo-600/20"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>추가</span>
-          </button>
-        </div>
-      </div>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-600/20 shrink-0 whitespace-nowrap min-h-[36px]"
+              >
+                <Plus className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">추가</span>
+              </button>
+            </div>
+          </div>
 
       {/* Copy Notification Toast */}
       {copiedId && (
@@ -753,9 +758,16 @@ export const QuickCopyManager: React.FC = () => {
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setShowAddModal(false)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            {/* Modal Header (Fixed at top) */}
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">새 기본 정보 등록</h3>
               <button
                 type="button"
@@ -766,13 +778,14 @@ export const QuickCopyManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddItem} className="space-y-3">
+            {/* Modal Body & Form (Smoothly scrollable on mobile) */}
+            <form onSubmit={handleAddItem} className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">카테고리</label>
                 <select
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -789,7 +802,7 @@ export const QuickCopyManager: React.FC = () => {
                   placeholder="예: 주거래 계좌, 아파트 공동현관 비번"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -801,7 +814,7 @@ export const QuickCopyManager: React.FC = () => {
                   placeholder="예: 010-1234-5678, #1234*"
                   value={newValue}
                   onChange={(e) => setNewValue(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                   required
                 />
               </div>
@@ -817,17 +830,18 @@ export const QuickCopyManager: React.FC = () => {
                 />
               </div>
 
-              <div className="pt-2 flex gap-2">
+              {/* Submit Buttons: Always accessible and cleanly padded */}
+              <div className="pt-3 pb-safe flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30"
+                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/30 transition-all"
                 >
                   등록하기
                 </button>
@@ -839,9 +853,16 @@ export const QuickCopyManager: React.FC = () => {
 
       {/* Edit Item Modal */}
       {editingItem && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setEditingItem(null)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">기본 정보 수정</h3>
               <button
                 type="button"
@@ -852,13 +873,14 @@ export const QuickCopyManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="space-y-3">
+            {/* Modal Body & Form */}
+            <form onSubmit={handleSaveEdit} className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">카테고리</label>
                 <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -874,7 +896,7 @@ export const QuickCopyManager: React.FC = () => {
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -885,7 +907,7 @@ export const QuickCopyManager: React.FC = () => {
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                   required
                 />
               </div>
@@ -900,17 +922,18 @@ export const QuickCopyManager: React.FC = () => {
                 />
               </div>
 
-              <div className="pt-2 flex gap-2">
+              {/* Submit Buttons */}
+              <div className="pt-3 pb-safe flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-xl"
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-emerald-600/30"
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/30 transition-all"
                 >
                   수정 완료
                 </button>
@@ -922,9 +945,16 @@ export const QuickCopyManager: React.FC = () => {
 
       {/* Category Manager Modal (카테고리 추가/삭제/편집) */}
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md p-5 pb-safe space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div
+          onClick={() => setShowCategoryModal(false)}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[85dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 shrink-0 bg-[#12141c]">
               <h3 className="text-base font-bold text-white">카테고리 관리</h3>
               <button
                 type="button"
@@ -935,54 +965,58 @@ export const QuickCopyManager: React.FC = () => {
               </button>
             </div>
 
-            {/* Add Category Form */}
-            <form onSubmit={handleAddCategory} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="새 카테고리 이름 (예: 취미/골프)"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
-                required
-              />
-              <button
-                type="submit"
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl"
-              >
-                추가
-              </button>
-            </form>
-
-            {/* Category List */}
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {categories.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="flex items-center justify-between p-2.5 bg-zinc-900/80 rounded-xl border border-zinc-800 text-xs"
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Add Category Form */}
+              <form onSubmit={handleAddCategory} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="새 카테고리 이름 (예: 취미/골프)"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shrink-0 shadow-md shadow-indigo-600/30"
                 >
-                  <div className="flex items-center gap-2">
-                    {renderCategoryIcon(cat.id)}
-                    <span className="font-semibold text-white">{cat.name}</span>
-                    <span className="text-[10px] text-zinc-500">
-                      ({items.filter((it) => it.category === cat.id).length}개 항목)
-                    </span>
-                  </div>
+                  추가
+                </button>
+              </form>
 
-                  <button
-                    onClick={() => handleDeleteCategory(cat.id)}
-                    className="p-1 text-zinc-500 hover:text-rose-400"
-                    title="카테고리 삭제"
+              {/* Category List */}
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 text-xs"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-2">
+                      {renderCategoryIcon(cat.id)}
+                      <span className="font-semibold text-white">{cat.name}</span>
+                      <span className="text-[10px] text-zinc-500">
+                        ({items.filter((it) => it.category === cat.id).length}개 항목)
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="p-1.5 text-zinc-500 hover:text-rose-400 min-h-[32px] min-w-[32px] flex items-center justify-center rounded-lg"
+                      title="카테고리 삭제"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="pt-2">
+            <div className="p-4 pt-2 pb-safe border-t border-zinc-800/80 shrink-0">
               <button
+                type="button"
                 onClick={() => setShowCategoryModal(false)}
-                className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl"
+                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-white text-xs font-semibold rounded-xl transition-all"
               >
                 닫기
               </button>
