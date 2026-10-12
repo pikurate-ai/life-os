@@ -661,9 +661,9 @@ export const QuickCopyManager: React.FC = () => {
               onClick={() => handleCopyAndPromote(item)}
               className="group relative cursor-pointer bg-[#12141c] hover:bg-[#181b26] active:scale-[0.99] border border-[#1f2433] hover:border-indigo-500/50 rounded-2xl p-3.5 transition-all shadow-sm"
             >
-              {/* Card Header: Icon, Category, Title, TOP1 on left; Compact Action Buttons on right */}
+              {/* Row 1: 카테고리 뱃지 + TOP 뱃지 (좌) | 수정·삭제 버튼 (우) */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <div className="p-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 shrink-0 text-indigo-400">
                     {renderCategoryIcon(item.category)}
                   </div>
@@ -672,9 +672,6 @@ export const QuickCopyManager: React.FC = () => {
                       {categoryMeta.name}
                     </span>
                   )}
-                  <span className="text-xs font-bold text-white truncate min-w-0">
-                    {item.title}
-                  </span>
                   {index === 0 && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30 shrink-0">
                       TOP 1
@@ -682,53 +679,62 @@ export const QuickCopyManager: React.FC = () => {
                   )}
                 </div>
 
-                {/* Right Action Buttons */}
-                <div className="flex items-center gap-1 shrink-0">
+                {/* 수정·삭제 버튼만 (복사 버튼은 Row 3으로 이동) */}
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={(e) => handleStartEdit(item, e)}
                     title="항목 수정"
-                    className="p-1.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors min-w-[30px] min-h-[30px] flex items-center justify-center"
+                    className="p-2 rounded-xl bg-zinc-800/70 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
+                    <Edit2 className="w-4 h-4" />
                   </button>
-
                   <button
                     type="button"
                     onClick={(e) => handleDeleteItem(item.id, e)}
                     title="항목 삭제"
-                    className="p-1.5 rounded-xl bg-zinc-800/70 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-colors min-w-[30px] min-h-[30px] flex items-center justify-center"
+                    className="p-2 rounded-xl bg-zinc-800/70 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
-
-                  <div
-                    className={`ml-1 w-[60px] py-1 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all shrink-0 ${
-                      isCopied
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                        : "bg-zinc-800/80 text-zinc-300 group-hover:bg-indigo-600 group-hover:text-white"
-                    }`}
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span className="whitespace-nowrap font-bold text-[11px]">복사됨</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span className="whitespace-nowrap text-[11px]">복사</span>
-                      </>
-                    )}
-                  </div>
                 </div>
               </div>
 
-              {/* Card Value: Dedicated 100% Full-Width Container (Never Squished on iPhone 13 Pro) */}
-              <div className="mt-2.5 p-3 rounded-xl bg-black/40 border border-white/5 group-hover:border-indigo-500/30 transition-colors w-full">
-                <p className="text-sm font-semibold text-white tracking-wide break-all font-mono leading-relaxed select-all">
-                  {item.value}
-                </p>
+              {/* Row 2: 제목 전용 행 — 풀너비, 최대 2줄 */}
+              <p className="mt-2 text-sm font-bold text-white leading-snug line-clamp-2 break-words">
+                {item.title}
+              </p>
+
+              {/* Row 3: 값 박스 + 1초 복사 버튼 */}
+              <div className="mt-2 flex items-stretch gap-2">
+                <div className="flex-1 p-3 rounded-xl bg-black/40 border border-white/5 group-hover:border-indigo-500/30 transition-colors min-w-0">
+                  <p className="text-sm font-semibold text-white tracking-wide break-all font-mono leading-relaxed select-all">
+                    {item.value}
+                  </p>
+                </div>
+
+                {/* 1초 복사 CTA 버튼 */}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleCopyAndPromote(item); }}
+                  className={`shrink-0 px-3.5 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all min-w-[60px] ${
+                    isCopied
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/40"
+                  }`}
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span className="whitespace-nowrap">복사됨</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span className="whitespace-nowrap">1초복사</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Memo Trigger & Expandable Content */}
