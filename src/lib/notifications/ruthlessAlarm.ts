@@ -39,13 +39,36 @@ export const saveAlarmConfig = (config: AlarmConfig): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 };
 
-// Web Audio API Synthesizer Chime (no external audio assets required)
-export const playAlarmChime = (tone: "alert" | "success" | "snooze" = "alert") => {
+// Web Audio API Synthesizer Chime + Vibration
+export const triggerVibration = (pattern: number | number[] = [200, 100, 200]) => {
+  if (typeof window !== "undefined" && typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      // ignore
+    }
+  }
+};
+
+export const playAlarmChime = async (tone: "alert" | "success" | "snooze" = "alert") => {
   if (typeof window === "undefined") return;
+
+  // Trigger Haptic Vibration
+  if (tone === "success") {
+    triggerVibration([80, 50, 80]);
+  } else if (tone === "snooze") {
+    triggerVibration([150, 80, 150]);
+  } else {
+    triggerVibration([400, 150, 400, 150, 600]);
+  }
+
   try {
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
 
     if (tone === "success") {
       // Pleasant dual chime (C5 -> G5)
@@ -54,23 +77,23 @@ export const playAlarmChime = (tone: "alert" | "success" | "snooze" = "alert") =
       const gain1 = ctx.createGain();
       osc1.type = "sine";
       osc1.frequency.setValueAtTime(523.25, now);
-      gain1.gain.setValueAtTime(0.15, now);
-      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      gain1.gain.setValueAtTime(0.2, now);
+      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
       osc1.start(now);
-      osc1.stop(now + 0.3);
+      osc1.stop(now + 0.35);
 
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "sine";
       osc2.frequency.setValueAtTime(783.99, now + 0.15);
-      gain2.gain.setValueAtTime(0.2, now + 0.15);
-      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      gain2.gain.setValueAtTime(0.25, now + 0.15);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
       osc2.start(now + 0.15);
-      osc2.stop(now + 0.5);
+      osc2.stop(now + 0.6);
     } else if (tone === "snooze") {
       // Subtle double beep
       const now = ctx.currentTime;
@@ -79,28 +102,28 @@ export const playAlarmChime = (tone: "alert" | "success" | "snooze" = "alert") =
         const gain = ctx.createGain();
         osc.type = "square";
         osc.frequency.setValueAtTime(440, now + offset);
-        gain.gain.setValueAtTime(0.1, now + offset);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.1);
+        gain.gain.setValueAtTime(0.15, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.12);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now + offset);
-        osc.stop(now + offset + 0.1);
+        osc.stop(now + offset + 0.12);
       });
     } else {
-      // Urgent wake chime (High tri-tone alarm)
+      // Urgent wake chime (High tri-tone alarm with louder presence)
       const now = ctx.currentTime;
-      [0, 0.18, 0.36].forEach((offset, idx) => {
+      [0, 0.18, 0.36, 0.54].forEach((offset, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sawtooth";
-        const freq = [587.33, 739.99, 880][idx];
+        const freq = [587.33, 739.99, 880, 1046.5][idx % 4];
         osc.frequency.setValueAtTime(freq, now + offset);
-        gain.gain.setValueAtTime(0.15, now + offset);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.15);
+        gain.gain.setValueAtTime(0.3, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.18);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now + offset);
-        osc.stop(now + offset + 0.15);
+        osc.stop(now + offset + 0.18);
       });
     }
   } catch (err) {
@@ -228,7 +251,8 @@ export const scheduleRuthlessAlarm = async (isDiarySavedToday: boolean): Promise
 // Immediate test alarm for user verification
 export const triggerTestAlarm = async () => {
   const permGranted = await requestAlarmPermission();
-  playAlarmChime("alert");
+  await playAlarmChime("alert");
+  triggerVibration([500, 200, 500, 200, 800]);
 
   if (Capacitor.isNativePlatform()) {
     try {
@@ -242,18 +266,22 @@ export const triggerTestAlarm = async () => {
           },
         ],
       });
-      return { success: true, message: "네이티브 테스트 알림이 발송되었습니다." };
+      return { success: true, message: "네이티브 테스트 알림과 진동 및 사운드가 발송되었습니다." };
     } catch (e) {
       console.error(e);
     }
   }
 
   if (typeof window !== "undefined" && "Notification" in window && permGranted) {
-    new Notification("🚨 [Life-OS] 지독한 알람 테스트", {
-      body: "일기 쓸 때까지 울리는 5분 스누즈 알람 시스템 정상 작동 중!",
-      icon: "/favicon.ico",
-    });
+    try {
+      new Notification("🚨 [Life-OS] 지독한 알람 테스트", {
+        body: "일기 쓸 때까지 울리는 5분 스누즈 알람 시스템 정상 작동 중!",
+        icon: "/favicon.ico",
+      });
+    } catch {
+      // ignore
+    }
   }
 
-  return { success: true, message: "테스트 차임벨 및 알람이 작동했습니다." };
+  return { success: true, message: "테스트 경보음과 햅틱 진동이 정상 작동했습니다!" };
 };
