@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, LogIn, LogOut, UserCheck, Database, Smartphone } from "lucide-react";
+import { LogIn, LogOut, UserCheck, Database } from "lucide-react";
 import { signOutUser, onAuthChanged } from "@/lib/firebase/client";
 import { GoogleAuthModal } from "@/components/auth/GoogleAuthModal";
 
@@ -42,15 +42,15 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="max-w-md mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
           {/* Logo and Titles */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+              {/* Minimalist Life-OS Core Emblem */}
+              <div className="w-3.5 h-3.5 border-2 border-white rounded-md flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-white rounded-full" />
+              </div>
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 truncate">
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5 truncate">
                 <span className="truncate">{title}</span>
-                <span className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                  1인 전용
-                </span>
               </h1>
               <p className="text-[10px] text-zinc-400 leading-tight truncate hidden sm:block">{subtitle}</p>
             </div>
@@ -58,17 +58,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Controls */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            {/* iOS App Download Button */}
-            {onOpenInstallGuide && (
-              <button
-                onClick={onOpenInstallGuide}
-                title="아이폰 앱 다운로드 가이드"
-                className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap min-h-[36px] min-w-[36px] justify-center"
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-bold hidden sm:inline">앱받기</span>
-              </button>
-            )}
 
             {/* Raw Data Sync Hub Button */}
             {onOpenSyncHub && (

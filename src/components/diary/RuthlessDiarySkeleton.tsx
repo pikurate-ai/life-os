@@ -465,11 +465,11 @@ export const RuthlessDiarySkeleton: React.FC = () => {
   };
 
   const moods = [
-    { id: "great", label: "🔥 최상", color: "text-amber-400" },
-    { id: "good", label: "😊 만족", color: "text-emerald-400" },
-    { id: "neutral", label: "😐 무난", color: "text-zinc-400" },
-    { id: "tired", label: "😴 피곤", color: "text-blue-400" },
-    { id: "bad", label: "😡 힘듦", color: "text-rose-400" },
+    { id: "1", score: 1, emoji: "😡", label: "1점 매우 힘듦", color: "text-rose-400" },
+    { id: "2", score: 2, emoji: "🙁", label: "2점 조금 피곤", color: "text-orange-400" },
+    { id: "3", score: 3, emoji: "😐", label: "3점 무난/보통", color: "text-zinc-400" },
+    { id: "4", score: 4, emoji: "😊", label: "4점 만족/좋음", color: "text-emerald-400" },
+    { id: "5", score: 5, emoji: "🔥", label: "5점 최고/성취", color: "text-amber-400" },
   ];
 
   const filteredArchive = allDiaries.filter((d) => {
@@ -486,7 +486,7 @@ export const RuthlessDiarySkeleton: React.FC = () => {
       {toastMessage && (
         <div className="sticky top-2 z-50 p-3 rounded-2xl bg-gradient-to-r from-indigo-900/90 to-emerald-950/90 border border-emerald-500/40 text-white text-xs font-semibold shadow-xl shadow-black/50 flex items-center justify-between gap-2 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{toastMessage}</span>
           </div>
           <button onClick={() => setToastMessage(null)} className="p-1 hover:text-zinc-300">
@@ -660,74 +660,89 @@ export const RuthlessDiarySkeleton: React.FC = () => {
       {/* Diary Input & Date Picker Section */}
       <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
         {/* Date Selector Navigation Bar */}
-        <div className="flex items-center justify-between gap-2 bg-zinc-900/80 p-2.5 rounded-2xl border border-zinc-800">
-          <button
-            type="button"
-            onClick={() => changeDateByOffset(-1)}
-            className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-            title="이전 날짜"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-zinc-900/80 p-2.5 rounded-2xl border border-zinc-800">
+          <div className="flex items-center justify-between sm:justify-start gap-2 flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={() => changeDateByOffset(-1)}
+              className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+              title="이전 날짜"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
 
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-indigo-400 shrink-0" />
-            <input
-              type="date"
-              max={todayStr}
-              value={selectedDate}
-              onChange={(e) => {
-                if (e.target.value) setSelectedDate(e.target.value);
-              }}
-              className="bg-transparent text-white font-bold text-xs sm:text-sm font-mono focus:outline-none cursor-pointer"
-            />
+            <div className="flex items-center gap-2 flex-1 justify-center sm:justify-start min-w-0">
+              <Calendar className="w-4 h-4 text-indigo-400 shrink-0" />
+              <input
+                type="date"
+                max={todayStr}
+                value={selectedDate}
+                onChange={(e) => {
+                  if (e.target.value) setSelectedDate(e.target.value);
+                }}
+                className="bg-transparent text-white font-bold text-xs sm:text-sm font-mono focus:outline-none cursor-pointer text-center sm:text-left min-w-[125px]"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => changeDateByOffset(1)}
+              disabled={isSelectedDateToday}
+              className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+              title="다음 날짜"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Today Indicator or Move to Today Button (Always unclipped, whitespace-nowrap) */}
+          <div className="flex items-center justify-end shrink-0">
             {isSelectedDateToday ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
-                오늘
+              <span className="whitespace-nowrap shrink-0 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                오늘의 일기
               </span>
             ) : (
               <button
                 type="button"
                 onClick={() => setSelectedDate(todayStr)}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium"
+                className="whitespace-nowrap shrink-0 px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-semibold border border-indigo-500/30 transition-all flex items-center gap-1"
               >
-                오늘로 이동
+                <span>오늘로 이동</span>
               </button>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => changeDateByOffset(1)}
-            disabled={isSelectedDateToday}
-            className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
-            title="다음 날짜"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
 
-        {/* Mood Selection & Date Notice */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-          <span className="text-xs text-zinc-400">
-            {isSelectedDateToday ? "오늘 하루의 기분:" : `📅 ${selectedDate} 과거 일기 편집 중`}
-          </span>
+        {/* 5-Point Scale Mood Selection */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-zinc-400 font-medium">
+              하루의 기분 (5점 척도 선택):
+            </span>
+            <span className="text-xs font-bold text-amber-300">
+              {moods.find((m) => m.id === selectedMood)?.label || "선택"}
+            </span>
+          </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
-            {moods.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setSelectedMood(m.id)}
-                className={`px-2.5 py-1 rounded-xl text-xs whitespace-nowrap transition-all min-h-[32px] ${
-                  selectedMood === m.id
-                    ? "bg-zinc-800 font-bold scale-105 border border-zinc-600 text-white shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-5 gap-1.5">
+            {moods.map((m) => {
+              const isSelected = selectedMood === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setSelectedMood(m.id)}
+                  className={`py-2 px-1 rounded-xl text-center flex flex-col items-center justify-center gap-0.5 transition-all select-none min-h-[50px] border ${
+                    isSelected
+                      ? "bg-indigo-600/40 border-indigo-400 text-white shadow-md shadow-indigo-600/30 scale-[1.02] ring-1 ring-indigo-400"
+                      : "bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                  }`}
+                >
+                  <span className="text-base sm:text-lg">{m.emoji}</span>
+                  <span className="text-[10px] font-bold whitespace-nowrap">{m.score}점</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -818,14 +833,18 @@ export const RuthlessDiarySkeleton: React.FC = () => {
               {/* Click checkbox & title to toggle */}
               <div
                 onClick={() => toggleRoutine(routine.id)}
-                className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer pr-2"
               >
                 {routine.completed ? (
                   <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
                 ) : (
                   <Circle className="w-4 h-4 text-zinc-600 shrink-0" />
                 )}
-                <span className={`text-xs font-medium truncate ${routine.completed ? "line-through text-zinc-500" : ""}`}>
+                <span
+                  className={`text-xs font-medium break-keep leading-snug ${
+                    routine.completed ? "line-through text-zinc-500" : "text-white"
+                  }`}
+                >
                   {routine.title}
                 </span>
               </div>

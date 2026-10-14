@@ -10,13 +10,11 @@ import { PasswordVaultManager } from "@/components/vault/PasswordVaultManager";
 import { FinanceHub } from "@/components/finance/FinanceHub";
 import { HealthHub } from "@/components/health/HealthHub";
 import { DataSyncHub } from "@/components/sync/DataSyncHub";
-import { IosInstallGuideModal } from "@/components/pwa/IosInstallGuideModal";
 import { ArrowLeft } from "lucide-react";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [showSyncHub, setShowSyncHub] = useState<boolean>(false);
-  const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
 
   const getHeaderTitle = () => {
     if (showSyncHub) return "데이터 싱크 센터";
@@ -67,7 +65,6 @@ export default function Home() {
         title={getHeaderTitle()}
         subtitle={getHeaderSubtitle()}
         onOpenSyncHub={() => setShowSyncHub(true)}
-        onOpenInstallGuide={() => setShowInstallGuide(true)}
       />
 
       <main className="flex-1 max-w-md w-full mx-auto p-4 pb-28">
@@ -88,7 +85,6 @@ export default function Home() {
               <DashboardOverview
                 onNavigateTab={(tab) => handleTabChange(tab)}
                 onOpenSyncHub={() => setShowSyncHub(true)}
-                onOpenInstallGuide={() => setShowInstallGuide(true)}
               />
             )}
 
@@ -106,12 +102,6 @@ export default function Home() {
       </main>
 
       <BottomNav activeTab={activeTab} onChangeTab={handleTabChange} />
-
-      {/* iOS PWA Install Guide Modal */}
-      <IosInstallGuideModal
-        isOpen={showInstallGuide}
-        onClose={() => setShowInstallGuide(false)}
-      />
     </div>
   );
 }

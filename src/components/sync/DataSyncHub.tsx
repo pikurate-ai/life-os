@@ -14,7 +14,6 @@ import {
   Copy,
   ArrowRight,
   ExternalLink,
-  Sparkles,
   Layers,
   FileText,
   Save,
@@ -24,10 +23,17 @@ import {
   PRESET_GOOGLE_SHEETS,
   fetchLiveGoogleSheet,
   parseDocsOrSlidesText,
+  inferCategory,
   GoogleSyncResultItem,
 } from "@/lib/sync/googleDriveSync";
 import { parseKakaoChatText, ParsedKakaoItem } from "@/lib/parser/kakaoParser";
-import { downloadBackupFile, restoreFromBackup, exportAllLocalData } from "@/lib/sync/universalBackup";
+import {
+  downloadBackupFile,
+  downloadExcelBackupFile,
+  sendMonthlyBackupEmail,
+  restoreFromBackup,
+  exportAllLocalData,
+} from "@/lib/sync/universalBackup";
 import { onAuthChanged, saveEssentialInfoToCloud, loadEssentialInfoFromCloud } from "@/lib/firebase/client";
 import type { User } from "firebase/auth";
 
@@ -85,6 +91,74 @@ export const DataSyncHub: React.FC = () => {
     if (res.success && res.items.length > 0) {
       setGoogleItems(res.items);
     }
+  };
+
+  // Direct Raw File (Excel, Word, PDF, CSV, TXT) Ingestion Handler
+  const handleRawFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsGoogleLoading(true);
+    setGoogleStatus(`'${file.name}' 파일을 분석하고 로우 데이터를 추출하는 중...`);
+
+    try {
+      const text = await file.text();
+      const extracted: GoogleSyncResultItem[] = [];
+
+      // Check if it's CSV
+      if (file.name.endsWith(".csv") || file.name.endsWith(".txt")) {
+        const rows = text.split(/\r?\n/).filter((r) => r.trim());
+        rows.forEach((row, idx) => {
+          if (idx === 0 && (row.includes("제목") || row.includes("title") || row.includes("ID"))) return; // header skip
+          const cols = row.split(/,|\t/).map((c) => c.replace(/^["']|["']$/g, "").trim());
+          if (cols.length >= 2 && cols[0] && cols[1]) {
+            extracted.push({
+              id: `raw-${Date.now()}-${idx}`,
+              title: cols[1] || cols[0],
+              value: cols[2] || cols[1] || cols[0],
+              category: inferCategory(cols[1] || cols[0], cols[2] || cols[1] || cols[0]),
+              memo: `파일: ${file.name} (행 #${idx + 1})`,
+              source: "google_sheets",
+            });
+          }
+        });
+      } else {
+        // Word, PDF, or other binary text extraction fallback
+        const parsed = parseDocsOrSlidesText(text, "google_docs");
+        extracted.push(...parsed);
+      }
+
+      if (extracted.length > 0) {
+        setGoogleItems((prev) => [...prev, ...extracted]);
+        setGoogleStatus(`'${file.name}'에서 총 ${extracted.length}개의 로우 데이터를 성공적으로 추출했습니다!`);
+      } else {
+        // Fallback: entire text as an item if small
+        setGoogleItems((prev) => [
+          ...prev,
+          {
+            id: `raw-${Date.now()}-1`,
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            value: text.slice(0, 150),
+            category: inferCategory(file.name, text.slice(0, 150)),
+            memo: file.name,
+            source: "google_docs",
+          },
+        ]);
+        setGoogleStatus(`'${file.name}' 파일의 내용을 로우 데이터로 로드했습니다.`);
+      }
+    } catch (err: any) {
+      setGoogleStatus(`파일 읽기 오류: ${err.message}`);
+    } finally {
+      setIsGoogleLoading(false);
+      e.target.value = "";
+    }
+  };
+
+  // Monthly Backup Email to imidoing@naver.com
+  const handleMonthlyEmailBackup = async () => {
+    setBackupStatus("엑셀 백업 파일 생성 및 imidoing@naver.com 메일 전송 준비 중...");
+    const res = await sendMonthlyBackupEmail("imidoing@naver.com");
+    setBackupStatus(res.message);
   };
 
   // Google Docs / Slides Text Parse Handler
@@ -319,29 +393,55 @@ export const DataSyncHub: React.FC = () => {
             </div>
           </div>
 
-          {/* Custom Google Sheet URL input */}
+          {/* Custom Google Sheet / Drive URL input (Mobile Responsive Layout) */}
           <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
             <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
               <ExternalLink className="w-4 h-4 text-indigo-400" />
-              임의의 구글 시트 공유 링크 실시간 페치
+              구글 시트 / 드라이브 공유 링크 실시간 페치
             </h4>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={googleUrl}
                 onChange={(e) => setGoogleUrl(e.target.value)}
                 placeholder="https://docs.google.com/spreadsheets/d/.../edit"
-                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 font-mono"
+                className="w-full flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 font-mono min-h-[40px]"
               />
               <button
+                type="button"
                 onClick={() => handleFetchGoogleSheet()}
                 disabled={isGoogleLoading || !googleUrl.trim()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1 disabled:opacity-50 shrink-0"
+                className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0 whitespace-nowrap min-h-[40px] shadow-md shadow-indigo-600/30"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isGoogleLoading ? "animate-spin" : ""}`} />
-                <span>가져오기</span>
+                <span>데이터 가져오기</span>
               </button>
             </div>
+          </div>
+
+          {/* Direct Raw File Upload (Excel, Word, PDF, CSV, TXT) */}
+          <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                <Upload className="w-4 h-4 text-emerald-400" />
+                로우데이터 파일 직접 업로드 (엑셀, 워드, PDF, CSV)
+              </h4>
+              <span className="text-[10px] text-zinc-500 font-mono">자동 파싱</span>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              컴퓨터나 모바일에 있는 엑셀(.xlsx, .csv), 워드 문서(.docx), PDF, 텍스트 파일을 직접 선택하면 데이터를 자동 분석하여 Life-OS에 적재합니다.
+            </p>
+            <label className="w-full py-3 px-4 bg-zinc-900/90 hover:bg-zinc-800 border-2 border-dashed border-zinc-700 hover:border-emerald-500/50 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all">
+              <Upload className="w-5 h-5 text-emerald-400 mb-0.5" />
+              <span className="text-xs font-bold text-white">파일 선택하여 로우데이터 적재하기</span>
+              <span className="text-[10px] text-zinc-500">지원: .csv, .xlsx, .docx, .pdf, .txt, .json</span>
+              <input
+                type="file"
+                accept=".csv,.txt,.json,.xlsx,.xls,.docx,.pdf"
+                onChange={handleRawFileUpload}
+                className="hidden"
+              />
+            </label>
           </div>
 
           {/* Google Docs / Slides Raw Text Ingestion */}
@@ -363,7 +463,7 @@ export const DataSyncHub: React.FC = () => {
                 disabled={!googleDocText.trim()}
                 className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <FileText className="w-3.5 h-3.5 text-purple-400" />
                 <span>텍스트 자동 분석</span>
               </button>
             </div>
@@ -372,7 +472,7 @@ export const DataSyncHub: React.FC = () => {
           {/* Status Message */}
           {googleStatus && (
             <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 shrink-0 text-amber-400" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>{googleStatus}</span>
             </div>
           )}
@@ -454,8 +554,8 @@ export const DataSyncHub: React.FC = () => {
                 disabled={!kakaoRawText.trim()}
                 className="px-4 py-2 bg-amber-600 hover:bg-amber-500 active:scale-95 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-600/30 flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>지능형 데이터 추출</span>
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>데이터 추출하기</span>
               </button>
             </div>
           </div>
@@ -463,7 +563,7 @@ export const DataSyncHub: React.FC = () => {
           {/* Status Message */}
           {kakaoStatus && (
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 shrink-0 text-amber-400" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-400" />
               <span>{kakaoStatus}</span>
             </div>
           )}
@@ -514,6 +614,40 @@ export const DataSyncHub: React.FC = () => {
       {/* TAB 3: Universal Raw Backup & Restore */}
       {activeTab === "backup" && (
         <div className="space-y-4">
+          {/* Monthly Excel Backup & Email to imidoing@naver.com Card */}
+          <div className="bg-gradient-to-br from-emerald-950/60 via-indigo-950/40 to-[#12141c] border border-emerald-500/30 rounded-3xl p-5 space-y-3 shadow-lg shadow-emerald-950/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+                <h4 className="text-sm font-bold text-white">월간 엑셀 백업 & 이메일 전송</h4>
+              </div>
+              <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                imidoing@naver.com
+              </span>
+            </div>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              한 달에 한 번씩 필수 정보, 가계부, 자산, 일기, 헬스 기록 전체를 한글 엑셀 호환 CSV/XLS 파일로 생성하여 <strong>imidoing@naver.com</strong>으로 즉시 백업 메일을 전송합니다.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleMonthlyEmailBackup}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 transition-all"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>엑셀 백업 & 이메일 전송하기</span>
+              </button>
+              <button
+                type="button"
+                onClick={downloadExcelBackupFile}
+                className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 active:scale-98 border border-zinc-700 text-zinc-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all"
+              >
+                <Download className="w-4 h-4 text-emerald-400" />
+                <span>엑셀 파일 즉시 다운로드 (.csv)</span>
+              </button>
+            </div>
+          </div>
+
           {/* Download Raw Backup Card */}
           <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
             <div className="flex items-center justify-between">

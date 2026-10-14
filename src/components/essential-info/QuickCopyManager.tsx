@@ -567,11 +567,10 @@ export const QuickCopyManager: React.FC = () => {
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1 pr-1">
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-1.5 truncate">
-                <span className="truncate">기본 정보 메모장</span>
-                <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse shrink-0" />
+                <span className="truncate">필수 정보 메모장</span>
               </h2>
               <p className="text-[11px] text-zinc-400 truncate">
-                대한민국 40대 남성 맞춤형 • 클릭 시 1초 복사
+                클릭 시 즉시 클립보드 복사
               </p>
             </div>
 

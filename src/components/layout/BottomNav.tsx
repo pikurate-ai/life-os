@@ -12,13 +12,13 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) => {
-  const tabs = [
-    { id: "dashboard" as TabType, label: "홈", icon: LayoutDashboard },
-    { id: "quickcopy" as TabType, label: "1초복사", icon: Copy },
-    { id: "diary" as TabType, label: "일기", icon: BookOpen },
-    { id: "finance" as TabType, label: "가계/자산", icon: Wallet, badge: "NEW" },
-    { id: "vault" as TabType, label: "암호금고", icon: KeyRound },
-    { id: "health" as TabType, label: "헬스1RM", icon: Activity },
+  const tabs: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[] = [
+    { id: "dashboard", label: "홈", icon: LayoutDashboard },
+    { id: "quickcopy", label: "1초복사", icon: Copy },
+    { id: "diary", label: "일기", icon: BookOpen },
+    { id: "finance", label: "가계/자산", icon: Wallet },
+    { id: "vault", label: "암호금고", icon: KeyRound },
+    { id: "health", label: "헬스1RM", icon: Activity },
   ];
 
   return (

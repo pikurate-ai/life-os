@@ -9,7 +9,6 @@ import {
   Wallet,
   ChevronRight,
   Database,
-  Smartphone,
   ShieldCheck,
   FileSpreadsheet,
   MessageSquare,
@@ -25,7 +24,6 @@ interface DashboardOverviewProps {
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onNavigateTab,
   onOpenSyncHub,
-  onOpenInstallGuide,
 }) => {
   return (
     <div className="space-y-4">
@@ -49,7 +47,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <span>AES-256 Zero-Knowledge 활성화</span>
           </div>
           <span className="text-indigo-400 font-mono text-[11px] bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
-            1인 전용 Super App
+            Life-OS Production
           </span>
         </div>
       </div>
@@ -177,27 +175,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           카드 결제 문자나 카카오톡 알림을 복사해 붙여넣으면 금액과 가맹점을 자동 파싱하고 순자산을 한눈에 집계합니다.
         </p>
       </div>
-
-      {/* iPhone PWA Install Guide Banner */}
-      {onOpenInstallGuide && (
-        <div
-          onClick={onOpenInstallGuide}
-          className="group cursor-pointer bg-[#12141c] hover:bg-[#181b26] border border-[#1f2433] hover:border-indigo-500/40 rounded-2xl p-3.5 flex items-center justify-between transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              <Smartphone className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-white group-hover:text-indigo-300 block">
-                아이폰 1인 전용 앱으로 다운로드하기
-              </span>
-              <span className="text-[10px] text-zinc-400">사파리 공유 버튼 → [홈 화면에 추가] 1초 안내</span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
-        </div>
-      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { parseSms, ParsedTransaction } from "@/lib/parser/smsParser";
-import { Receipt, Sparkles, Plus, Trash2, ArrowDownRight, Tag, CreditCard, PieChart, Target, Calendar, Check } from "lucide-react";
+import { Receipt, Sparkles, Plus, Trash2, ArrowDownRight, Tag, CreditCard, PieChart, Target, Calendar, Check, CheckCircle2 } from "lucide-react";
 import {
   onAuthChanged,
   saveFinancialLogsToCloud,
@@ -321,7 +321,7 @@ export const SmsLedgerParser: React.FC = () => {
       <div className="bg-[#12141c] border border-[#1f2433] rounded-3xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+            <Receipt className="w-4 h-4 text-purple-400" />
             <h3 className="text-sm font-bold text-white">결제 문자 / 카톡 0.1초 파싱</h3>
           </div>
           <button
@@ -361,8 +361,8 @@ export const SmsLedgerParser: React.FC = () => {
         {parsedPreview && (
           <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 space-y-2.5 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-indigo-300 font-semibold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5" />
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
                 자동 분석 완료
               </span>
               <span className="text-zinc-400 font-mono text-[11px]">

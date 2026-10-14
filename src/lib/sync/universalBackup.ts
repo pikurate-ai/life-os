@@ -70,6 +70,89 @@ export function exportAllLocalData(): LifeOSBackupPackage {
 }
 
 /**
+ * Generate Excel-compatible UTF-8 BOM CSV data from all Life-OS local domains
+ */
+export function generateExcelCSV(): string {
+  const backup = exportAllLocalData();
+  const d = backup.data;
+  const lines: string[] = [];
+
+  // UTF-8 BOM for seamless Excel Korean display
+  const BOM = "\uFEFF";
+
+  lines.push(`=== [Life-OS Master Excel Backup] ===`);
+  lines.push(`백업 일시: ${new Date().toLocaleString("ko-KR")}`);
+  lines.push(`수신자: imidoing@naver.com\n`);
+
+  // 1. 필수 정보 (1초 복사)
+  lines.push(`[1. 필수 정보 (1초 복사 메모장)]`);
+  lines.push(`ID,카테고리,제목,값,메모,조회수`);
+  if (Array.isArray(d.essentialInfo)) {
+    d.essentialInfo.forEach((item: any) => {
+      const cat = `"${(item.category || "").replace(/"/g, '""')}"`;
+      const title = `"${(item.title || "").replace(/"/g, '""')}"`;
+      const val = `"${(item.value || "").replace(/"/g, '""')}"`;
+      const memo = `"${(item.memo || "").replace(/"/g, '""')}"`;
+      lines.push(`${item.id || ""},${cat},${title},${val},${memo},${item.clickCount || 0}`);
+    });
+  }
+  lines.push(`\n`);
+
+  // 2. 가계부 지출 내역
+  lines.push(`[2. 가계부 지출 내역]`);
+  lines.push(`일시,가맹점/내역,금액(원),결제수단,카테고리,비고`);
+  if (Array.isArray(d.financialLogs)) {
+    d.financialLogs.forEach((tx: any) => {
+      const merchant = `"${(tx.merchant || tx.title || "").replace(/"/g, '""')}"`;
+      const category = `"${(tx.category || "").replace(/"/g, '""')}"`;
+      const method = `"${(tx.paymentMethod || "").replace(/"/g, '""')}"`;
+      lines.push(`${tx.date || ""},${merchant},${tx.amount || 0},${method},${category},"${(tx.memo || "").replace(/"/g, '""')}"`);
+    });
+  }
+  lines.push(`\n`);
+
+  // 3. 자산 현황
+  lines.push(`[3. 자산 현황]`);
+  lines.push(`자산명,분류,평가금액(원),금융기관/비고`);
+  if (Array.isArray(d.assets)) {
+    d.assets.forEach((asset: any) => {
+      const name = `"${(asset.name || asset.title || "").replace(/"/g, '""')}"`;
+      const type = `"${(asset.type || asset.category || "").replace(/"/g, '""')}"`;
+      const inst = `"${(asset.institution || asset.memo || "").replace(/"/g, '""')}"`;
+      lines.push(`${name},${type},${asset.amount || asset.value || 0},${inst}`);
+    });
+  }
+  lines.push(`\n`);
+
+  // 4. 지독한 일기 히스토리
+  lines.push(`[4. 지독한 감사 일기 히스토리]`);
+  lines.push(`날짜,기분(척도),일기 본문`);
+  if (Array.isArray(d.archivedDiaries)) {
+    d.archivedDiaries.forEach((diary: any) => {
+      const content = `"${(diary.text || diary.content || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+      lines.push(`${diary.date || ""},${diary.mood || ""},${content}`);
+    });
+  }
+  lines.push(`\n`);
+
+  // 5. 헬스 1RM 및 신체지표
+  lines.push(`[5. 헬스 1RM 및 신체지표]`);
+  lines.push(`종목/항목,수치(kg/횟수),측정일자,메모`);
+  if (Array.isArray(d.workout1RM)) {
+    d.workout1RM.forEach((w: any) => {
+      lines.push(`1RM-${w.exercise || ""},${w.calculated1RM || w.weight || 0}kg,${w.date || ""},"${(w.notes || "").replace(/"/g, '""')}"`);
+    });
+  }
+  if (Array.isArray(d.healthMetrics)) {
+    d.healthMetrics.forEach((m: any) => {
+      lines.push(`체중,${m.weight}kg,${m.date || ""},"골격근 ${m.muscleMass || 0}kg / 체지방 ${m.fatRatio || 0}%"`);
+    });
+  }
+
+  return BOM + lines.join("\r\n");
+}
+
+/**
  * Trigger immediate browser download of the entire raw JSON backup
  */
 export function downloadBackupFile(): void {
@@ -86,6 +169,81 @@ export function downloadBackupFile(): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Trigger immediate browser download of the Excel backup file (.csv)
+ */
+export function downloadExcelBackupFile(): void {
+  const csvContent = generateExcelCSV();
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const dateStr = new Date().toISOString().split("T")[0];
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `life-os-monthly-backup-${dateStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Trigger Monthly Backup & Email Dispatch to imidoing@naver.com
+ */
+export async function sendMonthlyBackupEmail(targetEmail: string = "imidoing@naver.com"): Promise<{ success: boolean; message: string }> {
+  // 1. Download Excel file immediately
+  downloadExcelBackupFile();
+
+  // 2. Prepare mailto link with summary
+  const backup = exportAllLocalData();
+  const d = backup.data;
+  const dateStr = new Date().toISOString().split("T")[0];
+  const subject = encodeURIComponent(`[Life-OS 월간 데이터 백업] ${dateStr} 전체 데이터 보고서`);
+  const bodyText = `안녕하세요, Life-OS 월간 자동 백업 보고서입니다.
+
+■ 백업 일시: ${new Date().toLocaleString("ko-KR")}
+■ 수신 대상: ${targetEmail}
+
+[도메인별 백업 통계]
+• 1초 복사 메모: ${d.essentialInfo?.length || 0}개
+• 가계부 지출 내역: ${d.financialLogs?.length || 0}건
+• 자산 항목: ${d.assets?.length || 0}개
+• 지독한 일기: ${d.archivedDiaries?.length || 0}편
+• 헬스 1RM 기록: ${d.workout1RM?.length || 0}개
+• 신체 지표 기록: ${d.healthMetrics?.length || 0}개
+
+다운로드 폴더에 자동 저장된 'life-os-monthly-backup-${dateStr}.csv' 엑셀 백업 파일을 확인해 주세요.
+`;
+  const body = encodeURIComponent(bodyText);
+
+  // 3. Try Web Share API with file if supported on Mobile
+  if (typeof navigator !== "undefined" && "share" in navigator && "canShare" in navigator) {
+    try {
+      const csvContent = generateExcelCSV();
+      const file = new File([csvContent], `life-os-monthly-backup-${dateStr}.csv`, { type: "text/csv" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `Life-OS 엑셀 백업 (${dateStr})`,
+          text: `imidoing@naver.com으로 발송할 Life-OS 월간 엑셀 백업 파일입니다.`,
+          files: [file],
+        });
+        return { success: true, message: "모바일 이메일/앱으로 엑셀 파일 공유가 실행되었습니다!" };
+      }
+    } catch {
+      // fallback to mailto
+    }
+  }
+
+  // Fallback to mailto link
+  const mailtoUrl = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
+  window.open(mailtoUrl, "_blank");
+
+  return {
+    success: true,
+    message: `엑셀 백업 파일이 다운로드되었으며, ${targetEmail} 메일 전송 창이 열렸습니다!`,
+  };
 }
 
 /**
