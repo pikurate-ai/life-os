@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Activity, Heart, Scale, Plus, RefreshCw, Footprints, Flame, Check, CheckCircle2, Clock, TrendingDown, TrendingUp, Waves, Dumbbell, Trash2 } from "lucide-react";
+import { Activity, Heart, Scale, Plus, RefreshCw, Footprints, Flame, Check, CheckCircle2, Clock, TrendingDown, TrendingUp, Waves, Dumbbell, Trash2, Edit3, X, Info } from "lucide-react";
 import {
   onAuthChanged,
   saveHealthMetricsToCloud,
@@ -9,7 +9,7 @@ import {
   subscribeHealthMetricsFromCloud,
   mergeItemsById,
 } from "@/lib/firebase/client";
-import { HealthKitData, getStoredHealthData, syncHealthKit } from "@/lib/healthkit/healthKitBridge";
+import { HealthKitData, getStoredHealthData, saveStoredHealthData, syncHealthKit } from "@/lib/healthkit/healthKitBridge";
 import { triggerVibration } from "@/lib/notifications/ruthlessAlarm";
 
 export interface BodyMetric {
@@ -49,6 +49,16 @@ export const BodyMetricsCard: React.FC = () => {
     new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })
   );
   const [newNotes, setNewNotes] = useState<string>("기상 직후 공복 측정");
+
+  // HealthKit direct user edit state
+  const [showHealthEditModal, setShowHealthEditModal] = useState(false);
+  const [editActiveCalories, setEditActiveCalories] = useState<number>(healthKitData.activeCalories);
+  const [editSwimmingCalories, setEditSwimmingCalories] = useState<number>(380);
+  const [editSwimmingMeters, setEditSwimmingMeters] = useState<number>(healthKitData.swimmingDistanceMeters);
+  const [editSwimmingMinutes, setEditSwimmingMinutes] = useState<number>(healthKitData.swimmingMinutes);
+  const [editSteps, setEditSteps] = useState<number>(healthKitData.stepCount);
+  const [editMaxHr, setEditMaxHr] = useState<number>(healthKitData.maxHeartRate);
+  const [editWorkoutMinutes, setEditWorkoutMinutes] = useState<number>(healthKitData.totalWorkoutMinutes);
 
   useEffect(() => {
     try {
@@ -162,6 +172,53 @@ export const BodyMetricsCard: React.FC = () => {
     setSyncStatus(res.message);
     triggerVibration([80, 50, 80]);
     setTimeout(() => setSyncStatus(null), 3500);
+  };
+
+  const openHealthEditModal = () => {
+    setEditActiveCalories(healthKitData.activeCalories);
+    setEditSwimmingCalories(healthKitData.todayWorkouts[0]?.caloriesBurned || 380);
+    setEditSwimmingMeters(healthKitData.swimmingDistanceMeters || 1250);
+    setEditSwimmingMinutes(healthKitData.swimmingMinutes || 45);
+    setEditSteps(healthKitData.stepCount);
+    setEditMaxHr(healthKitData.maxHeartRate);
+    setEditWorkoutMinutes(healthKitData.totalWorkoutMinutes);
+    setShowHealthEditModal(true);
+    triggerVibration(40);
+  };
+
+  const handleSaveHealthEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const timeNow = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    const updated: HealthKitData = {
+      ...healthKitData,
+      activeCalories: editActiveCalories,
+      swimmingDistanceMeters: editSwimmingMeters,
+      swimmingMinutes: editSwimmingMinutes,
+      stepCount: editSteps,
+      maxHeartRate: editMaxHr,
+      totalWorkoutMinutes: editWorkoutMinutes,
+      lastSyncTime: `${timeNow} (직접 수정)`,
+      source: "apple_healthkit",
+      todayWorkouts: [
+        {
+          type: "아침 수영 (자유형/평영)",
+          durationMin: editSwimmingMinutes,
+          caloriesBurned: editSwimmingCalories,
+          distanceMeters: editSwimmingMeters,
+          maxHeartRate: editMaxHr,
+          avgHeartRate: Math.max(100, editMaxHr - 30),
+          timeString: "06:40 - 07:25",
+        },
+        ...(healthKitData.todayWorkouts.slice(1) || []),
+      ],
+    };
+
+    setHealthKitData(updated);
+    saveStoredHealthData(updated);
+    setShowHealthEditModal(false);
+    setSyncStatus("오늘의 실제 건강 지표가 정상적으로 저장되었습니다!");
+    triggerVibration([80, 40, 80]);
+    setTimeout(() => setSyncStatus(null), 3000);
   };
 
   // Most recent weight entry
@@ -305,16 +362,36 @@ export const BodyMetricsCard: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleSyncHealthKit}
-            disabled={isSyncing}
-            className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs flex items-center gap-1 border border-zinc-800 transition-all"
-            title="애플 건강 데이터 실시간 갱신"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isSyncing ? "animate-spin" : ""}`} />
-            <span className="text-[11px] font-bold">동기화</span>
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={openHealthEditModal}
+              className="px-2.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-bold flex items-center gap-1 border border-indigo-500/30 transition-all shrink-0 whitespace-nowrap min-h-[36px]"
+              title="내 실제 건강 수치 직접 수정"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>수치 수정</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSyncHealthKit}
+              disabled={isSyncing}
+              className="px-2.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs flex items-center gap-1 border border-zinc-800 transition-all shrink-0 whitespace-nowrap min-h-[36px]"
+              title="애플 건강 데이터 실시간 갱신"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isSyncing ? "animate-spin" : ""}`} />
+              <span className="font-bold">동기화</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Apple Health Web Notice Banner */}
+        <div className="p-2.5 rounded-xl bg-blue-950/30 border border-blue-500/20 text-[11px] text-zinc-300 flex items-start gap-2">
+          <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <div className="leading-relaxed">
+            <span className="text-blue-300 font-bold block mb-0.5">실제 애플 건강 데이터 반영 안내:</span>
+            아이폰 Safari 브라우저는 애플 보안 정책상 네이티브 건강 앱의 비공개 DB 자동 읽기를 제한합니다. 오늘 실제 건강 앱의 <strong>수영 칼로리·시간·심박수</strong>를 우측 상단 <strong>[수치 수정]</strong> 버튼으로 입력하시면 기기와 클라우드에 실제 수치로 영구 보존됩니다!
+          </div>
         </div>
 
         {syncStatus && (
@@ -390,7 +467,9 @@ export const BodyMetricsCard: React.FC = () => {
                   </div>
                   <div>
                     <h5 className="text-xs font-bold text-white">아침 수영 (자유형/평영)</h5>
-                    <span className="text-[10px] text-zinc-400 font-mono">06:40 - 07:25 (45분)</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">
+                      06:40 - 07:25 ({healthKitData.swimmingMinutes}분)
+                    </span>
                   </div>
                 </div>
                 <span className="text-[11px] font-bold text-cyan-300 font-mono">
@@ -398,9 +477,9 @@ export const BodyMetricsCard: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center justify-between text-[11px] text-zinc-300 pt-1 border-t border-white/5 font-mono">
-                <span>소모 380 kcal</span>
-                <span>최대 심박 168 bpm</span>
-                <span>25m 풀 50바퀴</span>
+                <span>소모 {healthKitData.todayWorkouts[0]?.caloriesBurned || 380} kcal</span>
+                <span>최대 심박 {healthKitData.todayWorkouts[0]?.maxHeartRate || healthKitData.maxHeartRate} bpm</span>
+                <span>{healthKitData.swimmingDistanceMeters > 0 ? `${Math.round(healthKitData.swimmingDistanceMeters / 25)}바퀴` : "완주"}</span>
               </div>
             </div>
 
@@ -526,6 +605,145 @@ export const BodyMetricsCard: React.FC = () => {
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30"
               >
                 저장하기
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal: Direct HealthKit Metrics Edit */}
+      {showHealthEditModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveHealthEdit}
+            className="bg-[#12141c] border border-zinc-800 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+              <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <Edit3 className="w-4 h-4 text-indigo-400" />
+                내 실제 운동 & 건강 데이터 직접 입력
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowHealthEditModal(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              아이폰 건강 앱에서 오늘 확인하신 실제 수치를 입력하세요. 저장 즉시 라이프 OS에 반영되고 영구 보존됩니다.
+            </p>
+
+            <div className="space-y-3">
+              {/* Active Calories */}
+              <div>
+                <label className="text-xs text-rose-400 font-bold block mb-1">오늘 총 활동 칼로리 (kcal)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={10000}
+                  value={editActiveCalories}
+                  onChange={(e) => setEditActiveCalories(parseInt(e.target.value) || 0)}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                  required
+                />
+              </div>
+
+              {/* Swimming Calories & Distance */}
+              <div className="p-3 rounded-2xl bg-blue-950/20 border border-blue-500/20 space-y-2.5">
+                <span className="text-xs font-bold text-cyan-300 block">🏊 아침 수영 세션 실제 수치</span>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">수영 소모 칼로리 (kcal)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={editSwimmingCalories}
+                      onChange={(e) => setEditSwimmingCalories(parseInt(e.target.value) || 0)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">수영 거리 (미터)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={25}
+                      value={editSwimmingMeters}
+                      onChange={(e) => setEditSwimmingMeters(parseInt(e.target.value) || 0)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-zinc-400 block mb-1">수영 진행 시간 (분)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editSwimmingMinutes}
+                    onChange={(e) => setEditSwimmingMinutes(parseInt(e.target.value) || 0)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Steps & Workout minutes */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">오늘 걸음 수 (보)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editSteps}
+                    onChange={(e) => setEditSteps(parseInt(e.target.value) || 0)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">최대 심박수 (bpm)</label>
+                  <input
+                    type="number"
+                    min={40}
+                    max={230}
+                    value={editMaxHr}
+                    onChange={(e) => setEditMaxHr(parseInt(e.target.value) || 0)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">오늘 총 운동 시간 (분)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={editWorkoutMinutes}
+                  onChange={(e) => setEditWorkoutMinutes(parseInt(e.target.value) || 0)}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setShowHealthEditModal(false)}
+                className="px-3 py-2 rounded-xl text-xs text-zinc-400 hover:text-white"
+              >
+                닫기
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>실제 수치로 저장</span>
               </button>
             </div>
           </form>

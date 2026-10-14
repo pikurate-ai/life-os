@@ -14,26 +14,26 @@ export const FinanceHub: React.FC = () => {
       <div className="flex bg-[#12141c] p-1 rounded-2xl border border-[#1f2433]">
         <button
           onClick={() => setSubTab("ledger")}
-          className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap shrink-0 min-h-[38px] ${
             subTab === "ledger"
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <Receipt className="w-3.5 h-3.5" />
-          <span>문자 파싱 가계부</span>
+          <Receipt className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap">문자 파싱 가계부</span>
         </button>
 
         <button
           onClick={() => setSubTab("asset")}
-          className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap shrink-0 min-h-[38px] ${
             subTab === "asset"
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-zinc-400 hover:text-white"
           }`}
         >
-          <Wallet className="w-3.5 h-3.5" />
-          <span>총자산 대시보드</span>
+          <Wallet className="w-3.5 h-3.5 shrink-0" />
+          <span className="whitespace-nowrap">총자산 대시보드</span>
         </button>
       </div>
 

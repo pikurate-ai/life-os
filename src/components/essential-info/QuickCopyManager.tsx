@@ -542,7 +542,7 @@ export const QuickCopyManager: React.FC = () => {
           }`}
         >
           <Copy className="w-3.5 h-3.5 shrink-0" />
-          <span className="whitespace-nowrap">1초 복사</span>
+          <span className="whitespace-nowrap">기억</span>
         </button>
 
         <button
@@ -712,11 +712,11 @@ export const QuickCopyManager: React.FC = () => {
                   </p>
                 </div>
 
-                {/* 1초 복사 CTA 버튼 */}
+                {/* 복사 CTA 버튼 */}
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleCopyAndPromote(item); }}
-                  className={`shrink-0 px-3.5 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all min-w-[60px] ${
+                  className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all min-w-[62px] ${
                     isCopied
                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                       : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/40"
@@ -725,12 +725,12 @@ export const QuickCopyManager: React.FC = () => {
                   {isCopied ? (
                     <>
                       <Check className="w-4 h-4" />
-                      <span className="whitespace-nowrap">복사됨</span>
+                      <span className="whitespace-nowrap font-bold">완료</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      <span className="whitespace-nowrap">1초복사</span>
+                      <span className="whitespace-nowrap font-bold">복사</span>
                     </>
                   )}
                 </button>

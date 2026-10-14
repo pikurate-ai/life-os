@@ -2,9 +2,9 @@
   <defs>
     <!-- Background Obsidian Gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f111a" />
-      <stop offset="50%" stop-color="#090a0f" />
-      <stop offset="100%" stop-color="#050608" />
+      <stop offset="0%" stop-color="#0e1017" />
+      <stop offset="50%" stop-color="#08090d" />
+      <stop offset="100%" stop-color="#040507" />
     </linearGradient>
 
     <!-- Core Dynamic Neon Gradient -->
@@ -35,18 +35,18 @@
   <path d="M 40 115 C 40 70 70 40 115 40 L 397 40 C 442 40 472 70 472 115 C 380 160 200 170 40 115 Z" fill="rgba(255, 255, 255, 0.03)" />
 
   <!-- Glowing Aura behind symbol -->
-  <circle cx="256" cy="256" r="140" fill="#6366f1" opacity="0.12" filter="url(#coreGlow)" />
-  <circle cx="280" cy="240" r="100" fill="#06b6d4" opacity="0.1" filter="url(#coreGlow)" />
+  <circle cx="256" cy="256" r="160" fill="#6366f1" opacity="0.16" filter="url(#coreGlow)" />
+  <circle cx="280" cy="240" r="120" fill="#06b6d4" opacity="0.14" filter="url(#coreGlow)" />
 
-  <!-- Life-OS Master Core: Interlocking Dynamic Hexa-Ring -->
-  <g transform="translate(256, 256)">
+  <!-- Life-OS Master Core: Scaled up to fill the icon without text -->
+  <g transform="translate(256, 256) scale(1.35)">
     <!-- Outer Orbit Ring -->
-    <circle cx="0" cy="0" r="135" fill="none" stroke="rgba(255, 255, 255, 0.06)" stroke-width="3" stroke-dasharray="16 12" />
+    <circle cx="0" cy="0" r="135" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="3" stroke-dasharray="16 12" />
 
     <!-- Pulse Node Outer Points -->
-    <circle cx="0" cy="-135" r="5" fill="#818cf8" />
-    <circle cx="117" cy="68" r="5" fill="#38bdf8" />
-    <circle cx="-117" cy="68" r="5" fill="#34d399" />
+    <circle cx="0" cy="-135" r="6" fill="#818cf8" />
+    <circle cx="117" cy="68" r="6" fill="#38bdf8" />
+    <circle cx="-117" cy="68" r="6" fill="#34d399" />
 
     <!-- Isometric Geometric Core (Precision L & Shield) -->
     <!-- Wing Left -->
@@ -54,13 +54,10 @@
     <!-- Wing Right Bottom (L-Bar) -->
     <path d="M -15 52 L 75 104 L 75 60 L -15 8 Z" fill="url(#glowAccent)" />
     <!-- Dynamic Infinity Hook -->
-    <path d="M -15 -107 L 70 -58 L 70 15 L 25 -10 L 25 -32 L -15 -55 Z" fill="#ffffff" opacity="0.9" />
+    <path d="M -15 -107 L 70 -58 L 70 15 L 25 -10 L 25 -32 L -15 -55 Z" fill="#ffffff" opacity="0.95" />
 
     <!-- Central Fusion Core Pulse -->
-    <circle cx="5" cy="5" r="22" fill="#06b6d4" filter="url(#coreGlow)" opacity="0.85" />
-    <circle cx="5" cy="5" r="12" fill="#ffffff" />
+    <circle cx="5" cy="5" r="24" fill="#06b6d4" filter="url(#coreGlow)" opacity="0.9" />
+    <circle cx="5" cy="5" r="13" fill="#ffffff" />
   </g>
-
-  <!-- High-end Micro Brandmark at base -->
-  <text x="256" y="445" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="28" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="6" opacity="0.9">LIFE·OS</text>
 </svg>

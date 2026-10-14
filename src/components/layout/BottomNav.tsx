@@ -4,7 +4,7 @@ import React from "react";
 import { LayoutDashboard, Copy, BookOpen, Wallet, KeyRound, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type TabType = "dashboard" | "quickcopy" | "diary" | "finance" | "vault" | "health";
+export type TabType = "quickcopy" | "diary" | "finance" | "vault" | "health" | "dashboard";
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -13,8 +13,7 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) => {
   const tabs: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[] = [
-    { id: "dashboard", label: "홈", icon: LayoutDashboard },
-    { id: "quickcopy", label: "1초복사", icon: Copy },
+    { id: "quickcopy", label: "기억", icon: Copy },
     { id: "diary", label: "일기", icon: BookOpen },
     { id: "finance", label: "가계/자산", icon: Wallet },
     { id: "vault", label: "암호금고", icon: KeyRound },

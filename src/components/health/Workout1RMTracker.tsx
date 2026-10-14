@@ -279,41 +279,53 @@ export const Workout1RMTracker: React.FC = () => {
         </div>
 
         {/* Set-by-Set Dynamic Reps Control */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between text-xs text-zinc-300">
-            <span className="font-semibold">세트별 수행 횟수 (Reps):</span>
+            <span className="font-semibold whitespace-nowrap">세트별 수행 횟수 (Reps):</span>
             <button
               type="button"
               onClick={handleAddSet}
-              className="text-xs px-2.5 py-1 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold border border-indigo-500/30 flex items-center gap-1"
+              className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold border border-indigo-400/30 flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-sm min-h-[32px] transition-all active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>세트 추가</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="space-y-2">
             {activeSets.map((repsCount, idx) => (
               <div
                 key={idx}
-                className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-2.5 flex items-center justify-between gap-1 shadow-sm"
+                className="bg-zinc-900/95 border border-zinc-800 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 shadow-sm"
               >
-                <div className="min-w-0">
-                  <span className="text-[10px] text-zinc-400 block">{idx + 1}세트</span>
-                  <span className="text-base font-black text-white font-mono">{repsCount}회</span>
+                {/* Left: Set label & Reps counter */}
+                <div className="flex items-center gap-3 min-w-0 shrink-0">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 whitespace-nowrap shrink-0">
+                    {idx + 1}세트
+                  </span>
+                  <div className="flex items-baseline gap-1 whitespace-nowrap">
+                    <span className="text-2xl font-black text-white font-mono leading-none tracking-tight">
+                      {repsCount}
+                    </span>
+                    <span className="text-xs text-zinc-400 font-bold">회</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
+
+                {/* Right: Generous touch target + / - / delete buttons */}
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => handleSetChange(idx, -1)}
-                    className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold flex items-center justify-center transition-colors"
+                    aria-label={`${idx + 1}세트 1회 감소`}
+                    className="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-zinc-200 text-base font-black flex items-center justify-center transition-all select-none border border-zinc-700/60 shadow-inner"
                   >
                     -
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSetChange(idx, 1)}
-                    className="w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center transition-colors"
+                    aria-label={`${idx + 1}세트 1회 증가`}
+                    className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-base font-black flex items-center justify-center transition-all select-none shadow-md shadow-indigo-900/40"
                   >
                     +
                   </button>
@@ -321,9 +333,10 @@ export const Workout1RMTracker: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveSet(idx)}
-                      className="w-6 h-6 rounded-lg text-zinc-500 hover:text-rose-400 flex items-center justify-center text-[10px]"
+                      aria-label={`${idx + 1}세트 삭제`}
+                      className="w-8 h-8 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center text-sm font-bold ml-1 transition-colors"
                     >
-                      ×
+                      ✕
                     </button>
                   )}
                 </div>

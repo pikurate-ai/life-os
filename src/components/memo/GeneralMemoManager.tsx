@@ -416,11 +416,11 @@ export const GeneralMemoManager: React.FC = () => {
         </div>
 
         {/* Row 2: 기능 설명 뱃지 */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap shrink-0">
             ⚡ 클릭 시 최상단 자동 이동
           </span>
-          <span className="text-[10px] text-zinc-500">자주 쓰는 메모가 항상 위에 노출됩니다</span>
+          <span className="text-[10px] text-zinc-500 whitespace-nowrap">자주 쓰는 메모가 항상 위에 노출됩니다</span>
         </div>
 
         {/* Expandable Fast Memo Composer */}

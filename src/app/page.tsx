@@ -12,16 +12,32 @@ import { HealthHub } from "@/components/health/HealthHub";
 import { DataSyncHub } from "@/components/sync/DataSyncHub";
 import { ArrowLeft } from "lucide-react";
 
+const LAST_TAB_KEY = "life_os_last_active_tab";
+
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>("dashboard");
+  const [activeTab, setActiveTab] = useState<TabType>("quickcopy");
   const [showSyncHub, setShowSyncHub] = useState<boolean>(false);
+
+  // Restore last active tab on mount
+  React.useEffect(() => {
+    try {
+      const savedTab = localStorage.getItem(LAST_TAB_KEY) as TabType | null;
+      if (savedTab && savedTab !== "dashboard" && ["quickcopy", "diary", "finance", "vault", "health"].includes(savedTab)) {
+        setActiveTab(savedTab);
+      } else {
+        setActiveTab("quickcopy");
+      }
+    } catch {
+      setActiveTab("quickcopy");
+    }
+  }, []);
 
   const getHeaderTitle = () => {
     if (showSyncHub) return "데이터 싱크 센터";
 
     switch (activeTab) {
       case "quickcopy":
-        return "필수 정보 1초 복사";
+        return "기억 (필수 정보)";
       case "diary":
         return "지독한 일기 & 루틴";
       case "finance":
@@ -29,18 +45,18 @@ export default function Home() {
       case "vault":
         return "암호화 Vault 매니저";
       case "health":
-        return "헬스 1RM & 라이프 아카이브";
+        return "헬스 1RM & 피트니스";
       default:
-        return "Life-OS";
+        return "기억 (필수 정보)";
     }
   };
 
   const getHeaderSubtitle = () => {
-    if (showSyncHub) return "구글 시트·닥스 & 카카오톡 실시간 연동";
+    if (showSyncHub) return "구글 시트·닥스 & 로우데이터 파일 연동";
 
     switch (activeTab) {
       case "quickcopy":
-        return "터치 즉시 클립보드에 복사";
+        return "원터치로 즉시 클립보드에 복사";
       case "diary":
         return "일기 쓸 때까지 울리는 알람 & 스트릭";
       case "finance":
@@ -48,15 +64,19 @@ export default function Home() {
       case "vault":
         return "Web Crypto AES-256 Zero-Knowledge";
       case "health":
-        return "3대 1RM Epley 공식 & 신체 지표 & 일기 아카이브 & 인생샷";
+        return "턱걸이 성장 & 체중 & 수영·운동 지표";
       default:
-        return "Single View Personal Operating System";
+        return "원터치로 즉시 클립보드에 복사";
     }
   };
 
   const handleTabChange = (tab: TabType) => {
     setShowSyncHub(false);
-    setActiveTab(tab);
+    const targetTab = tab === "dashboard" ? "quickcopy" : tab;
+    setActiveTab(targetTab);
+    try {
+      localStorage.setItem(LAST_TAB_KEY, targetTab);
+    } catch {}
   };
 
   return (
