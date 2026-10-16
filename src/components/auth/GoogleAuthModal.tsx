@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Sparkles,
   AlertTriangle,
   UserCheck,
   Smartphone,
@@ -38,9 +37,19 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
   const [copiedDomain, setCopiedDomain] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
-  // 1-Person Master Profile form
-  const [masterName, setMasterName] = useState("JU (주성빈)");
-  const [masterEmail, setMasterEmail] = useState("leo.song.life@gmail.com");
+  // 1-Person Master Profile form (Remembered from localStorage)
+  const [masterName, setMasterName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("life_os_last_auth_name") || "";
+    }
+    return "";
+  });
+  const [masterEmail, setMasterEmail] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("life_os_last_auth_email") || "";
+    }
+    return "";
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -48,18 +57,16 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
       const savedName = localStorage.getItem("life_os_last_auth_name");
       const localMaster = getLocalMasterUser();
 
-      if (localMaster?.email) {
-        setMasterEmail(localMaster.email);
-      } else if (savedEmail) {
-        setMasterEmail(savedEmail);
-      } else {
-        setMasterEmail("leo.song.life@gmail.com");
-      }
-
       if (localMaster?.displayName) {
         setMasterName(localMaster.displayName);
       } else if (savedName) {
         setMasterName(savedName);
+      }
+
+      if (localMaster?.email) {
+        setMasterEmail(localMaster.email);
+      } else if (savedEmail) {
+        setMasterEmail(savedEmail);
       }
     }
   }, [isOpen]);
@@ -108,20 +115,27 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
 
   // Handle 1-Person Instant Master User Connect
   const handleInstantMasterLogin = async () => {
-    const email = masterEmail.trim().toLowerCase() || "leo.song.life@gmail.com";
-    const name = masterName.trim() || "JU (주성빈)";
+    const email = masterEmail.trim().toLowerCase();
+    const name = masterName.trim();
+
+    if (!email) {
+      setErrorMessage("연동할 이메일을 입력해주세요 (예: user@gmail.com).");
+      return;
+    }
+
+    const finalName = name || email.split("@")[0] || "사용자";
     const uid = getSyncUserId(email);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("life_os_last_auth_name", name);
+      localStorage.setItem("life_os_last_auth_name", finalName);
       localStorage.setItem("life_os_last_auth_email", email);
     }
 
     setLocalMasterUser({
       uid,
-      displayName: name,
+      displayName: finalName,
       email,
-      photoURL: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(name),
+      photoURL: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(finalName),
       isLocalMaster: true,
     });
 
@@ -145,8 +159,10 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
     setLoading(true);
     setSyncStatus("클라우드 Firestore와 강제 전체 재동기화 중...");
     try {
-      const email = masterEmail.trim().toLowerCase() || "leo.song.life@gmail.com";
-      await syncAllModulesFromCloud(email);
+      const email = masterEmail.trim().toLowerCase() || (typeof window !== "undefined" ? localStorage.getItem("life_os_last_auth_email") || "" : "");
+      if (email) {
+        await syncAllModulesFromCloud(email);
+      }
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("life_os_auth_change"));
       }
@@ -190,7 +206,6 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
               <span className="text-[10px] font-mono uppercase bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">
                 Universal Cloud Sync
               </span>
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <h3 className="text-base font-black text-white mt-1">계정 연동 & 클라우드 실시간 동기화</h3>
           </div>
@@ -205,7 +220,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
             </span>
             <div>
               <span className="text-[10px] text-zinc-400 block">클라우드 Firestore 매핑 키</span>
-              <span className="font-mono text-emerald-400 font-bold text-[11px]">{computedDocId || "usr_leo_song_life_gmail_com"}</span>
+              <span className="font-mono text-emerald-400 font-bold text-[11px]">{computedDocId || "usr_user_gmail_com"}</span>
             </div>
           </div>
           <span className="text-[9px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">
@@ -253,6 +268,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
               <label className="text-[10px] text-zinc-400 block mb-1">사용자 이름</label>
               <input
                 type="text"
+                placeholder="이름 또는 닉네임"
                 value={masterName}
                 onChange={(e) => setMasterName(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm sm:text-xs text-white"
@@ -262,9 +278,10 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
               <label className="text-[10px] text-zinc-400 block mb-1">연동 이메일 (계정 키)</label>
               <input
                 type="email"
+                placeholder="user@gmail.com"
                 value={masterEmail}
                 onChange={(e) => setMasterEmail(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm sm:text-xs text-white"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm sm:text-xs text-white font-mono"
               />
             </div>
           </div>

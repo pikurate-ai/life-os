@@ -112,7 +112,21 @@ export function getLocalMasterUser(): MasterProfile | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(LOCAL_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (raw) return JSON.parse(raw);
+
+    // Fallback to remembered credentials if available
+    const savedEmail = localStorage.getItem("life_os_last_auth_email");
+    const savedName = localStorage.getItem("life_os_last_auth_name");
+    if (savedEmail && savedName) {
+      return {
+        uid: getSyncUserId(savedEmail),
+        displayName: savedName,
+        email: savedEmail,
+        photoURL: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(savedName),
+        isLocalMaster: true,
+      };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -126,6 +140,10 @@ export function setLocalMasterUser(user: MasterProfile | null): void {
     localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
     if (user.email) {
       localStorage.setItem(LAST_AUTH_EMAIL_KEY, user.email.toLowerCase().trim());
+      localStorage.setItem("life_os_last_auth_email", user.email.toLowerCase().trim());
+    }
+    if (user.displayName) {
+      localStorage.setItem("life_os_last_auth_name", user.displayName);
     }
   }
   window.dispatchEvent(new CustomEvent("life_os_auth_change"));
@@ -136,10 +154,14 @@ export async function signInWithGoogle(): Promise<User> {
   googleProvider.setCustomParameters({ prompt: "select_account" });
   const result = await signInWithPopup(auth, googleProvider);
   if (result.user) {
+    const name = result.user.displayName || result.user.email?.split("@")[0] || "사용자";
+    const email = result.user.email || "user@gmail.com";
+    localStorage.setItem("life_os_last_auth_name", name);
+    localStorage.setItem("life_os_last_auth_email", email.toLowerCase().trim());
     setLocalMasterUser({
       uid: result.user.uid,
-      displayName: result.user.displayName || "Life-OS 사용자",
-      email: result.user.email || "user@gmail.com",
+      displayName: name,
+      email: email,
       photoURL: result.user.photoURL || undefined,
     });
   }
@@ -169,10 +191,14 @@ export function onAuthChanged(callback: (user: any | null) => void) {
     getRedirectResult(auth)
       .then((res) => {
         if (res?.user) {
+          const name = res.user.displayName || res.user.email?.split("@")[0] || "사용자";
+          const email = res.user.email || "user@gmail.com";
+          localStorage.setItem("life_os_last_auth_name", name);
+          localStorage.setItem("life_os_last_auth_email", email.toLowerCase().trim());
           setLocalMasterUser({
             uid: res.user.uid,
-            displayName: res.user.displayName || "Life-OS 사용자",
-            email: res.user.email || "user@gmail.com",
+            displayName: name,
+            email: email,
             photoURL: res.user.photoURL || undefined,
           });
           callback(res.user);
@@ -183,8 +209,12 @@ export function onAuthChanged(callback: (user: any | null) => void) {
 
   const unsubscribeFirebase = onAuthStateChanged(auth, (fbUser) => {
     if (fbUser) {
+      if (fbUser.displayName) {
+        localStorage.setItem("life_os_last_auth_name", fbUser.displayName);
+      }
       if (fbUser.email) {
         localStorage.setItem(LAST_AUTH_EMAIL_KEY, fbUser.email.toLowerCase().trim());
+        localStorage.setItem("life_os_last_auth_email", fbUser.email.toLowerCase().trim());
       }
       callback(fbUser);
     } else {
