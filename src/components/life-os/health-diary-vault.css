@@ -1,0 +1,663 @@
+.hdv-header-actions,
+.hdv-inline,
+.hdv-row-actions,
+.hdv-list-heading,
+.hdv-record,
+.hdv-health-banner,
+.hdv-vault-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.hdv-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.hdv-inline {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hdv-between {
+  justify-content: space-between;
+}
+.hdv-grow {
+  flex: 1;
+  min-width: 0;
+}
+.hdv-row-actions {
+  flex-shrink: 0;
+  gap: 3px;
+}
+.hdv-break {
+  overflow-wrap: anywhere;
+}
+.hdv-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hdv-health h3,
+.hdv-diary h3,
+.hdv-vault h3 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.45px;
+  margin: 0 0 5px;
+}
+.hdv-health p,
+.hdv-diary p,
+.hdv-vault p {
+  margin-top: 5px;
+  margin-bottom: 0;
+  line-height: 1.7;
+}
+.hdv-list-heading {
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.hdv-filter {
+  max-width: 200px;
+}
+.hdv-record {
+  gap: 14px;
+  padding: 20px 0;
+}
+.hdv-record-icon,
+.hdv-symbol {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef4ee;
+  color: #386750;
+  flex-shrink: 0;
+}
+.hdv-blue {
+  background: #ecf3f9;
+  color: #5680a1;
+}
+.hdv-record-detail {
+  font-size: 14px;
+  color: #53635a;
+  overflow-wrap: anywhere;
+}
+.hdv-health-banner {
+  gap: 16px;
+  background: #f8faf7;
+}
+.hdv-health-banner > .badge {
+  margin-left: auto;
+}
+.hdv-search {
+  border: 1px solid #e3e7e0;
+  background: #fcfdfb;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  width: min(320px, 100%);
+  padding: 10px 13px;
+  border-radius: 10px;
+  color: #8a9389;
+}
+.hdv-search:focus-within {
+  border-color: #638a71;
+  box-shadow: 0 0 0 3px #38675012;
+}
+.hdv-search input {
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-size: 13px;
+  color: #263a31;
+  min-width: 0;
+  width: 100%;
+}
+.hdv-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.hdv-error {
+  padding: 11px 14px;
+  border: 1px solid #f0d6d0;
+  background: #fff5f2;
+  color: #a14132;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.hdv-info,
+.hdv-warning {
+  padding: 15px 17px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px solid #dfe9dc;
+  background: #f2f7ef;
+  border-radius: 12px;
+  color: #4c6b47;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.hdv-info > svg,
+.hdv-warning > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.hdv-warning {
+  background: #fbf7ec;
+  border-color: #ede3c9;
+  color: #886b35;
+}
+.hdv-diary-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  background: #fafbf7;
+}
+.hdv-diary-intro h3 {
+  font-size: 23px;
+  margin: 17px 0 11px;
+  line-height: 1.55;
+  letter-spacing: -0.9px;
+}
+.hdv-diary-intro p {
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.hdv-diary-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 195px;
+  flex-shrink: 0;
+  border-left: 1px solid #e4e9df;
+  padding-left: 28px;
+  color: #6e8766;
+}
+.hdv-diary-count strong {
+  font-size: 46px;
+  color: #386750;
+  letter-spacing: -2px;
+  line-height: 1.2;
+}
+.hdv-diary-count strong span {
+  font-size: 16px;
+  letter-spacing: 0;
+  margin-left: 5px;
+}
+.hdv-diary-count > span {
+  text-align: center;
+  line-height: 1.6;
+}
+.hdv-diary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.hdv-diary-entry {
+  padding: 21px 22px;
+  border: 1px solid #e6e9e3;
+  border-radius: 13px;
+  min-width: 0;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+.hdv-diary-entry:hover {
+  border-color: #bdcdbb;
+}
+.hdv-mood-tag {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.hdv-entry-open {
+  background: none;
+  border: 0;
+  display: block;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.hdv-entry-open h4 {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 15px 0 7px;
+  overflow-wrap: anywhere;
+  letter-spacing: -0.3px;
+}
+.hdv-entry-open p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #778174;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  min-height: 74px;
+  white-space: pre-line;
+}
+.hdv-gratitude {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px 11px;
+  background: #f5f7f1;
+  color: #748361;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 17px;
+}
+.hdv-gratitude svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.hdv-gratitude span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.hdv-entry-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+.hdv-entry-footer > .text-small {
+  font-size: 10px;
+}
+.hdv-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.hdv-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.hdv-mood-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.hdv-mood {
+  padding: 12px 4px 11px;
+  border-radius: 11px;
+  border: 1px solid #e6e9e3;
+  background: #fff;
+  cursor: pointer;
+  color: #7a8477;
+  min-width: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.hdv-mood > span {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+.hdv-mood small {
+  font-size: 11px;
+  line-height: 1.5;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.hdv-mood.active {
+  background: #f0f5ec;
+  border-color: #75946c;
+  color: #386750;
+}
+.hdv-diary-editor {
+  line-height: 1.95 !important;
+  resize: vertical;
+  min-height: 220px;
+}
+.hdv-full-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 2;
+  color: #4c5d51;
+}
+.hdv-upload {
+  border: 1px dashed #aabfa4;
+  background: #f9fbf7;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  padding: 28px 16px;
+  position: relative;
+  color: #58754f;
+  cursor: pointer;
+  text-align: center;
+}
+.hdv-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.hdv-upload:focus-within {
+  outline: 2px solid #386750;
+  outline-offset: 3px;
+}
+.hdv-upload:has(input:disabled) {
+  opacity: 0.6;
+  cursor: wait;
+}
+.hdv-import-preview {
+  border: 1px solid #e4e9df;
+  border-radius: 11px;
+  max-height: 285px;
+  overflow: auto;
+  padding: 0 15px;
+}
+.hdv-import-preview > div {
+  padding: 12px 0;
+  border-bottom: 1px solid #e9ece6;
+  overflow-wrap: anywhere;
+}
+.hdv-import-preview strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.hdv-import-preview > div:last-child {
+  border-bottom: 0;
+}
+.hdv-import-preview .text-small {
+  font-size: 11px;
+}
+.hdv-lock-card {
+  padding: 48px 25px 35px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  max-width: 660px;
+  width: 100%;
+  margin: 12px auto 0;
+}
+.hdv-lock-symbol {
+  width: 78px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  background: #eef4eb;
+  color: #52764b;
+  margin-bottom: 20px;
+}
+.hdv-lock-card h3 {
+  font-size: 24px;
+  letter-spacing: -0.9px;
+  margin: 18px 0 7px;
+}
+.hdv-lock-card > p {
+  font-size: 13px;
+}
+.hdv-lock-form {
+  max-width: 365px;
+  width: 100%;
+  margin: 29px 0 24px;
+  text-align: left;
+}
+.hdv-lock-form > .button {
+  width: 100%;
+  justify-content: center;
+}
+.hdv-lock-footnote {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  color: #72836c;
+  font-size: 11px;
+  line-height: 1.85;
+  padding-top: 21px;
+  border-top: 1px solid #e8ece3;
+  width: 100%;
+  max-width: 390px;
+  justify-content: center;
+}
+.hdv-lock-footnote svg {
+  flex-shrink: 0;
+}
+.hdv-lock-notice {
+  font-size: 11px !important;
+  margin-top: 16px !important;
+  line-height: 1.9 !important;
+}
+.hdv-vault-status {
+  gap: 14px;
+}
+.hdv-vault-status strong {
+  font-size: 14px;
+}
+.hdv-vault-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.hdv-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: #f5f7f1;
+  border: 1px solid #e4e9dd;
+  color: #58744e;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+.hdv-copy-button:hover {
+  background: #eaf1e4;
+}
+.hdv-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  line-height: 1.8;
+}
+.hdv-security-note svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.hdv-input-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #dfe5dc;
+  background: #fff;
+  border-radius: 10px;
+  padding-right: 5px;
+  min-width: 0;
+}
+.hdv-input-action:focus-within {
+  border-color: #6b8e65;
+  box-shadow: 0 0 0 3px #38675010;
+}
+.hdv-input-action .input {
+  border: 0;
+  box-shadow: none !important;
+  background: none;
+  min-width: 0;
+  flex: 1;
+}
+.hdv-input-action .icon-button {
+  flex-shrink: 0;
+}
+@media (min-width: 1450px) {
+  .hdv-diary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .hdv-header-actions {
+    justify-content: flex-start;
+    width: 100%;
+    gap: 8px;
+  }
+  .hdv-list-heading {
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .hdv-search {
+    width: 100%;
+  }
+  .hdv-health-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .hdv-health-banner .hdv-grow {
+    flex-basis: calc(100% - 65px);
+  }
+  .hdv-health-banner > .badge {
+    margin-left: 60px;
+  }
+  .hdv-diary-intro {
+    gap: 20px;
+  }
+  .hdv-diary-intro h3 {
+    font-size: 19px;
+  }
+  .hdv-diary-count {
+    width: 135px;
+    padding-left: 17px;
+  }
+  .hdv-diary-count strong {
+    font-size: 38px;
+  }
+  .hdv-diary-grid {
+    gap: 12px;
+  }
+  .hdv-diary-entry {
+    padding: 17px 16px;
+  }
+  .hdv-vault-status {
+    flex-wrap: wrap;
+  }
+  .hdv-vault-status > .button {
+    margin-left: 58px;
+  }
+  .hdv-lock-card {
+    padding: 35px 20px 27px;
+    margin-top: 0;
+  }
+  .hdv-mood-picker {
+    gap: 5px;
+  }
+  .hdv-mood > span {
+    font-size: 24px;
+  }
+  .hdv-mood small {
+    font-size: 10px;
+  }
+  .hdv-vault .hdv-record {
+    flex-wrap: wrap;
+  }
+  .hdv-vault .hdv-record .hdv-grow {
+    flex-basis: calc(100% - 60px);
+  }
+  .hdv-vault-actions {
+    margin-left: 58px;
+  }
+  .hdv-lock-card h3 {
+    font-size: 21px;
+  }
+}
+@media (max-width: 480px) {
+  .hdv-diary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hdv-diary-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .hdv-diary-count {
+    width: 100%;
+    padding: 18px 0 0;
+    border-left: 0;
+    border-top: 1px solid #e4e9df;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 15px;
+  }
+  .hdv-diary-count > svg {
+    width: 24px;
+  }
+  .hdv-diary-count strong {
+    font-size: 30px;
+  }
+  .hdv-diary-count > span {
+    text-align: left;
+    max-width: 110px;
+    font-size: 10px;
+  }
+  .hdv-record {
+    gap: 10px;
+  }
+  .hdv-record-icon {
+    width: 37px;
+    height: 37px;
+    border-radius: 11px;
+  }
+  .hdv-health .hdv-record {
+    align-items: flex-start;
+  }
+  .hdv-health .hdv-row-actions {
+    gap: 0;
+  }
+  .hdv-record-detail {
+    font-size: 12px;
+  }
+  .hdv-inline > .text-small {
+    font-size: 11px;
+  }
+  .hdv-upload {
+    padding: 23px 12px;
+  }
+  .hdv-info,
+  .hdv-warning {
+    padding: 12px 13px;
+    font-size: 12px;
+  }
+}
