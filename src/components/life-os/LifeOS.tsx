@@ -463,7 +463,7 @@ function Shell() {
           {toast}
         </div>
       )}
-      {search && (
+      {search && ready && (
         <Modal title="내 기록에서 찾기" onClose={() => setSearch(false)} wide>
           <div className="global-search-input">
             <Search size={20} />
@@ -512,7 +512,7 @@ function Shell() {
           </div>
         </Modal>
       )}
-      {quick && (
+      {quick && ready && (
         <Modal title="떠오른 순간, 빠른 기록" onClose={() => setQuick(false)}>
           <form
             className="page-stack"
@@ -650,7 +650,14 @@ function ArrowRightSmall() {
 export function LifeOS() {
   return (
     <LifeProvider>
-      <Shell />
+      <WorkspaceShell />
     </LifeProvider>
   );
+}
+
+/** Destroy every draft and dialog when the active data owner changes. */
+function WorkspaceShell() {
+  const { demo, user } = useLife();
+  const scope = demo ? 'demo' : user ? `uid:${user.uid}` : 'guest';
+  return <Shell key={scope} />;
 }

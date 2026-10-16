@@ -73,6 +73,96 @@ function validData(value: unknown): value is RecordData {
   });
 }
 
+type FieldCheck = (value: unknown) => boolean;
+const textField: FieldCheck = (value) => typeof value === 'string';
+const booleanField: FieldCheck = (value) => typeof value === 'boolean';
+const nonnegativeField: FieldCheck = (value) =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+const nonnegativeInteger: FieldCheck = (value) =>
+  nonnegativeField(value) && Number.isSafeInteger(value);
+const stringList: FieldCheck = (value) =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+const oneOf =
+  (...values: string[]): FieldCheck =>
+  (value) =>
+    typeof value === 'string' && values.includes(value);
+
+/** Optional known fields remain backward compatible; present fields must match
+ * their domain shape before a view can safely use .includes/.join/.map. Unknown
+ * migration metadata still passes through the generic RecordData boundary. */
+function validKnownData(type: RecordKind, data: RecordData): boolean {
+  const fields: Partial<Record<RecordKind, Record<string, FieldCheck>>> = {
+    task: {
+      completed: booleanField,
+      category: textField,
+      time: (value) =>
+        typeof value === 'string' && (value === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(value)),
+    },
+    routine: {
+      completedDates: (value) => Array.isArray(value) && value.every(validDate),
+      icon: textField,
+      target: nonnegativeInteger,
+    },
+    diary: {
+      mood: (value) =>
+        typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5,
+      gratitude: textField,
+      tags: stringList,
+    },
+    memory: { category: textField, pinned: booleanField, masked: booleanField },
+    transaction: {
+      direction: oneOf('income', 'expense'),
+      amount: nonnegativeField,
+      category: textField,
+      time: textField,
+      paymentMethod: textField,
+    },
+    asset: {
+      direction: oneOf('asset', 'liability'),
+      amount: nonnegativeField,
+      category: textField,
+    },
+    workout: {
+      activity: oneOf('running', 'swimming', 'pullups', 'strength'),
+      distance: nonnegativeField,
+      duration: nonnegativeField,
+      sets: (value) => Array.isArray(value) && value.every(nonnegativeField),
+      exercise: textField,
+      load: nonnegativeField,
+      reps: nonnegativeField,
+    },
+    weight: {
+      kg: (value) => typeof value === 'number' && Number.isFinite(value) && value > 0,
+      measuredAt: textField,
+    },
+    bookmark: { url: textField, tags: stringList, read: booleanField, favorite: booleanField },
+    photo: { image: textField, category: textField, bytes: nonnegativeInteger },
+    goal: {
+      category: textField,
+      steps: stringList,
+      completedSteps: (value) => Array.isArray(value) && value.every(nonnegativeInteger),
+      targetDate: (value) => value === '' || validDate(value),
+      status: oneOf('active', 'done'),
+    },
+    vault: {
+      role: oneOf('config', 'entry'),
+      version: (value) => nonnegativeInteger(value) && Number(value) > 0,
+      iv: textField,
+      ciphertext: textField,
+      salt: textField,
+      iterations: (value) => nonnegativeInteger(value) && Number(value) > 0,
+      keyId: (value) => value === null || typeof value === 'string',
+      legacy: booleanField,
+      encrypted: textField,
+      legacyFormat: textField,
+      source: textField,
+    },
+  };
+  return Object.entries(fields[type] ?? {}).every(
+    ([key, check]) => !(key in data) || check(data[key]),
+  );
+}
+
 /** Trust boundary shared by local cache, imports, and remote snapshots. */
 export function validateRecord(value: unknown): LifeRecord {
   if (
@@ -107,6 +197,11 @@ export function validateRecord(value: unknown): LifeRecord {
     clean.title = '';
     clean.body = '';
     clean.data = {};
+  }
+  if (!validKnownData(clean.type, clean.data)) {
+    throw new Error(
+      '기록의 세부 항목 형식이 올바르지 않습니다. 목록·숫자·완료 상태를 확인해 주세요.',
+    );
   }
   if (new TextEncoder().encode(JSON.stringify(clean)).byteLength > RECORD_LIMIT) {
     throw new Error('기록 하나의 용량은 650KB 이하여야 합니다. 사진 크기를 줄여 주세요.');

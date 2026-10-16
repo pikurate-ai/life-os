@@ -202,3 +202,100 @@ test('validated tombstones cannot preserve plaintext deleted content', () => {
   assert.equal(record.title, '');
   assert.deepEqual(record.data, {});
 });
+
+test('known domain arrays reject scalar, mixed, and invalid element types', () => {
+  for (const [type, data] of [
+    ['routine', { completedDates: 1 }],
+    ['routine', { completedDates: '2026-10-16' }],
+    ['routine', { completedDates: [1] }],
+    ['routine', { completedDates: ['2026-02-30'] }],
+    ['bookmark', { tags: 'AI' }],
+    ['bookmark', { tags: [1, 2] }],
+    ['goal', { steps: 'one step' }],
+    ['goal', { steps: [1] }],
+    ['goal', { completedSteps: 1 }],
+    ['goal', { completedSteps: [0.5] }],
+    ['goal', { completedSteps: [-1] }],
+    ['workout', { sets: '8, 6' }],
+    ['workout', { sets: ['8', '6'] }],
+    ['workout', { sets: [8, -1] }],
+  ]) {
+    assert.throws(() => make({ type, data }), undefined, `${type}: ${JSON.stringify(data)}`);
+  }
+});
+test('important known booleans, numbers, dates, and enums retain their domain types', () => {
+  for (const [type, data] of [
+    ['task', { completed: 1 }],
+    ['task', { time: '25:99' }],
+    ['routine', { target: 'seven' }],
+    ['memory', { pinned: 'yes' }],
+    ['diary', { mood: 'good' }],
+    ['diary', { mood: 6 }],
+    ['diary', { gratitude: 1 }],
+    ['transaction', { amount: '10000' }],
+    ['transaction', { amount: -10000 }],
+    ['transaction', { direction: 'refund' }],
+    ['asset', { direction: 'debt' }],
+    ['workout', { duration: '30' }],
+    ['workout', { activity: 'run' }],
+    ['weight', { kg: '75' }],
+    ['weight', { kg: 0 }],
+    ['bookmark', { read: 'false' }],
+    ['bookmark', { favorite: 1 }],
+    ['photo', { image: 1 }],
+    ['photo', { bytes: '100' }],
+    ['goal', { targetDate: '2026-02-30' }],
+    ['goal', { status: 'unknown' }],
+    ['vault', { ciphertext: 'abcdefghijklmnop', iterations: '600000' }],
+  ]) {
+    assert.throws(() => make({ type, data, ...(type === 'vault' ? { body: '' } : {}) }));
+  }
+});
+test('malformed known fields are rejected at backup and cached-workspace boundaries', () => {
+  const raw = { ...make(), type: 'routine', data: { completedDates: 1 } };
+  const backup = { ...makeBackup([], 'guest'), records: [make({ id: 'safe-diary' }), raw] };
+  const cache = { ...emptyWorkspace('guest'), records: [raw], pending: [raw.id] };
+  const original = JSON.stringify([backup, cache]);
+  assert.throws(() => parseBackup(JSON.stringify(backup)), /세부 항목/);
+  assert.throws(() => parseWorkspace(JSON.stringify(cache), 'guest'), /세부 항목/);
+  assert.equal(JSON.stringify([backup, cache]), original);
+});
+test('optional old fields and unrelated migration metadata remain compatible', () => {
+  for (const type of [
+    'task',
+    'routine',
+    'diary',
+    'memory',
+    'transaction',
+    'asset',
+    'workout',
+    'weight',
+    'bookmark',
+    'photo',
+    'goal',
+  ]) {
+    assert.doesNotThrow(() => make({ type, data: { source: 'legacy', legacyStreak: 99 } }));
+  }
+  const routine = make({
+    type: 'routine',
+    data: {
+      completedDates: ['2026-10-16'],
+      legacyCompleted: true,
+      legacyStreak: 99,
+      legacyCategory: '기존 분류',
+    },
+  });
+  assert.equal(routine.data.legacyStreak, 99);
+  assert.doesNotThrow(() =>
+    make({
+      type: 'goal',
+      data: { steps: [], completedSteps: [], targetDate: '', status: 'active' },
+    }),
+  );
+  assert.doesNotThrow(() =>
+    make({
+      type: 'workout',
+      data: { activity: 'pullups', duration: 0, distance: 0, sets: [8, 6], legacyMaxReps: 8 },
+    }),
+  );
+});

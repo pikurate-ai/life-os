@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowUpRight, Bookmark, Check, Globe, Pencil, Plus, Search, Star } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
+import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
 import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
 import { attempt, DeleteControl, shortDate, validUrl } from './domain-utils';
@@ -109,7 +110,11 @@ export function LibraryView() {
       title: draft.title.trim(),
       body: draft.body.trim(),
       date: editing?.date || localDate(),
-      data: { url, tags, read: draft.read, favorite: draft.favorite },
+      data: preserveRecordData(
+        records.filter((record) => record.type === 'bookmark'),
+        editing?.id,
+        { url, tags, read: draft.read, favorite: draft.favorite },
+      ),
     };
     if (
       !attempt(() => {

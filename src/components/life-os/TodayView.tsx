@@ -33,6 +33,8 @@ const taskCategories: Record<string, string> = {
 };
 const taskCategoryLabel = (value: unknown) =>
   taskCategories[String(value)] || String(value || '나를 위한 일');
+const stringValues = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
 function Landscape() {
   return (
@@ -103,7 +105,7 @@ export function TodayView({
   const completed = tasks.filter((r) => r.data.completed).length;
   const routines = records.filter((r) => r.type === 'routine');
   const doneRoutines = routines.filter((r) =>
-    ((r.data.completedDates as string[]) || []).includes(date),
+    stringValues(r.data.completedDates).includes(date),
   ).length;
   const diaries = records.filter((r) => r.type === 'diary');
   const diaryDays = new Set(diaries.map((r) => r.date)).size;
@@ -308,14 +310,14 @@ export function TodayView({
             <div className="routine-grid">
               {routines.map((r) => {
                 const Icon = routineIcons[String(r.data.icon)] || Check;
-                const done = ((r.data.completedDates as string[]) || []).includes(date);
+                const done = stringValues(r.data.completedDates).includes(date);
                 return (
                   <button
                     key={r.id}
                     className={`routine-item ${done ? 'routine-done' : ''}`}
                     onClick={() =>
                       guard(() => {
-                        const dates = (r.data.completedDates as string[]) || [];
+                        const dates = stringValues(r.data.completedDates);
                         updateRecord(r.id, {
                           data: {
                             ...r.data,
@@ -369,7 +371,7 @@ export function TodayView({
                     <span>{i ? 'LEARN' : 'READ'}</span>
                   </span>
                   <span className="reading-copy">
-                    <small>{((r.data.tags as string[]) || ['읽을거리']).join(' · ')}</small>
+                    <small>{stringValues(r.data.tags).join(' · ') || '읽을거리'}</small>
                     <strong>{r.title}</strong>
                     <span>{r.body || '미래의 나를 위해 저장한 읽을거리'}</span>
                   </span>
@@ -465,9 +467,11 @@ export function TodayView({
               </button>
             </div>
             {goals.map((g) => {
-              const steps = (g.data.steps as string[]) || [];
+              const steps = stringValues(g.data.steps);
               const progress = steps.length
-                ? (((g.data.completedSteps as number[]) || []).length / steps.length) * 100
+                ? ((Array.isArray(g.data.completedSteps) ? g.data.completedSteps.length : 0) /
+                    steps.length) *
+                  100
                 : 0;
               return (
                 <button className="goal-peek-row" key={g.id} onClick={() => navigate('goals')}>

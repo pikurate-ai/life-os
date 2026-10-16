@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Activity, Dumbbell, Footprints, Plus, Scale, Waves, Trash2, Pencil } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
 import { localDate, numberData, type LifeRecord, type NewRecord } from '@/lib/life-os/types';
+import { preserveRecordData } from '@/lib/life-os/editing';
 import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
 import './health-diary-vault.css';
 
@@ -177,7 +178,11 @@ export function HealthView() {
       title,
       date: draft.date,
       body: draft.notes.trim(),
-      data,
+      data: preserveRecordData(
+        records.filter((record) => record.type === draft.type),
+        draft.id,
+        data,
+      ),
     };
     try {
       if (draft.id) updateRecord(draft.id, value);

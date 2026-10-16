@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Camera, ImagePlus, Plus, ShieldCheck } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
+import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
 import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
 import { attempt, DeleteControl, shortDate, validDate } from './domain-utils';
@@ -142,7 +143,11 @@ export function GalleryView() {
       title: draft.title.trim(),
       body: draft.body.trim(),
       date: draft.date,
-      data: { category: draft.category, image: draft.image, bytes: draft.image.length },
+      data: preserveRecordData(
+        records.filter((record) => record.type === 'photo'),
+        editing?.id,
+        { category: draft.category, image: draft.image, bytes: draft.image.length },
+      ),
     };
     if (
       !attempt(() => {

@@ -16,6 +16,7 @@ import {
 import { useLife } from '@/lib/life-os/store';
 import { localDate, numberData, type LifeRecord, type NewRecord } from '@/lib/life-os/types';
 import { importDiary, uniqueDiary } from '@/lib/life-os/imports';
+import { preserveRecordData } from '@/lib/life-os/editing';
 import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
 import './health-diary-vault.css';
 
@@ -106,7 +107,11 @@ export function DiaryView() {
       date: draft.date,
       title: draft.title.trim() || '오늘의 기록',
       body: draft.body.trim(),
-      data: { mood: draft.mood, gratitude: draft.gratitude.trim() },
+      data: preserveRecordData(
+        records.filter((record) => record.type === 'diary'),
+        draft.id,
+        { mood: draft.mood, gratitude: draft.gratitude.trim() },
+      ),
     };
     try {
       if (draft.id) updateRecord(draft.id, value);

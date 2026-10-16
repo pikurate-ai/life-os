@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
+import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, numberData, type LifeRecord } from '@/lib/life-os/types';
 import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
 import { attempt, DeleteControl, formatWon, shortDate, validDate } from './domain-utils';
@@ -139,7 +140,11 @@ export function FinanceView() {
       title: draft.title.trim(),
       body: draft.body.trim(),
       date: draft.date,
-      data: { amount, direction: draft.direction, category: draft.category },
+      data: preserveRecordData(
+        records.filter((record) => record.type === draft.type),
+        editing?.id,
+        { amount, direction: draft.direction, category: draft.category },
+      ),
     };
     if (
       !attempt(() => {

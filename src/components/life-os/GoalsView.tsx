@@ -13,6 +13,7 @@ import {
   Target,
 } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
+import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
 import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
 import { attempt, DeleteControl, shortDate, validDate } from './domain-utils';
@@ -136,13 +137,17 @@ export function GoalsView() {
       title: draft.title.trim(),
       body: draft.body.trim(),
       date: editing?.date || localDate(),
-      data: {
-        category: draft.category,
-        steps,
-        completedSteps: doneSteps,
-        targetDate: draft.targetDate,
-        status,
-      },
+      data: preserveRecordData(
+        records.filter((record) => record.type === 'goal'),
+        editing?.id,
+        {
+          category: draft.category,
+          steps,
+          completedSteps: doneSteps,
+          targetDate: draft.targetDate,
+          status,
+        },
+      ),
     };
     if (
       !attempt(() => {
