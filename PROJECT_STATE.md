@@ -1,45 +1,51 @@
-# 🚀 Life-OS (인생 Super App) — Project State & Context Transfer Master
+# Life OS v2 — 현재 상태
 
-> **목적**: 이 문서는 AI 어시스턴트(Antigravity) 세션 및 계정 전환 시에도 컨텍스트 손실 없이 완벽하게 개발을 이어갈 수 있도록 프로젝트의 현황, 아키텍처, 데이터베이스 스키마, 향후 로드맵을 실시간으로 동기화하는 마스터 문서입니다.
+갱신: 2026-10-17. 실제 로컬 코드와 검증 범위에 대한 기록이며 운영 배포나 상업 판매 준비 완료를 뜻하지 않습니다.
 
----
+## 이번 구현
 
-## 📌 1. 프로젝트 기본 정보
-- **프로젝트 명**: Life-OS (인생 Super App) — 1인 전용 개인 운영체제
-- **위치**: `C:\Users\JU\life-os` (기존 `quote-memo`와 분리된 전용 독립 디렉토리)
-- **공식 영구 배포 URL (24시간 전세계 어디서든 접속 가능)**: 
-  👉 **`https://pikurate-ai.github.io/life-os/`**
-- **GitHub 공식 저장소**: `https://github.com/pikurate-ai/life-os` (GitHub Actions 자동 배포 파이프라인 탑재)
-- **로컬 개발 서버**: `http://localhost:3000` (동일 Wi-Fi 접속: `http://192.168.0.2:3000`)
-- **인증 및 클라우드 DB**: Firebase Google OAuth 팝업/리다이렉트 + 1인 전용 마스터 계정 즉시 연동 + Cloud Firestore 8대 도메인 실시간 동기화 (`users_essential_info`, `users_general_memos`, `users_financial_logs`, `users_assets`, `users_encrypted_vault`, `users_workout_1rm`, `users_health_metrics`, `users_archived_diaries`, `users_life_photos`)
+- 오늘·기억·일기·건강·가계/자산·읽기·사진·목표·금고·설정의 통합 구조
+- 공통 디자인 토큰, 폼/모달, 모바일·데스크톱 탐색
+- 날짜별 달리기 거리·시간, 수영·턱걸이·근력·체중
+- 체험/guest/UID 격리, 환경 변수 기반 실제 Google 인증과 기록별 클라우드 동기화
+- 지속 큐, tombstone, 결정적 병합과 탭 간 승인 버전 보존
+- JSON 검증·비파괴 병합, 명시적 이전 로컬 기록 가져오기
+- 마스터 암호 기반 금고와 지원 파일 가져오기
+- owner-only Firestore 규칙, CI와 배포 설정, 최신 인계 문서
 
----
+## 검증 기록
 
-## 📱 2. 아이폰 13 Pro (390px) 화면 및 버튼 전수 최적화 완료 내역
-1. **메모 & 1초복사 카드 2단 전체 폭(Full-Width) 구조 혁신**:
-   - 기존: 우측 액션 버튼 3개([수정], [삭제], [복사])가 본문과 한 줄에 있어 긴 텍스트(주소, 계좌번호 등)가 약 150px로 쪼그라들던 문제 해결.
-   - 변경: 상단 헤더 줄(태그, 제목, 컴팩트 액션 버튼) + 본문 전용 100% 가로 폭 컨테이너(`w-full break-all font-mono`)로 시원하게 표시.
-2. **모든 버튼 전수 조사 및 텍스트 밀림 방지**:
-   - `Header.tsx`: [앱받기], [싱크], 프로필 텍스트의 `shrink-0`, `whitespace-nowrap` 적용.
-   - `BottomNav.tsx`: 6개 탭(홈, 1초복사, 일기, 가계/자산, 암호금고, 헬스1RM) 모바일 화면 줄바꿈 방지.
-   - `PasswordVaultManager.tsx`, `BodyMetricsCard.tsx`, `SmsLedgerParser.tsx`, `AssetDashboard.tsx`, `DataSyncHub.tsx`, `GeneralMemoManager.tsx`의 모든 버튼에 `shrink-0 whitespace-nowrap` 적용.
+최신 통합 결과: 설정 화면의 테스트 안내 보완을 포함한 포맷 검사·타입 검사·자동 테스트 49개·암호화/가져오기 검사·일반 정적 빌드를 통과했습니다. 기존 `/life-os` 정적 빌드, 320–1440px 대시보드와 각 기능의 320px 넘침 검사, 운동 저장·수정·삭제·별도 창 반영, TXT 일기 가져오기, 사진 압축, 오프라인 앱 셸·기록 보존도 확인했습니다. 상세 재현 범위와 화면은 [QA 기록](docs/QA.md)에 있습니다.
 
----
+데이터 기반 단위 테스트는 병합 순서 독립성, 삭제 전파, 백업 왕복/오류 거부, 평문 금고 차단, UID 격리, 지속 큐, 오래된 탭의 큐 재생성 방지, 시계 역행과 미래 시각 오염을 검사합니다. 기반 검사 외 도메인 가져오기·암호화 검사도 포함합니다. 최종 개수와 실행 결과는 아래 통합 보고 원칙을 따릅니다.
 
-## 🛠️ 3. 구글 로그인 및 영구 배포 솔루션
-- **영구 배포 (밖이나 회사 어디서든 접속)**:
-  - GitHub Actions CI/CD를 구축하여 `https://pikurate-ai.github.io/life-os/`로 영구 배포 완료 (서버 꺼짐/만료 없음, 24/7 가동).
-- **구글 로그인 장애 해결**:
-  1. **1인 전용 내 계정 즉시 연동 (1초 해결)**: 복잡한 도메인 승인 절차 없이, 본인의 이름과 구글 이메일만으로 터치 한 번에 모든 인증 상태를 활성화(`GoogleAuthModal.tsx`).
-  2. **Firebase 도메인 1클릭 복사**: 현재 접속 중인 도메인을 원클릭으로 복사하여 Firebase Console 승인 도메인에 즉시 추가 가능.
+이전 데이터의 실제 코드 형태를 바탕으로 한 가상 fixture 검사 10개를 추가했습니다. photos_v2와 한국어 날짜, 로컬 사진 압축 경로, 원격 사진 무요청 보존, 일기 중복/충돌, 루틴 이력 비조작, 체중·근력의 두 스키마, 동일일 거래, 부호 있는 자산, 건너뛴 이유와 원본 불변성, 빈 브라우저의 샘플 미생성을 확인합니다. 개인정보 검색과 편집 메타데이터 보존, 테스트 빌드 경로·저장 공간 격리 관련 검사를 포함한 최신 자동 테스트 수는 49개입니다.
 
----
+전체 통합 후 테스트·정적 빌드·브라우저 검사 결과는 주 작업자의 최종 보고를 기준으로 합니다. 기반 테스트를 실제 OAuth나 운영 보안 규칙 검증으로 확대 해석하지 않습니다.
 
-## 🗺️ 4. 주요 모듈 및 기능 요약
-1. **자유 일반 메모장 (`GeneralMemoManager.tsx`)**: 클릭 시 최상단 자동 점프, 6가지 컬러, 1초 복사.
-2. **필수 정보 1초 복사 (`QuickCopyManager.tsx`)**: 2단 전체 폭 구조로 계좌, 사업자, 주소 등 클립보드 원클릭 복사.
-3. **가계부 & 자산 대시보드 (`SmsLedgerParser.tsx`, `AssetDashboard.tsx`)**: 카드 결제 문자/카톡 0.1초 파싱 및 순자산 관리.
-4. **암호 금고 (`PasswordVaultManager.tsx`)**: Zero-Knowledge AES-256 클라이언트 암호화 및 CSV 임포트.
-5. **헬스 & 1RM (`BodyMetricsCard.tsx`, `Workout1RMCalculator.tsx`)**: Apple HealthKit 실시간 연동 및 3대 운동 1RM 계산기.
-6. **로우 데이터 통합 싱크 & 적재 센터 (`DataSyncHub.tsx`)**: 구글 시트/드라이브, 카톡 텍스트 파서, 전체 백업 & 복원.
-7. **아이폰 PWA 앱 설치 (`IosInstallGuideModal.tsx`)**: Safari [공유] → [홈 화면에 추가]로 앱스토어 없이 네이티브 앱 구동.
+## iPhone 테스트 빌드와 공개 배포
+
+- 2026-10-17 `npm run build:iphone` 성공. `/life-os-preview/` 기준 manifest의 `id`·`start_url`·`scope`·아이콘 경로와 절대 에셋 경로 18개가 일치함을 확인했습니다.
+- Chromium의 로컬 390×844 화면에서 달리기 1.2km/10분 → 8′20″/km, 긴 한글·영문 메모, 새로고침 후 기록 유지, 366px 모달·16px 입력·가로 넘침 0px를 확인했습니다. 320px 전체 메뉴도 가로 넘침 0px를 확인했습니다. 실제 iPhone Safari 검증과는 구분합니다.
+- 테스트 빌드는 Firebase 연결을 강제로 비활성화하며, 운영과 다른 저장 공간 이름을 사용합니다. 예시·기기 기록·백업만 테스트하고 PC·iPhone 클라우드 동기화는 시험하지 않았습니다.
+- [Life OS 테스트](https://pikurate-ai.github.io/life-os-preview/)를 [전용 저장소](https://github.com/pikurate-ai/life-os-preview)의 `main` 루트에서 공개 배포했습니다. 소스 빌드 기준은 `649b020`, 정적 배포 커밋은 `b408294361964e229f54aedbf167b472f088d718`입니다. [Pages 실행](https://github.com/pikurate-ai/life-os-preview/actions/runs/38986710274)이 성공했고 HTTPS를 강제합니다. 기존 master 서비스는 변경하지 않았습니다.
+- 2026-10-17 실제 HTTPS의 HTML·manifest·service worker·192/512px PNG·Apple 설치 PNG와 스크립트 12개 모두 HTTP 200을 확인했습니다. manifest와 스크립트 경로는 `/life-os-preview/`를 사용합니다.
+- 공개 사이트의 Chromium 390×844에서 가로 넘침 없음, 달리기 1.2km/10분 → 8′20″/km 저장·새로고침 유지, 콘솔 경고·오류 0건을 확인했습니다. 생성한 시험 기록은 삭제해 정리했습니다.
+- 설정 화면은 기기 저장·자동 동기화 없음으로 안내하며 테스트 빌드에서는 Google 로그인 버튼을 숨깁니다. 실제 iPhone Safari·홈 화면 설치와 OAuth·두 기기 동기화 검증은 남아 있습니다. [iPhone 가이드](docs/IPHONE_TEST_GUIDE.md)를 따릅니다.
+
+## 운영에서 남은 항목
+
+| 항목                          | 현재 범위                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| Google 로그인                 | 코드 구현, Firebase/허용 도메인 설정과 실계정 검증 필요                      |
+| 기기간 동기화                 | 큐/리스너/트랜잭션 구현, 두 실제 기기 검증 필요                              |
+| Firestore 보안                | 규칙 파일 제공, 운영 배포와 emulator 권한 테스트 필요                        |
+| GitHub/Pages                  | 별도 테스트 사이트 공개 배포 확인, 소스 기능 브랜치/PR 검토와 운영 출시 구분 |
+| iOS/App Store                 | 반응형 웹 우선, 네이티브 인증/서명/심사 별도                                 |
+| Docs/앨범/건강/은행 자동 연동 | 미구현, 사용자 선택 지원 파일만 가져오기                                     |
+| 대용량 사진                   | 압축 이미지 기록, 인증 객체 저장소 별도                                      |
+| 상업 서비스                   | 계정 삭제·개인정보 정책·관측·악용 방지·과금 별도                             |
+
+체험을 개인 데이터로 오인시키지 않습니다. 이메일 입력을 인증으로 대체하거나 계정 간 자동 이전을 하지 않습니다. 오류를 성공으로 표시하지 않습니다. 일반 기록까지 종단간 암호화되었다고 하거나 연결되지 않은 외부 서비스를 연결 완료로 표현하지 않습니다.
+
+[배포 문서](docs/DEPLOYMENT.md)와 [아키텍처](docs/ARCHITECTURE.md)를 확인합니다.

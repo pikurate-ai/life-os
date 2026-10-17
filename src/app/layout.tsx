@@ -1,30 +1,32 @@
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { resolveBuildConfig } from '../../scripts/build-config.cjs';
+import './globals.css';
 
-const basePath = process.env.GITHUB_PAGES === "true" ? "/life-os" : "";
+const { basePath, appName, title } = resolveBuildConfig();
 
 export const metadata: Metadata = {
-  title: "Life-OS | 인생 Super App",
-  description: "단 하나의 개인 전용 1인 라이프 운영체제 (Life Operating System)",
+  title,
+  description:
+    '하루의 기록이 내일의 방향이 되도록. 일기, 건강, 기억, 재정과 성장을 연결하는 나만의 Life OS.',
   manifest: `${basePath}/manifest.json`,
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Life-OS",
+    statusBarStyle: 'default',
+    title: appName,
   },
   icons: {
     icon: `${basePath}/icons/icon-192.svg`,
-    apple: `${basePath}/icons/icon-192.svg`,
+    apple: `${basePath}/icons/apple-touch-icon.png`,
   },
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  viewportFit: "cover",
-  themeColor: "#090a0f",
+  viewportFit: 'cover',
+  themeColor: '#f6f7f5',
 };
 
 export default function RootLayout({
@@ -33,10 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="dark">
-      <body className="bg-[#090a0f] text-zinc-100 min-h-screen antialiased flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
-        {children}
-      </body>
+    <html lang="ko">
+      <body>{children}</body>
     </html>
   );
 }
