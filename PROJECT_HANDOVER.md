@@ -1,6 +1,6 @@
 # Life OS v2 프로젝트 종합 인계
 
-기준일: 2026-10-16. 이전 인계의 검증되지 않은 “완벽한 보안/동기화/자동 연동” 표현을 현재 코드와 검증 범위에 맞게 교체했습니다.
+기준일: 2026-10-17. 이전 인계의 검증되지 않은 “완벽한 보안/동기화/자동 연동” 표현을 현재 코드와 검증 범위에 맞게 교체했습니다.
 
 ## 기획 의도
 
@@ -16,11 +16,13 @@ Next.js App Router / React / TypeScript strict, CSS 디자인 토큰, Firebase G
 
 Node 24에서 `npm ci`, `npm run dev`로 실행합니다. `npm run typecheck`, `npm test`, `npm run build`로 검사합니다. 정적 산출물은 out/이며 Pages 빌드에는 GITHUB_PAGES=true가 필요합니다.
 
-### iPhone 테스트 빌드 — 공개 게시 대기
+### iPhone 테스트 빌드와 공개 사이트
 
 `npm run build:iphone`은 `/life-os-preview/` 경로, **Life OS 테스트** 설치 이름, 전용 manifest·아이콘으로 정적 산출물을 만듭니다. Firebase 값이 있더라도 이 빌드는 클라우드 연결을 강제로 끄며, 로컬 저장 공간 이름도 운영 앱과 분리합니다. 기기 기록·예시·백업용 테스트이며 PC·iPhone 자동 동기화 시험은 포함하지 않습니다.
 
-2026-10-17 해당 빌드와 로컬 390×844 기록·새로고침·레이아웃 검사를 통과했습니다. 이후 설정의 기기 저장·자동 동기화 없음 안내와 로그인 버튼 숨김을 반영한 포맷·타입·자동 테스트 49개·암호화/가져오기 검사·일반 빌드도 통과했으며, 최종 iPhone 테스트 빌드도 성공했습니다. [전용 공개 저장소](https://github.com/pikurate-ai/life-os-preview)는 생성되었지만 아직 비어 있고 공개 게시 승인 대기 중입니다. [예정 주소](https://pikurate-ai.github.io/life-os-preview/)의 배포 완료나 실제 iPhone 사용은 확인하지 않았습니다. 공개 게시와 실제 HTTPS 응답 확인이 남아 있습니다. [QA](docs/QA.md), [배포 절차](docs/DEPLOYMENT.md), [아이폰 테스트 가이드](docs/IPHONE_TEST_GUIDE.md)를 함께 확인하세요.
+2026-10-17 설정 안내를 포함한 포맷·타입·자동 테스트 49개·암호화/가져오기 검사·일반 및 iPhone 빌드를 통과했습니다. [Life OS 테스트](https://pikurate-ai.github.io/life-os-preview/)를 [전용 공개 저장소](https://github.com/pikurate-ai/life-os-preview)의 `main` 루트에서 배포하고 HTTPS 응답을 확인했습니다. 빌드 소스 기준은 `649b020`, 정적 배포 커밋은 `b408294361964e229f54aedbf167b472f088d718`이며 [Pages 실행](https://github.com/pikurate-ai/life-os-preview/actions/runs/38986710274)이 성공했습니다. 기존 master 서비스는 변경하지 않았습니다.
+
+실제 HTML·manifest·service worker·설치 PNG 3종·스크립트 12개의 HTTP 200과 `/life-os-preview/` 경로 일치를 확인했습니다. 공개 Chromium 390×844에서 달리기 1.2km/10분 → 8′20″/km 저장·새로고침 유지, 가로 넘침 없음, 콘솔 경고·오류 0건을 확인하고 시험 기록을 정리했습니다. 실제 iPhone Safari·홈 화면 설치와 OAuth·기기 간 동기화는 별도 검증이 필요합니다. [QA](docs/QA.md), [재배포 절차](docs/DEPLOYMENT.md), [아이폰 테스트 가이드](docs/IPHONE_TEST_GUIDE.md)를 함께 확인하세요.
 
 ## 코드 지도
 

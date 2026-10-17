@@ -63,9 +63,27 @@ npm run preview
 | 모달과 입력                | 모달 너비 366px, 입력 글자 16px |
 | 가로 레이아웃              | 가로 넘침 0px                   |
 
-이 빌드의 Firebase 연결은 강제로 비활성화되어 있으며 기기 저장과 백업을 시험하는 버전입니다. 설정 화면은 기기 내 저장·자동 동기화 없음을 안내하도록 보완했고 Google 로그인 버튼은 테스트 모드에서 숨깁니다. 해당 변경을 포함한 최종 iPhone 테스트 빌드도 성공했습니다. [전용 저장소](https://github.com/pikurate-ai/life-os-preview)는 생성되었지만 아직 비어 있고 공개 게시 승인 대기 중입니다. [예정 테스트 주소](https://pikurate-ai.github.io/life-os-preview/)의 실제 배포, HTTP 응답, iPhone 13 Pro의 Safari·홈 화면 설치, PC와 실제 iPhone의 동기화는 아직 확인하지 않았습니다.
+이 빌드의 Firebase 연결은 강제로 비활성화되어 있으며 기기 저장과 백업을 시험하는 버전입니다. 설정 화면은 기기 내 저장·자동 동기화 없음을 안내하도록 보완했고 Google 로그인 버튼은 테스트 모드에서 숨깁니다. 해당 변경을 포함한 최종 iPhone 테스트 빌드도 성공했습니다. 실제 iPhone 13 Pro의 Safari·홈 화면 설치와 PC·iPhone 동기화 검증은 별도입니다.
 
 추가로 320px 화면의 전체 메뉴에서도 가로 넘침 0px를 확인했습니다.
+
+## 공개 테스트 사이트 검증 — 2026-10-17
+
+[Life OS 테스트](https://pikurate-ai.github.io/life-os-preview/)는 [별도 정적 저장소](https://github.com/pikurate-ai/life-os-preview)의 `main` 루트에서 배포했습니다. 빌드 소스 기준 `649b020`, 정적 커밋 `b408294361964e229f54aedbf167b472f088d718`, [Pages 실행](https://github.com/pikurate-ai/life-os-preview/actions/runs/38986710274) 성공을 기준으로 검사했습니다. HTTPS를 강제하며 기존 master 서비스는 변경하지 않았습니다.
+
+| 공개 HTTPS / Chromium 검사 | 확인한 결과                                                 |
+| -------------------------- | ----------------------------------------------------------- |
+| 앱 HTML                    | HTTP 200                                                    |
+| manifest                   | HTTP 200, `id`·`start_url`·`scope` 모두 `/life-os-preview/` |
+| service worker             | HTTP 200                                                    |
+| 192px·512px·Apple 설치 PNG | 3종 모두 HTTP 200                                           |
+| 스크립트                   | 12개 모두 HTTP 200, preview 경로 사용                       |
+| 대시보드 390×844           | 가로 넘침 없음                                              |
+| 달리기 저장·새로고침       | 1.2km / 10분 → 8′20″/km 표시, 기록 유지                     |
+| 시험 데이터 정리           | 생성한 시험 기록 삭제                                       |
+| 콘솔                       | 경고·오류 0건                                               |
+
+공개 서버의 정적 파일과 Chromium 사용 흐름을 검증한 결과입니다. 실제 iPhone Safari의 사진 선택·키보드·홈 화면 설치, OAuth·운영 Firestore·두 기기 동기화를 확인한 것으로 확대 해석하지 않습니다.
 
 ## 화면
 
