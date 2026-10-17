@@ -4,6 +4,21 @@
 
 Next.js App Router, React, TypeScript, 공통 디자인 토큰과 Firebase Auth / Firestore를 사용합니다. 데스크톱과 모바일 브라우저에서 같은 기록 모델을 공유합니다. 기본 화면은 **가상 체험 데이터**이며 개인·계정 데이터와 분리됩니다.
 
+## iPhone 테스트 버전 — 게시 대기
+
+게시 예정 주소는 [Life OS 테스트](https://pikurate-ai.github.io/life-os-preview/)입니다. 2026-10-17 현재 [별도 테스트 저장소](https://github.com/pikurate-ai/life-os-preview)만 생성되었고 정적 파일은 아직 게시하지 않았습니다. **공개 게시 승인 대기 상태이며, 링크 접속이나 배포 완료를 확인한 상태가 아닙니다.** 기존 `/life-os/` 서비스는 이 테스트 배포와 구분합니다.
+
+테스트 빌드는 클라우드를 강제로 비활성화합니다. 예시 화면, 이 기기의 개인 기록, JSON 백업을 확인하는 범위이며 Google 로그인이나 PC·iPhone 자동 동기화는 제공하지 않습니다. Safari의 홈 화면에 추가하는 PWA로 준비했으며, 실제 iPhone 13 Pro에서의 설치·사용 검증은 별도입니다. [아이폰 테스트 절차](docs/IPHONE_TEST_GUIDE.md)를 참고하세요.
+
+```sh
+npm run build:iphone
+npm run preview
+```
+
+`build:iphone`은 `/life-os-preview/` 경로와 전용 설치 이름·manifest·아이콘으로 `out/`을 생성합니다. 운영 빌드와 로컬 저장 공간의 이름을 분리합니다. 개발 서버와 빌드는 동시에 실행하지 마세요. 로컬 390×844 화면 검사와 빌드 근거는 [QA 기록](docs/QA.md)에 있습니다.
+
+설정 화면의 기기 저장 안내 보완을 포함한 최종 포맷·타입·자동 테스트 49개·암호화/가져오기 검사와 일반 빌드는 통과했습니다. 해당 안내를 포함한 최종 iPhone 테스트 빌드도 성공했으며, 공개 게시는 여전히 승인 대기입니다.
+
 ## 시작하기
 
 Node.js 24가 필요합니다.
@@ -54,5 +69,6 @@ Google Docs, iPhone 앨범, Apple Health, 은행, 비밀번호 관리 서비스�
 - [디자인 시스템](docs/DESIGN_SYSTEM.md)
 - [제품 기획](docs/PRODUCT_BRIEF.md)
 - [검증 기록과 화면](docs/QA.md)
+- [iPhone 테스트 가이드](docs/IPHONE_TEST_GUIDE.md)
 
 기존 원격 master를 확인해 `codex/life-os-v2` 브랜치로 Git 연결을 복구했습니다. 변경은 초안 PR로 검토하며 운영 배포는 별도입니다. 기존 [저장소](https://github.com/pikurate-ai/life-os)와 [서비스](https://pikurate-ai.github.io/life-os/)는 별도 운영 확인과 배포 준비가 필요합니다.

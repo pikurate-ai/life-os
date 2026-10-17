@@ -1,17 +1,18 @@
 import type { Metadata, Viewport } from 'next';
+import { resolveBuildConfig } from '../../scripts/build-config.cjs';
 import './globals.css';
 
-const basePath = process.env.GITHUB_PAGES === 'true' ? '/life-os' : '';
+const { basePath, appName, title } = resolveBuildConfig();
 
 export const metadata: Metadata = {
-  title: 'Life OS — 나를 위한 일상의 공간',
+  title,
   description:
     '하루의 기록이 내일의 방향이 되도록. 일기, 건강, 기억, 재정과 성장을 연결하는 나만의 Life OS.',
   manifest: `${basePath}/manifest.json`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Life OS',
+    title: appName,
   },
   icons: {
     icon: `${basePath}/icons/icon-192.svg`,

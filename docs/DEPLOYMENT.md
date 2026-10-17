@@ -1,6 +1,6 @@
 # 배포와 운영 인계
 
-기준일: 2026-10-16. 기존 원격 master를 확인한 후 로컬 변경을 보존하여 `codex/life-os-v2` 개발 브랜치로 Git 연결을 복구했습니다. 변경은 검토용 브랜치/초안 PR로 전달하며 운영 master나 실제 서비스에 직접 배포하지 않습니다. PR 상태와 주소는 주 작업자의 최종 보고를 확인합니다.
+기준일: 2026-10-17. 기존 원격 master를 확인한 후 로컬 변경을 보존하여 `codex/life-os-v2` 개발 브랜치로 Git 연결을 복구했습니다. 변경은 검토용 브랜치/초안 PR로 전달하며 운영 master나 실제 서비스와 별도로 관리합니다. iPhone용 전용 정적 테스트 사이트는 아래의 게시 대기 절차를 따릅니다. PR 상태와 주소는 주 작업자의 최종 보고를 확인합니다.
 
 ## 로컬 실행과 검사
 
@@ -44,6 +44,22 @@ Firebase CLI 및 관리자의 프로젝트 권한이 필요한 명령입니다. 
 - 기존 Pages artifact/environment 방식 유지
 
 공개 Firebase 웹 설정 값은 repository variables에 둘 수 있습니다. 기존 secrets가 있다면 대체 값으로 사용합니다. Pages Source는 GitHub Actions로 설정합니다. 실제 Firestore 규칙 배포는 이 workflow와 별도 단계입니다.
+
+## iPhone용 별도 테스트 빌드 — 공개 게시 승인 대기
+
+운영의 Firebase 필수 배포 절차와 별개로, [life-os-preview 저장소](https://github.com/pikurate-ai/life-os-preview)에 정적 테스트 산출물을 게시하는 방식을 준비했습니다. 예정 주소는 [Life OS 테스트](https://pikurate-ai.github.io/life-os-preview/)입니다. 2026-10-17 현재 저장소는 생성되었으나 비어 있으며 공개 게시 승인 대기 중입니다. **저장소 생성이나 로컬 빌드 성공을 실제 HTTPS 배포 완료로 간주하지 않습니다.**
+
+```sh
+npm run build:iphone
+npm run preview
+```
+
+- `scripts/build-iphone.cjs`가 `LIFE_OS_BASE_PATH=/life-os-preview`, `LIFE_OS_PREVIEW=true`를 설정하고 여섯 가지 Firebase 웹 환경 값을 비웁니다. 앱의 Firebase 모듈도 테스트 모드에서는 연결을 강제로 비활성화합니다.
+- Next.js 경로, metadata, manifest의 `id`·`start_url`·`scope`, PNG 아이콘은 공통 `scripts/build-config.cjs` 계약을 사용합니다. 설치 이름은 **Life OS 테스트**입니다.
+- 테스트 앱의 로컬 키는 경로별 preview namespace를 사용합니다. 같은 `pikurate-ai.github.io` origin의 기존 앱과 저장 공간 이름을 분리하지만, 원본 데이터는 여전히 명시적 백업·가져오기로만 옮깁니다.
+- 기존 `/life-os/` 운영 서비스와 테스트 저장소를 분리합니다. 이번 테스트에서 OAuth·Firestore·PC와 iPhone의 클라우드 동기화는 사용하지 않습니다.
+
+2026-10-17 테스트 빌드 성공, `/life-os-preview/` manifest·아이콘 계약과 절대 에셋 경로 18개의 일치를 확인했습니다. 로컬 390×844 동작 검사는 [QA](QA.md)에 기록했습니다. 이후 설정 화면의 기기 저장·자동 동기화 없음 안내와 Google 로그인 버튼 숨김을 반영했고, 포맷·타입·49개 자동 테스트·암호화/가져오기 검사·일반 빌드가 통과했습니다. 이 변경을 포함한 최종 iPhone 테스트 빌드도 성공했습니다. 게시 승인을 받은 뒤 산출물을 올려 HTML·manifest·아이콘·service worker의 실제 HTTPS 응답을 확인해야 합니다. 아이폰의 홈 화면 설치와 실제 기기 사용 검증은 [테스트 가이드](IPHONE_TEST_GUIDE.md)를 따릅니다.
 
 ## 실제 기기 검증
 

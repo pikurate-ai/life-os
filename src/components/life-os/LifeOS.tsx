@@ -32,6 +32,7 @@ import {
 import { LifeProvider, useLife } from '@/lib/life-os/store';
 import { LifeRecord, localDate, PageId, pageTitles, RecordKind } from '@/lib/life-os/types';
 import { searchRecords, searchableBody } from '@/lib/life-os/search';
+import { storageKey } from '@/lib/life-os/storage';
 import { Badge, Button, Field, IconButton, Modal } from './ui';
 import { TodayView } from './TodayView';
 import { SettingsView } from './SettingsView';
@@ -61,6 +62,8 @@ const navigation: {
   { id: 'gallery', label: '소중한 순간', icon: FolderHeart, group: '나의 보관함', type: 'photo' },
   { id: 'vault', label: '암호금고', icon: LockKeyhole, group: '나의 보관함', type: 'vault' },
 ];
+const PAGE_KEY = storageKey('page');
+const previewBuild = process.env.NEXT_PUBLIC_LIFE_OS_PREVIEW === 'true';
 const kindPage: Record<RecordKind, PageId> = {
   task: 'today',
   routine: 'today',
@@ -148,13 +151,13 @@ function Shell() {
     setDrawer(false);
     setSearch(false);
     try {
-      localStorage.setItem('life-os:v2:page', target);
+      localStorage.setItem(PAGE_KEY, target);
     } catch {}
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
   useEffect(() => {
     try {
-      const last = localStorage.getItem('life-os:v2:page') as PageId;
+      const last = localStorage.getItem(PAGE_KEY) as PageId;
       if (last && Object.hasOwn(pageTitles, last)) setPage(last);
     } catch {}
   }, []);
@@ -378,6 +381,11 @@ function Shell() {
             </button>
           </div>
         </header>
+        {previewBuild && (
+          <div className="preview-notice" role="note">
+            iPhone 테스트 버전 · 기록은 이 기기에 저장돼요 · 클라우드 연결 없음
+          </div>
+        )}
         {demo && (
           <div className="demo-bar">
             <span>

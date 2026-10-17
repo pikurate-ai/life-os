@@ -1,6 +1,7 @@
 /* Cache application assets only. Firebase requests and user records never enter CacheStorage. */
-const CACHE = 'life-os-shell-v2.0.0';
 const root = new URL('./', self.location.href).pathname;
+const CACHE_PREFIX = `life-os-shell:${encodeURIComponent(root)}:`;
+const CACHE = `${CACHE_PREFIX}v2.0.1`;
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
@@ -28,7 +29,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith('life-os-shell-') && key !== CACHE)
+            .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE)
             .map((key) => caches.delete(key)),
         ),
       )
@@ -54,23 +55,26 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(async () => (await caches.match(root)) || Response.error()),
+        .catch(async () => (await (await caches.open(CACHE)).match(root)) || Response.error()),
     );
     return;
   }
   if (/\.(?:js|css|woff2?|png|svg|ico)$/.test(url.pathname)) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((response) => {
-            if (response.ok) {
-              const copy = response.clone();
-              caches.open(CACHE).then((cache) => cache.put(request, copy));
-            }
-            return response;
-          }),
-      ),
+      caches
+        .open(CACHE)
+        .then((cache) => cache.match(request))
+        .then(
+          (cached) =>
+            cached ||
+            fetch(request).then((response) => {
+              if (response.ok) {
+                const copy = response.clone();
+                caches.open(CACHE).then((cache) => cache.put(request, copy));
+              }
+              return response;
+            }),
+        ),
     );
   }
 });

@@ -1,4 +1,5 @@
 import type { LifeRecord, NewRecord, RecordData, RecordKind } from './types';
+import { storageKey } from './storage.ts';
 
 export const RECORD_KINDS: RecordKind[] = [
   'task',
@@ -270,7 +271,7 @@ export function mergeRecords(...groups: LifeRecord[][]): LifeRecord[] {
 export function workspaceKey(scope: string): string {
   if (scope !== 'demo' && scope !== 'guest' && !/^uid:[^\s/]{1,128}$/.test(scope))
     throw new Error('잘못된 작업 공간입니다.');
-  return `life-os:v2:workspace:${encodeURIComponent(scope)}`;
+  return storageKey(`workspace:${encodeURIComponent(scope)}`);
 }
 export function emptyWorkspace(scope: string): WorkspaceEnvelope {
   workspaceKey(scope);

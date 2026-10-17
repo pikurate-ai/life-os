@@ -7,6 +7,7 @@
     "predev": "node scripts/generate-icons.cjs",
     "prebuild": "node scripts/generate-icons.cjs",
     "build": "next build",
+    "build:iphone": "node scripts/build-iphone.cjs",
     "start": "node scripts/serve.cjs",
     "preview": "node scripts/serve.cjs",
     "typecheck": "tsc --noEmit",

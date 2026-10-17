@@ -39,6 +39,7 @@ import {
 import { demoRecords } from './demo';
 import { firebaseConfigured, getLifeFirebase, type FirebaseServices } from './firebase';
 import { readLegacy } from './legacy';
+import { storageKey } from './storage';
 
 interface LifeUser {
   uid: string;
@@ -68,7 +69,7 @@ interface LifeContextValue {
   migrationReport: string[];
 }
 
-const MODE_KEY = 'life-os:v2:mode';
+const MODE_KEY = storageKey('mode');
 const LifeContext = createContext<LifeContextValue | null>(null);
 function errorMessage(error: unknown): string {
   const code =

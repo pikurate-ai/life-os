@@ -21,6 +21,8 @@ import {
 import { useLife } from '@/lib/life-os/store';
 import { Badge, Button, Field, Modal, SectionHeader } from './ui';
 
+const previewBuild = process.env.NEXT_PUBLIC_LIFE_OS_PREVIEW === 'true';
+
 export function SettingsView() {
   const {
     user,
@@ -74,7 +76,11 @@ export function SettingsView() {
           </span>
           <div>
             <h2>내 계정</h2>
-            <p>같은 계정으로 로그인하면 기기가 달라도 같은 기록을 봅니다.</p>
+            <p>
+              {previewBuild
+                ? '테스트 기록은 현재 기기에 보관됩니다.'
+                : '같은 계정으로 로그인하면 기기가 달라도 같은 기록을 봅니다.'}
+            </p>
           </div>
         </div>
         <div className="account-card">
@@ -95,22 +101,23 @@ export function SettingsView() {
           </Badge>
         </div>
         <div className="settings-actions">
-          {user ? (
-            <Button variant="secondary" disabled={pending} onClick={() => action(signOut)}>
-              <LogOut size={16} />
-              로그아웃
-            </Button>
-          ) : (
-            <Button disabled={pending || !configured} onClick={() => action(signIn)}>
-              <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M21.8 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.5a4.8 4.8 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6ZM12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.6c-.9.6-2.1 1-3.4 1-2.6 0-4.9-1.8-5.7-4.2H2.9v2.7A10 10 0 0 0 12 22Zm-5.7-8.2a6 6 0 0 1 0-3.6V7.5H2.9a10 10 0 0 0 0 9l3.4-2.7ZM12 6c1.5 0 2.8.5 3.9 1.5l2.9-2.9A9.7 9.7 0 0 0 12 2a10 10 0 0 0-9.1 5.5l3.4 2.7C7.1 7.8 9.4 6 12 6Z"
-                />
-              </svg>
-              {pending ? '연결 중…' : 'Google로 로그인'}
-            </Button>
-          )}
+          {!previewBuild &&
+            (user ? (
+              <Button variant="secondary" disabled={pending} onClick={() => action(signOut)}>
+                <LogOut size={16} />
+                로그아웃
+              </Button>
+            ) : (
+              <Button disabled={pending || !configured} onClick={() => action(signIn)}>
+                <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M21.8 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.5a4.8 4.8 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6ZM12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.6c-.9.6-2.1 1-3.4 1-2.6 0-4.9-1.8-5.7-4.2H2.9v2.7A10 10 0 0 0 12 22Zm-5.7-8.2a6 6 0 0 1 0-3.6V7.5H2.9a10 10 0 0 0 0 9l3.4-2.7ZM12 6c1.5 0 2.8.5 3.9 1.5l2.9-2.9A9.7 9.7 0 0 0 12 2a10 10 0 0 0-9.1 5.5l3.4 2.7C7.1 7.8 9.4 6 12 6Z"
+                  />
+                </svg>
+                {pending ? '연결 중…' : 'Google로 로그인'}
+              </Button>
+            ))}
           {demo && (
             <Button variant="secondary" onClick={() => setDemo(false)}>
               내 기록 시작하기
@@ -122,13 +129,18 @@ export function SettingsView() {
             </Button>
           )}
         </div>
-        {!configured && (
+        {previewBuild && (
           <div className="setting-note">
-            클라우드 연결 설정이 필요합니다. 설정 전에도 이 기기에서 기록하고 백업할 수 있어요.
-            관리자 연결 방법은 저장소의 배포 가이드에 정리되어 있습니다.
+            테스트 기록은 이 브라우저에만 저장돼요. 중요한 기록은 백업 파일로 보관하고, 다른
+            기기에서 이어 쓰려면 해당 파일을 가져와 주세요.
           </div>
         )}
-        {!user && configured && (
+        {!previewBuild && !configured && (
+          <div className="setting-note">
+            현재 클라우드 연결을 사용할 수 없어요. 이 기기에서 기록하고 백업할 수 있어요.
+          </div>
+        )}
+        {!previewBuild && !user && configured && (
           <div className="setting-note">
             로그인하면 계정 전용 공간이 열립니다. 이 기기의 기존 기록을 옮기려면 먼저 백업한 뒤,
             로그인 후 가져오기를 진행하세요.
@@ -166,8 +178,9 @@ export function SettingsView() {
         </div>
         <div className="setting-note">
           <MonitorSmartphone size={17} />
-          PC와 모바일에서 같은 Google 계정으로 로그인해 주세요. 네트워크가 끊기면 기록은 기기에
-          보관되고, 연결이 돌아오면 다시 전송됩니다.
+          {previewBuild
+            ? '이 테스트 버전은 PC와 아이폰 간 자동 동기화를 제공하지 않아요. 다른 기기로 옮길 때는 백업 파일을 사용해 주세요.'
+            : 'PC와 모바일에서 같은 Google 계정으로 로그인해 주세요. 네트워크가 끊기면 기록은 기기에 보관되고, 연결이 돌아오면 다시 전송됩니다.'}
         </div>
       </section>
       <section className="card settings-section">

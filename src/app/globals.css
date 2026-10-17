@@ -3283,3 +3283,32 @@ kbd {
 .migration-report li + li {
   margin-top: 5px;
 }
+.preview-notice {
+  padding: 8px 38px;
+  border-bottom: 1px solid #e6e1ca;
+  background: #f6f2e4;
+  color: #6d674d;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .preview-notice {
+    padding: 8px 18px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 760px) {
+  .mobile-drawer {
+    padding-top: calc(26px + env(safe-area-inset-top, 0px));
+  }
+  .modal-backdrop {
+    padding: calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px))
+      calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px));
+  }
+  .modal {
+    max-height: calc(
+      100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+  }
+}

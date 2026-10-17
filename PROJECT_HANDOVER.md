@@ -16,6 +16,12 @@ Next.js App Router / React / TypeScript strict, CSS 디자인 토큰, Firebase G
 
 Node 24에서 `npm ci`, `npm run dev`로 실행합니다. `npm run typecheck`, `npm test`, `npm run build`로 검사합니다. 정적 산출물은 out/이며 Pages 빌드에는 GITHUB_PAGES=true가 필요합니다.
 
+### iPhone 테스트 빌드 — 공개 게시 대기
+
+`npm run build:iphone`은 `/life-os-preview/` 경로, **Life OS 테스트** 설치 이름, 전용 manifest·아이콘으로 정적 산출물을 만듭니다. Firebase 값이 있더라도 이 빌드는 클라우드 연결을 강제로 끄며, 로컬 저장 공간 이름도 운영 앱과 분리합니다. 기기 기록·예시·백업용 테스트이며 PC·iPhone 자동 동기화 시험은 포함하지 않습니다.
+
+2026-10-17 해당 빌드와 로컬 390×844 기록·새로고침·레이아웃 검사를 통과했습니다. 이후 설정의 기기 저장·자동 동기화 없음 안내와 로그인 버튼 숨김을 반영한 포맷·타입·자동 테스트 49개·암호화/가져오기 검사·일반 빌드도 통과했으며, 최종 iPhone 테스트 빌드도 성공했습니다. [전용 공개 저장소](https://github.com/pikurate-ai/life-os-preview)는 생성되었지만 아직 비어 있고 공개 게시 승인 대기 중입니다. [예정 주소](https://pikurate-ai.github.io/life-os-preview/)의 배포 완료나 실제 iPhone 사용은 확인하지 않았습니다. 공개 게시와 실제 HTTPS 응답 확인이 남아 있습니다. [QA](docs/QA.md), [배포 절차](docs/DEPLOYMENT.md), [아이폰 테스트 가이드](docs/IPHONE_TEST_GUIDE.md)를 함께 확인하세요.
+
 ## 코드 지도
 
 | 경로                                     | 역할                                     |
