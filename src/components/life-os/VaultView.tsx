@@ -31,7 +31,7 @@ import {
   VAULT_ITERATIONS,
 } from '@/lib/life-os/vault-crypto';
 import { resolveVaultConfig, vaultConfigs, vaultEntriesForConfig } from '@/lib/life-os/vault-model';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
 import './health-diary-vault.css';
 
 type OpenCredential = Credential & { id: string };
@@ -63,9 +63,11 @@ export function VaultView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [entries, setEntries] = useState<OpenCredential[]>([]);
+  const [loadingEntries, setLoadingEntries] = useState(false);
   const [unreadable, setUnreadable] = useState(0);
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState<Credential | null>(null);
+  const initialDraft = useRef<Credential | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -92,9 +94,13 @@ export function VaultView() {
     setMaster('');
     setConfirmation('');
     setEntries([]);
+    setLoadingEntries(false);
+    initialDraft.current = null;
     setDraft(null);
+    setEditingId(null);
     setRemove(null);
     setImports([]);
+    setImportSource('');
     setImportOpen(false);
     setSearch('');
     setError('');
@@ -123,6 +129,7 @@ export function VaultView() {
       generation.current++;
       keyRef.current = null;
       keyConfig.current = null;
+      initialDraft.current = null;
       if (idleTimer.current) clearTimeout(idleTimer.current);
       document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('pointerdown', refresh);
@@ -142,6 +149,7 @@ export function VaultView() {
   useEffect(() => {
     const key = keyRef.current;
     if (!key || !unlocked) return;
+    setLoadingEntries(true);
     let cancelled = false;
     const currentGeneration = generation.current;
     (async () => {
@@ -170,6 +178,7 @@ export function VaultView() {
           .sort((a, b) => a.title.localeCompare(b.title)),
       );
       setUnreadable(results.filter((result) => result.status === 'rejected').length);
+      setLoadingEntries(false);
     })();
     return () => {
       cancelled = true;
@@ -222,6 +231,7 @@ export function VaultView() {
       setMaster('');
       setConfirmation('');
       setUnlocked(true);
+      setLoadingEntries(true);
       setError('');
     } catch (error) {
       if (mounted.current && currentGeneration === generation.current)
@@ -246,22 +256,25 @@ export function VaultView() {
   }
   const openDraft = (entry?: OpenCredential) => {
     setEditingId(entry?.id || null);
-    setDraft(
-      entry
-        ? {
-            title: entry.title,
-            username: entry.username,
-            password: entry.password,
-            url: entry.url,
-            notes: entry.notes,
-          }
-        : blank(),
-    );
+    const value = entry
+      ? {
+          title: entry.title,
+          username: entry.username,
+          password: entry.password,
+          url: entry.url,
+          notes: entry.notes,
+        }
+      : blank();
+    initialDraft.current = value;
+    setDraft(value);
     setShowPassword(false);
     setFormError('');
   };
   const set = (key: keyof Credential, value: string) =>
     setDraft((current) => (current ? { ...current, [key]: value } : null));
+  const dirtyDraft = Boolean(
+    draft && initialDraft.current && JSON.stringify(draft) !== JSON.stringify(initialDraft.current),
+  );
   async function save(event: React.FormEvent) {
     event.preventDefault();
     const key = keyRef.current;
@@ -290,11 +303,16 @@ export function VaultView() {
       };
       if (editingId) updateRecord(editingId, value);
       else addRecord(value);
+      initialDraft.current = null;
       setDraft(null);
       notify('로그인 정보를 암호화해 저장했어요.');
-    } catch {
+    } catch (error) {
       if (mounted.current && currentGeneration === generation.current)
-        setFormError('암호화하여 저장하지 못했습니다. 다시 시도해 주세요.');
+        setFormError(
+          error instanceof Error
+            ? error.message
+            : '암호화하여 저장하지 못했습니다. 다시 시도해 주세요.',
+        );
     } finally {
       if (mounted.current && currentGeneration === generation.current) setBusy(false);
     }
@@ -304,6 +322,12 @@ export function VaultView() {
     setImportError('');
     setImports([]);
     if (!file) return;
+    if (!keyRef.current) {
+      event.target.value = '';
+      notify('화면 전환으로 금고가 잠겼어요. 다시 연 뒤 CSV 파일을 선택해 주세요.');
+      return;
+    }
+    setBusy(true);
     const currentGeneration = generation.current;
     try {
       if (!/\.csv$/i.test(file.name))
@@ -321,16 +345,23 @@ export function VaultView() {
         setImportError(error instanceof Error ? error.message : '파일을 읽지 못했습니다.');
     } finally {
       event.target.value = '';
+      if (mounted.current && currentGeneration === generation.current) setBusy(false);
     }
   }
   const uniqueImports = useMemo(() => {
     const known = new Set(
       entries.map((value) =>
-        JSON.stringify([value.title, value.username, value.password, value.url]),
+        JSON.stringify([value.title, value.username, value.password, value.url, value.notes]),
       ),
     );
     return imports.filter((value) => {
-      const key = JSON.stringify([value.title, value.username, value.password, value.url]);
+      const key = JSON.stringify([
+        value.title,
+        value.username,
+        value.password,
+        value.url,
+        value.notes,
+      ]);
       if (known.has(key)) return false;
       known.add(key);
       return true;
@@ -339,6 +370,10 @@ export function VaultView() {
   async function commitImport() {
     const key = keyRef.current;
     if (!key || busy) return;
+    if (loadingEntries) {
+      setImportError('금고에 저장된 항목을 확인하고 있어요. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
     setBusy(true);
     setImportError('');
     const currentGeneration = generation.current;
@@ -366,7 +401,11 @@ export function VaultView() {
           `${saved}개 저장 후 중단되었습니다. 저장된 항목은 중복에서 제외됩니다. ${error instanceof Error ? error.message : '저장 공간을 확인하고 다시 시도해 주세요.'}`,
         );
     } finally {
-      if (mounted.current && currentGeneration === generation.current) setBusy(false);
+      if (mounted.current && currentGeneration === generation.current) {
+        // A partially saved batch must be decrypted before retry deduplication can be trusted.
+        if (saved > 0) setLoadingEntries(true);
+        setBusy(false);
+      }
     }
   }
   function deleteEntry() {
@@ -406,7 +445,7 @@ export function VaultView() {
       {demo && (
         <div className="hdv-info">
           <ShieldCheck size={19} />
-          <span>체험 공간입니다. 실제 비밀번호는 계정을 연결한 개인 공간에서 저장하세요.</span>
+          <span>체험 공간입니다. 비밀번호 저장과 가져오기는 예시 정보로 연습해 주세요.</span>
         </div>
       )}
       {legacyCount > 0 && (
@@ -497,6 +536,9 @@ export function VaultView() {
                 placeholder={config ? '마스터 비밀번호 입력' : '12자 이상의 비밀번호'}
                 minLength={config ? undefined : 12}
                 value={master}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 disabled={busy}
                 onChange={(event) => setMaster(event.target.value)}
               />
@@ -510,6 +552,9 @@ export function VaultView() {
                   type="password"
                   placeholder="비밀번호를 다시 입력해 주세요"
                   value={confirmation}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   disabled={busy}
                   onChange={(event) => setConfirmation(event.target.value)}
                 />
@@ -548,11 +593,15 @@ export function VaultView() {
             <div className="hdv-grow">
               <strong>금고가 열려 있어요</strong>
               <p className="muted text-small">
-                {entries.length}개 로그인 정보 · 화면을 벗어나거나 5분 후 자동 잠금
+                {loadingEntries
+                  ? '로그인 정보를 확인하고 있어요'
+                  : `${entries.length}개 로그인 정보`}{' '}
+                · 화면을 벗어나거나 5분 동안 미사용 시 자동 잠금
               </p>
             </div>
             <Button
               variant="secondary"
+              disabled={loadingEntries}
               onClick={() => {
                 setImports([]);
                 setImportError('');
@@ -586,7 +635,11 @@ export function VaultView() {
                 />
               </label>
             </div>
-            {!visible.length ? (
+            {loadingEntries && !entries.length ? (
+              <p className="muted" role="status">
+                암호화된 로그인 정보를 확인하고 있어요…
+              </p>
+            ) : !visible.length ? (
               <EmptyState
                 icon={<KeyRound size={29} />}
                 title={search ? '검색 결과가 없어요' : '첫 로그인 정보를 저장하세요'}
@@ -616,6 +669,7 @@ export function VaultView() {
                         className="hdv-copy-button"
                         onClick={() => copy(entry.password, '비밀번호를')}
                         title="비밀번호 복사"
+                        aria-label={`${entry.title} 비밀번호 복사`}
                       >
                         <Copy size={14} />
                         <span>비밀번호</span>
@@ -651,17 +705,22 @@ export function VaultView() {
         <Modal
           title={editingId ? '로그인 정보 수정' : '로그인 정보 추가'}
           onClose={() => {
-            if (!busy) setDraft(null);
+            if (!busy) {
+              initialDraft.current = null;
+              setDraft(null);
+            }
           }}
+          dirty={dirtyDraft && !busy}
         >
           <form className="page-stack" onSubmit={save}>
             <Field label="서비스 이름">
               <input
-                autoFocus
                 required
+                disabled={busy}
                 className="input"
                 placeholder="예: Google"
                 value={draft.title}
+                maxLength={200}
                 onChange={(event) => set('title', event.target.value)}
               />
             </Field>
@@ -670,6 +729,11 @@ export function VaultView() {
                 <input
                   className="input"
                   autoComplete="off"
+                  aria-label="아이디 또는 이메일"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  disabled={busy}
                   placeholder="이메일 또는 아이디"
                   value={draft.username}
                   onChange={(event) => set('username', event.target.value)}
@@ -678,6 +742,7 @@ export function VaultView() {
                   <button
                     type="button"
                     className="icon-button"
+                    disabled={busy}
                     aria-label="아이디 복사"
                     onClick={() => copy(draft.username, '아이디를')}
                   >
@@ -686,19 +751,28 @@ export function VaultView() {
                 )}
               </div>
             </Field>
-            <Field label="비밀번호">
+            <Field
+              label="비밀번호"
+              hint="여기에서 수정해도 실제 서비스의 비밀번호는 바뀌지 않아요."
+            >
               <div className="hdv-input-action">
                 <input
                   required
                   className="input"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
+                  aria-label="저장할 비밀번호"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  disabled={busy}
                   value={draft.password}
                   onChange={(event) => set('password', event.target.value)}
                 />
                 <button
                   type="button"
                   className="icon-button"
+                  disabled={busy}
                   aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -708,6 +782,7 @@ export function VaultView() {
                   <button
                     type="button"
                     className="icon-button"
+                    disabled={busy}
                     aria-label="비밀번호 복사"
                     onClick={() => copy(draft.password, '비밀번호를')}
                   >
@@ -717,7 +792,11 @@ export function VaultView() {
               </div>
             </Field>
             <div className="hdv-inline">
-              <Button variant="secondary" onClick={() => set('password', generatePassword())}>
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() => set('password', generatePassword())}
+              >
                 <RefreshCw size={14} />
                 강력한 비밀번호 생성
               </Button>
@@ -727,6 +806,11 @@ export function VaultView() {
               <input
                 className="input"
                 autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="url"
+                disabled={busy}
                 placeholder="https://example.com"
                 value={draft.url}
                 onChange={(event) => set('url', event.target.value)}
@@ -736,6 +820,8 @@ export function VaultView() {
               <textarea
                 className="textarea"
                 rows={3}
+                maxLength={20000}
+                disabled={busy}
                 value={draft.notes}
                 onChange={(event) => set('notes', event.target.value)}
                 placeholder="복구 정보, 계정 관련 메모 등"
@@ -747,9 +833,7 @@ export function VaultView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" disabled={busy} onClick={() => setDraft(null)}>
-                취소
-              </Button>
+              <ModalCloseButton disabled={busy}>취소</ModalCloseButton>
               <Button type="submit" disabled={busy}>
                 <LockKeyhole size={16} />
                 {busy ? '암호화 중…' : '암호화해 저장'}
@@ -780,12 +864,18 @@ export function VaultView() {
               setImports([]);
             }
           }}
+          dirty={!busy && uniqueImports.length > 0}
           wide
         >
           <div className="page-stack">
             <p className="muted">
               Chrome·Google 비밀번호 관리자, LastPass에서 내보낸 CSV를 지원합니다. Excel은{' '}
               <strong>CSV UTF-8 (.csv)</strong> 형식으로 저장해 주세요.
+            </p>
+            <p className="muted text-small">
+              기존 서비스에서 내보낸 파일을 먼저 기기의 파일 앱에 저장하세요. 파일 선택 → 항목
+              미리보기 → 가져오기 순서로 진행합니다. 다른 앱으로 전환하면 금고가 잠길 수 있으니
+              파일을 준비한 뒤 시작하세요.
             </p>
             <div className="hdv-warning">
               <ShieldCheck size={19} />
@@ -796,7 +886,7 @@ export function VaultView() {
             </div>
             <label className="hdv-upload">
               <Upload size={22} />
-              <strong>CSV 파일 선택</strong>
+              <strong>{busy ? '파일을 확인하고 있어요…' : 'CSV 파일 선택'}</strong>
               <span className="muted text-small">최대 5 MB · 1,000개 항목</span>
               <input type="file" accept=".csv,text/csv" disabled={busy} onChange={readCSV} />
             </label>
@@ -812,6 +902,11 @@ export function VaultView() {
                   <Badge tone="green">새 항목 {uniqueImports.length}개</Badge>
                   <Badge>중복 {imports.length - uniqueImports.length}개 제외</Badge>
                 </div>
+                {uniqueImports.length === 0 && (
+                  <p className="muted text-small" role="status">
+                    모두 이미 금고에 있는 로그인 정보예요. 같은 정보는 다시 추가하지 않습니다.
+                  </p>
+                )}
                 <div className="hdv-import-preview">
                   {uniqueImports.slice(0, 20).map((entry, index) => (
                     <div key={index}>
@@ -831,19 +926,17 @@ export function VaultView() {
               직접 만든 CSV 헤더: name, url, username, password, notes
             </p>
             <div className="form-actions">
+              <ModalCloseButton disabled={busy}>취소</ModalCloseButton>
               <Button
-                variant="secondary"
-                disabled={busy}
-                onClick={() => {
-                  setImportOpen(false);
-                  setImports([]);
-                }}
+                disabled={busy || loadingEntries || !uniqueImports.length}
+                onClick={commitImport}
               >
-                취소
-              </Button>
-              <Button disabled={busy || !uniqueImports.length} onClick={commitImport}>
                 <LockKeyhole size={16} />
-                {busy ? '암호화 중…' : `${uniqueImports.length}개 암호화해 가져오기`}
+                {busy
+                  ? '암호화 중…'
+                  : loadingEntries
+                    ? '기존 항목 확인 중…'
+                    : `${uniqueImports.length}개 암호화해 가져오기`}
               </Button>
             </div>
           </div>

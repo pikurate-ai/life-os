@@ -15,7 +15,7 @@ import {
 import { useLife } from '@/lib/life-os/store';
 import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, numberData, type LifeRecord } from '@/lib/life-os/types';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
 import { attempt, DeleteControl, formatWon, shortDate, validDate } from './domain-utils';
 import styles from './domain.module.css';
 
@@ -66,6 +66,7 @@ export function FinanceView() {
   const [directionFilter, setDirectionFilter] = useState('all');
   const [editing, setEditing] = useState<LifeRecord | null | undefined>(undefined);
   const [draft, setDraft] = useState<Draft>(() => blank('transaction'));
+  const [initialDraft, setInitialDraft] = useState('');
   const [error, setError] = useState('');
   const [smsOpen, setSmsOpen] = useState(false);
   const [sms, setSms] = useState('');
@@ -93,11 +94,21 @@ export function FinanceView() {
   const filtered = transactions.filter(
     (record) => directionFilter === 'all' || record.data.direction === directionFilter,
   );
-  const categoryTotals = expenseCategories
+  const categoryTotals = Array.from(
+    new Set(
+      transactions
+        .filter((record) => record.data.direction !== 'income')
+        .map((record) => String(record.data.category || '기타')),
+    ),
+  )
     .map((category) => ({
       category,
       amount: transactions
-        .filter((record) => record.data.direction !== 'income' && record.data.category === category)
+        .filter(
+          (record) =>
+            record.data.direction !== 'income' &&
+            String(record.data.category || '기타') === category,
+        )
         .reduce((sum, record) => sum + numberData(record, 'amount'), 0),
     }))
     .filter((item) => item.amount > 0)
@@ -108,19 +119,19 @@ export function FinanceView() {
     setSmsOpen(false);
     setSms('');
     setSmsMessage('');
-    setDraft(
-      record
-        ? {
-            type: record.type as Draft['type'],
-            title: record.title,
-            body: record.body,
-            amount: String(numberData(record, 'amount')),
-            date: record.date,
-            direction: String(record.data.direction || (type === 'asset' ? 'asset' : 'expense')),
-            category: String(record.data.category || '기타'),
-          }
-        : blank(type),
-    );
+    const nextDraft: Draft = record
+      ? {
+          type: record.type as Draft['type'],
+          title: record.title,
+          body: record.body,
+          amount: String(numberData(record, 'amount')),
+          date: record.date,
+          direction: String(record.data.direction || (type === 'asset' ? 'asset' : 'expense')),
+          category: String(record.data.category || '기타'),
+        }
+      : blank(type);
+    setDraft(nextDraft);
+    setInitialDraft(JSON.stringify(nextDraft));
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -128,11 +139,16 @@ export function FinanceView() {
     if (
       !draft.title.trim() ||
       !Number.isSafeInteger(amount) ||
-      amount <= 0 ||
+      !draft.amount.replace(/,/g, '').trim() ||
+      (draft.type === 'asset' ? amount < 0 : amount <= 0) ||
       amount > 100000000000000 ||
       !validDate(draft.date)
     ) {
-      setError('내용, 올바른 날짜, 0원보다 큰 정수 금액을 입력해 주세요.');
+      setError(
+        draft.type === 'asset'
+          ? '이름, 올바른 날짜, 0원 이상의 정수 잔액을 입력해 주세요.'
+          : '내용, 올바른 날짜, 0원보다 큰 정수 금액을 입력해 주세요.',
+      );
       return;
     }
     const value = {
@@ -154,6 +170,10 @@ export function FinanceView() {
     )
       return;
     setEditing(undefined);
+    if (draft.type === 'transaction') {
+      setMonth(draft.date.slice(0, 7));
+      setDirectionFilter('all');
+    }
     notify(draft.type === 'asset' ? '자산 정보를 저장했어요.' : '거래를 기록했어요.');
   };
   const parseSms = () => {
@@ -219,7 +239,7 @@ export function FinanceView() {
       </div>
       <div className="metric-grid">
         <div className="metric-card">
-          <span className="metric-label">이번 달 수입</span>
+          <span className="metric-label">선택한 달 수입</span>
           <div className={`${styles.metricAmount} ${styles.amountIncome}`}>
             {formatWon(income)}
             <span className={styles.amountUnit}>원</span>
@@ -227,7 +247,7 @@ export function FinanceView() {
           <div className={styles.statCompact}>기록된 수입 기준</div>
         </div>
         <div className="metric-card">
-          <span className="metric-label">이번 달 지출</span>
+          <span className="metric-label">선택한 달 지출</span>
           <div className={styles.metricAmount}>
             {formatWon(expense)}
             <span className={styles.amountUnit}>원</span>
@@ -235,7 +255,7 @@ export function FinanceView() {
           <div className={styles.statCompact}>일상의 흐름을 확인해요</div>
         </div>
         <div className="metric-card">
-          <span className="metric-label">이번 달 남은 돈</span>
+          <span className="metric-label">선택한 달 수지</span>
           <div className={styles.metricAmount}>
             {formatWon(income - expense)}
             <span className={styles.amountUnit}>원</span>
@@ -245,7 +265,7 @@ export function FinanceView() {
       </div>
       <div className={styles.twoCol}>
         <section className={`card card-pad ${styles.listCard}`}>
-          <div className={styles.panelHeading}>
+          <div className={styles.panelHeading} style={{ flexWrap: 'wrap' }}>
             <h2 className={styles.panelTitle}>
               거래 내역 <span className={styles.count}>{filtered.length}</span>
             </h2>
@@ -257,6 +277,7 @@ export function FinanceView() {
               ].map(([key, label]) => (
                 <button
                   className={`${styles.filter} ${directionFilter === key ? styles.selected : ''}`}
+                  aria-pressed={directionFilter === key}
                   key={key}
                   onClick={() => setDirectionFilter(key)}
                 >
@@ -267,13 +288,13 @@ export function FinanceView() {
           </div>
           {filtered.length ? (
             filtered.map((record) => (
-              <div className={styles.record} key={record.id}>
+              <div className={styles.record} key={record.id} style={{ flexWrap: 'wrap' }}>
                 <span
                   className={`${styles.recordIcon} ${record.data.direction === 'income' ? styles.incomeIcon : styles.expenseIcon}`}
                 >
                   {record.data.direction === 'income' ? <ArrowDownLeft /> : <ArrowUpRight />}
                 </span>
-                <div className={styles.recordText}>
+                <div className={styles.recordText} style={{ flex: '1 1 120px' }}>
                   <p className={styles.recordTitle}>{record.title}</p>
                   <div className={styles.recordMeta}>
                     {shortDate(record.date)} · {String(record.data.category || '기타')}
@@ -299,19 +320,31 @@ export function FinanceView() {
           ) : (
             <EmptyState
               icon={<Wallet size={25} />}
-              title="아직 기록된 거래가 없어요"
-              description={`${month.replace('-', '년 ')}월의 첫 기록을 남겨 보세요.`}
+              title={
+                transactions.length ? '선택한 구분의 거래가 없어요' : '아직 기록된 거래가 없어요'
+              }
+              description={
+                transactions.length
+                  ? '전체 거래에서 이달의 기록을 확인해 보세요.'
+                  : `${month.replace('-', '년 ')}월의 첫 기록을 남겨 보세요.`
+              }
               action={
-                <Button variant="secondary" onClick={() => openEditor(null)}>
-                  거래 기록하기
-                </Button>
+                transactions.length ? (
+                  <Button variant="secondary" onClick={() => setDirectionFilter('all')}>
+                    전체 거래 보기
+                  </Button>
+                ) : (
+                  <Button variant="secondary" onClick={() => openEditor(null)}>
+                    거래 기록하기
+                  </Button>
+                )
               }
             />
           )}
         </section>
         <div className="page-stack">
           <section className="card card-pad">
-            <div className={styles.panelHeading}>
+            <div className={styles.panelHeading} style={{ flexWrap: 'wrap' }}>
               <h2 className={styles.panelTitle}>자산 현황</h2>
               <button
                 className={styles.icon}
@@ -334,17 +367,17 @@ export function FinanceView() {
                 }}
               />
             </div>
-            <div className={styles.assetTotals}>
+            <div className={styles.assetTotals} style={{ flexWrap: 'wrap' }}>
               <span>자산 {formatWon(assetTotal)}원</span>
               <span>부채 {formatWon(liabilityTotal)}원</span>
             </div>
             {assets.length ? (
               assets.map((record) => (
-                <div className={styles.record} key={record.id}>
+                <div className={styles.record} key={record.id} style={{ flexWrap: 'wrap' }}>
                   <span className={styles.recordIcon}>
                     {record.data.direction === 'liability' ? <CreditCard /> : <Building2 />}
                   </span>
-                  <div className={styles.recordText}>
+                  <div className={styles.recordText} style={{ flex: '1 1 120px' }}>
                     <p className={styles.recordTitle}>{record.title}</p>
                     <div className={styles.recordMeta}>
                       {record.data.direction === 'liability' ? '부채' : '자산'} ·{' '}
@@ -373,7 +406,7 @@ export function FinanceView() {
           </section>
           <section className="card card-pad">
             <h2 className={styles.panelTitle}>어디에 사용했나요?</h2>
-            <p className={styles.help}>이번 달 카테고리별 지출</p>
+            <p className={styles.help}>선택한 달 카테고리별 지출</p>
             {categoryTotals.length ? (
               categoryTotals.map((item) => (
                 <div key={item.category} style={{ marginTop: 15 }}>
@@ -407,6 +440,7 @@ export function FinanceView() {
                 : '새 거래 기록'
           }
           onClose={() => setEditing(undefined)}
+          dirty={JSON.stringify(draft) !== initialDraft || sms.trim().length > 0}
         >
           <form onSubmit={submit} className={styles.formStack}>
             {draft.type === 'transaction' && !editing && (
@@ -481,16 +515,17 @@ export function FinanceView() {
                   value={draft.category}
                   onChange={(event) => setDraft({ ...draft, category: event.target.value })}
                 >
-                  {options(draft.direction).map((category) => (
-                    <option key={category}>{category}</option>
-                  ))}
+                  {Array.from(new Set([draft.category, ...options(draft.direction)])).map(
+                    (category) => (
+                      <option key={category}>{category}</option>
+                    ),
+                  )}
                 </select>
               </Field>
             </div>
             <Field label={draft.type === 'asset' ? '이름' : '사용처 또는 수입 내용'}>
               <input
                 className="input"
-                autoFocus
                 required
                 value={draft.title}
                 maxLength={120}
@@ -539,9 +574,7 @@ export function FinanceView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setEditing(undefined)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">기록 저장하기</Button>
             </div>
           </form>

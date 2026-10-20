@@ -28,7 +28,6 @@ import {
   mergeRecords,
   mergeWorkspaces,
   nextTimestamp,
-  parseBackup,
   parseWorkspace,
   recordFingerprint,
   recordVersion,
@@ -40,6 +39,13 @@ import { demoRecords } from './demo';
 import { firebaseConfigured, getLifeFirebase, type FirebaseServices } from './firebase';
 import { readLegacy } from './legacy';
 import { storageKey } from './storage';
+import {
+  BackupImportSession,
+  backupTargetVersion,
+  inspectBackupText,
+  preserveLegacyImport,
+  type BackupImportPreview,
+} from './backup';
 
 interface LifeUser {
   uid: string;
@@ -64,7 +70,9 @@ interface LifeContextValue {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   exportBackup: () => void;
-  importBackup: (file: File) => Promise<void>;
+  previewBackup: (file: File) => Promise<BackupImportPreview>;
+  discardBackupPreview: () => void;
+  importBackup: (file: File, confirmationToken?: string) => Promise<void>;
   importLegacy: () => Promise<number>;
   migrationReport: string[];
 }
@@ -113,6 +121,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
   const verifiedCloud = useRef(false);
   const flush = useRef<() => void>(() => {});
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backupSession = useRef(new BackupImportSession());
   const scope = demo ? 'demo' : user ? `uid:${user.uid}` : 'guest';
   const expectedScope = useRef(scope);
   expectedScope.current = scope;
@@ -230,6 +239,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
     verifiedCloud.current = false;
     cloudError.current = null;
     setMigrationReport([]);
+    backupSession.current.discard();
     storageError.current = null;
     blocked.current = false;
     let next = emptyWorkspace(scope);
@@ -522,14 +532,81 @@ export function LifeProvider({ children }: { children: ReactNode }) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify('백업을 내보냈습니다. 일기·금융 정보가 포함되므로 안전한 곳에 보관해 주세요.');
   }, [notify, requireWorkspace]);
-  const importBackup = useCallback(
+  const discardBackupPreview = useCallback(() => {
+    backupSession.current.discard();
+  }, []);
+  const previewBackup = useCallback(
     async (file: File) => {
       const startingScope = requireWorkspace().scope;
+      const request = backupSession.current.begin();
       if (file.size > BACKUP_LIMIT) throw new Error('백업 파일은 25MB 이하여야 합니다.');
-      const backup = parseBackup(await file.text());
+      const candidate = await inspectBackupText(await file.text());
       const current = requireWorkspace();
       if (current.scope !== startingScope)
         throw new Error('가져오는 동안 계정이 바뀌었습니다. 다시 시도해 주세요.');
+      const legacyPlan =
+        candidate.source === 'v1' ? preserveLegacyImport(current.records, candidate.records) : null;
+      const currentIds = new Map(current.records.map((record) => [record.id, record]));
+      const duplicates = legacyPlan
+        ? legacyPlan.unchanged + legacyPlan.deletedSkipped
+        : candidate.records.filter(
+            (record) =>
+              currentIds.has(record.id) &&
+              recordFingerprint(currentIds.get(record.id)!) === recordFingerprint(record),
+          ).length;
+      const kind =
+        current.scope === 'demo' ? 'demo' : current.scope === 'guest' ? 'guest' : 'account';
+      const preview = backupSession.current.stage(
+        request,
+        {
+          scope: current.scope,
+          file,
+          candidate,
+          targetVersion: backupTargetVersion(current.records),
+        },
+        {
+          source: candidate.source,
+          sourceWorkspace: candidate.sourceWorkspace,
+          total: candidate.records.length,
+          active: candidate.records.filter((record) => !record.deletedAt).length,
+          deleted: candidate.records.filter((record) => record.deletedAt).length,
+          skipped: candidate.skipped,
+          duplicates: candidate.duplicates + duplicates,
+          conflicts: legacyPlan?.conflicts ?? 0,
+          targetKind: kind,
+          targetLabel:
+            kind === 'demo'
+              ? '예시 전용 공간 · 실제 개인 기록 공간이 아닙니다'
+              : kind === 'guest'
+                ? '현재 기기의 브라우저 · 로그인되지 않은 개인 공간'
+                : `${user?.email || user?.displayName || '현재 Google 계정'} · 계정 전용 공간`,
+          warnings: [
+            ...candidate.warnings,
+            ...(legacyPlan?.conflicts
+              ? [
+                  '기존 ID의 변경분은 원본을 덮어쓰지 않고 기억 탭에 검토 사본으로 보존합니다. 금액·운동 집계에는 자동 반영하지 않습니다. 암호금고 변경분은 암호문 사본으로 보관합니다.',
+                ]
+              : []),
+            ...(legacyPlan?.deletedSkipped
+              ? ['현재 공간에서 삭제한 기록은 이전 원본을 다시 가져와도 복원하지 않습니다.']
+              : []),
+          ],
+        },
+      );
+      return preview;
+    },
+    [requireWorkspace, user],
+  );
+  const importBackup = useCallback(
+    async (file: File, confirmationToken?: string) => {
+      const current = requireWorkspace();
+      const prepared = backupSession.current.confirm(
+        confirmationToken,
+        file,
+        current.scope,
+        backupTargetVersion(current.records),
+      );
+      const backup = prepared.candidate;
       const existingTypes = new Map(current.records.map((record) => [record.id, record.type]));
       if (
         backup.records.some(
@@ -540,7 +617,9 @@ export function LifeProvider({ children }: { children: ReactNode }) {
           '같은 ID에 다른 종류의 기록이 있습니다. 올바른 작업 공간의 백업인지 확인해 주세요.',
         );
       }
-      const merged = mergeRecords(current.records, backup.records);
+      const plan =
+        backup.source === 'v1' ? preserveLegacyImport(current.records, backup.records) : null;
+      const merged = mergeRecords(current.records, plan ? plan.additions : backup.records);
       const before = new Map(
         current.records.map((record) => [record.id, recordFingerprint(record)]),
       );
@@ -548,7 +627,15 @@ export function LifeProvider({ children }: { children: ReactNode }) {
         .filter((record) => before.get(record.id) !== recordFingerprint(record))
         .map((record) => record.id);
       commit({ ...current, records: merged, pending: [...current.pending, ...changed] });
+      backupSession.current.discard();
       flush.current();
+      setMigrationReport([
+        `${backup.source.toUpperCase()} 백업에서 ${changed.length}개를 저장했습니다. 원본 파일과 기존 기록은 삭제하지 않았습니다.`,
+        ...(plan?.conflicts
+          ? [`이전 변경분 ${plan.conflicts}개를 검토 사본으로 보존했습니다.`]
+          : []),
+        ...backup.warnings,
+      ]);
       notify(`${changed.length}개의 기록을 가져왔습니다. 기존 기록은 병합해 보존했습니다.`);
     },
     [commit, notify, requireWorkspace],
@@ -561,8 +648,8 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       throw new Error(
         '이전 자료를 읽는 동안 계정이 바뀌었습니다. 현재 공간에서 다시 시도해 주세요.',
       );
-    const known = new Set(current.records.map((record) => record.id));
-    const added = legacy.records.filter((record) => !known.has(record.id));
+    const plan = preserveLegacyImport(current.records, legacy.records);
+    const added = plan.additions;
     commit({
       ...current,
       records: added,
@@ -570,7 +657,12 @@ export function LifeProvider({ children }: { children: ReactNode }) {
     });
     flush.current();
     setMigrationReport([
-      `${added.length}개를 추가했습니다. 이미 가져온 기록 ${legacy.records.length - added.length}개는 다시 추가하지 않았습니다. 지원하지 않거나 읽지 못한 항목 ${legacy.unsupported}개.`,
+      `${added.length}개를 추가했습니다. 동일한 기록 ${plan.unchanged}개와 이미 삭제한 기록 ${plan.deletedSkipped}개는 다시 추가하지 않았습니다. 지원하지 않거나 읽지 못한 항목 ${legacy.unsupported}개.`,
+      ...(plan.conflicts
+        ? [
+            `기존 ID의 변경분 ${plan.conflicts}개를 검토 사본으로 보존했습니다. 기존 기록과 집계는 바꾸지 않았습니다. 일반 변경분은 기억 탭에서, 금고 변경분은 암호문 상태로 확인할 수 있습니다.`,
+          ]
+        : []),
       ...legacy.warnings,
     ]);
     notify(
@@ -601,6 +693,8 @@ export function LifeProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         exportBackup,
+        previewBackup,
+        discardBackupPreview,
         importBackup,
         importLegacy,
         migrationReport,

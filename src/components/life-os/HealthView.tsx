@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Activity, Dumbbell, Footprints, Plus, Scale, Waves, Trash2, Pencil } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
 import { localDate, numberData, type LifeRecord, type NewRecord } from '@/lib/life-os/types';
 import { preserveRecordData } from '@/lib/life-os/editing';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
+import { validDate } from '@/lib/life-os/imports';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
 import './health-diary-vault.css';
 
 const activities = {
@@ -22,6 +23,7 @@ type HealthDraft = {
   date: string;
   distance: string;
   duration: string;
+  seconds: string;
   sets: string;
   exercise: string;
   load: string;
@@ -35,6 +37,7 @@ const blank = (type: 'workout' | 'weight' = 'workout'): HealthDraft => ({
   date: localDate(),
   distance: '',
   duration: '',
+  seconds: '0',
   sets: '',
   exercise: '',
   load: '',
@@ -53,13 +56,17 @@ const pace = (distance: number, duration: number) => {
   const seconds = Math.round((duration / distance) * 60);
   return `${Math.floor(seconds / 60)}′${String(seconds % 60).padStart(2, '0')}″`;
 };
+const displayDuration = (minutes: number) => {
+  const total = Math.round(minutes * 60);
+  return `${Math.floor(total / 60)}분${total % 60 ? ` ${total % 60}초` : ''}`;
+};
 function detail(record: LifeRecord): string {
   const activity = String(record.data.activity);
   if (record.type === 'weight') return `${numberData(record, 'kg')} kg`;
   if (activity === 'running')
-    return `${numberData(record, 'distance')} km · ${numberData(record, 'duration')}분 · ${pace(numberData(record, 'distance'), numberData(record, 'duration'))}/km`;
+    return `${numberData(record, 'distance')} km · ${displayDuration(numberData(record, 'duration'))} · ${pace(numberData(record, 'distance'), numberData(record, 'duration'))}/km`;
   if (activity === 'swimming')
-    return `${numberData(record, 'distance').toLocaleString()} m · ${numberData(record, 'duration')}분`;
+    return `${numberData(record, 'distance').toLocaleString()} m · ${displayDuration(numberData(record, 'duration'))}`;
   if (activity === 'pullups') {
     const sets = Array.isArray(record.data.sets) ? record.data.sets.map(Number) : [];
     return `${sets.join(' / ')}회 · 총 ${sets.reduce((a, b) => a + b, 0)}회`;
@@ -69,6 +76,7 @@ function detail(record: LifeRecord): string {
 export function HealthView() {
   const { records, addRecord, updateRecord, deleteRecord, notify } = useLife();
   const [draft, setDraft] = useState<HealthDraft | null>(null);
+  const initialDraft = useRef<HealthDraft | null>(null);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
   const [confirmDelete, setConfirmDelete] = useState<LifeRecord | null>(null);
@@ -99,29 +107,61 @@ export function HealthView() {
   );
   const set = (key: keyof HealthDraft, value: string) =>
     setDraft((current) => (current ? { ...current, [key]: value } : null));
+  const durationMinutes = draft ? Number(draft.duration) + Number(draft.seconds || 0) / 60 : 0;
+  const dirtyDraft = Boolean(
+    draft && initialDraft.current && JSON.stringify(draft) !== JSON.stringify(initialDraft.current),
+  );
+  function openNewDraft(type: 'workout' | 'weight' = 'workout') {
+    const value = blank(type);
+    if (type === 'workout' && Object.hasOwn(activities, filter))
+      value.activity = filter as ActivityKind;
+    initialDraft.current = value;
+    setError('');
+    setDraft(value);
+  }
+  function changeActivity(activity: ActivityKind) {
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            activity,
+            distance: current.activity !== activity ? '' : current.distance,
+          }
+        : null,
+    );
+    setError('');
+  }
   function edit(record: LifeRecord) {
     setError('');
-    setDraft({
+    const totalSeconds = Math.round(numberData(record, 'duration') * 60);
+    const value: HealthDraft = {
       ...blank(record.type === 'weight' ? 'weight' : 'workout'),
       id: record.id,
       date: record.date,
       activity:
-        typeof record.data.activity === 'string' && record.data.activity in activities
+        typeof record.data.activity === 'string' && Object.hasOwn(activities, record.data.activity)
           ? (record.data.activity as ActivityKind)
           : 'running',
       distance: String(record.data.distance ?? ''),
-      duration: String(record.data.duration ?? ''),
+      duration: totalSeconds ? String(Math.floor(totalSeconds / 60)) : '',
+      seconds: String(totalSeconds % 60),
       sets: Array.isArray(record.data.sets) ? record.data.sets.join(', ') : '',
       exercise: String(record.data.exercise ?? ''),
       load: String(record.data.load ?? ''),
       reps: String(record.data.reps ?? ''),
       kg: String(record.data.kg ?? ''),
       notes: record.body,
-    });
+    };
+    initialDraft.current = value;
+    setDraft(value);
   }
   function save(event: React.FormEvent) {
     event.preventDefault();
     if (!draft) return;
+    if (!validDate(draft.date)) {
+      setError('기록할 날짜를 선택해 주세요.');
+      return;
+    }
     const positive = (value: string) => Number.isFinite(Number(value)) && Number(value) > 0;
     let data: NewRecord['data'], title: string;
     if (draft.type === 'weight') {
@@ -135,11 +175,28 @@ export function HealthView() {
       title = activities[draft.activity].label;
       data = { activity: draft.activity };
       if (draft.activity === 'running' || draft.activity === 'swimming') {
-        if (!positive(draft.distance) || !positive(draft.duration)) {
-          setError('거리와 시간을 0보다 크게 입력해 주세요.');
+        if (!positive(draft.distance)) {
+          setError(
+            `거리를 0보다 크게 입력해 주세요. ${draft.activity === 'running' ? '달리기는 km' : '수영은 m'} 단위입니다.`,
+          );
           return;
         }
-        data = { ...data, distance: Number(draft.distance), duration: Number(draft.duration) };
+        if (
+          !draft.duration ||
+          !Number.isInteger(Number(draft.duration)) ||
+          Number(draft.duration) < 0 ||
+          !Number.isInteger(Number(draft.seconds || 0)) ||
+          Number(draft.seconds || 0) < 0 ||
+          Number(draft.seconds || 0) > 59 ||
+          !Number.isFinite(durationMinutes) ||
+          durationMinutes <= 0
+        ) {
+          setError(
+            '운동 시간을 분과 초로 입력해 주세요. 초는 0~59, 전체 시간은 1초 이상이어야 합니다.',
+          );
+          return;
+        }
+        data = { ...data, distance: Number(draft.distance), duration: durationMinutes };
       } else if (draft.activity === 'pullups') {
         const sets = draft.sets
           .split(/[,\s]+/)
@@ -188,6 +245,8 @@ export function HealthView() {
       if (draft.id) updateRecord(draft.id, value);
       else addRecord(value);
       notify(draft.id ? '운동 기록을 수정했어요.' : '오늘의 건강 기록을 남겼어요.');
+      setFilter(draft.type === 'weight' ? 'weight' : draft.activity);
+      initialDraft.current = null;
       setDraft(null);
     } catch (error) {
       setError(
@@ -216,8 +275,7 @@ export function HealthView() {
             <Button
               variant="secondary"
               onClick={() => {
-                setError('');
-                setDraft(blank('weight'));
+                openNewDraft('weight');
               }}
             >
               <Scale size={16} />
@@ -225,8 +283,7 @@ export function HealthView() {
             </Button>
             <Button
               onClick={() => {
-                setError('');
-                setDraft(blank());
+                openNewDraft();
               }}
             >
               <Plus size={17} />
@@ -307,16 +364,23 @@ export function HealthView() {
         {!visible.length ? (
           <EmptyState
             icon={<Footprints size={28} />}
-            title="오늘의 움직임을 기록해 보세요"
-            description="달린 거리부터 턱걸이 한 세트까지, 작은 기록이 변화를 만듭니다."
+            title={
+              filter === 'weight'
+                ? '몸무게의 변화를 기록해 보세요'
+                : '오늘의 움직임을 기록해 보세요'
+            }
+            description={
+              filter === 'weight'
+                ? '측정한 날짜와 몸무게를 남겨 나의 변화를 살펴보세요.'
+                : '달린 거리부터 턱걸이 한 세트까지, 작은 기록이 변화를 만듭니다.'
+            }
             action={
               <Button
                 onClick={() => {
-                  setError('');
-                  setDraft(blank());
+                  openNewDraft(filter === 'weight' ? 'weight' : 'workout');
                 }}
               >
-                첫 운동 기록하기
+                {filter === 'weight' ? '몸무게 기록하기' : '첫 운동 기록하기'}
               </Button>
             }
           />
@@ -385,7 +449,11 @@ export function HealthView() {
                 ? '운동 기록 수정'
                 : '오늘의 운동 기록'
           }
-          onClose={() => setDraft(null)}
+          onClose={() => {
+            initialDraft.current = null;
+            setDraft(null);
+          }}
+          dirty={dirtyDraft}
         >
           <form onSubmit={save} className="page-stack">
             <div className="form-grid">
@@ -403,7 +471,7 @@ export function HealthView() {
                   <select
                     className="select"
                     value={draft.activity}
-                    onChange={(event) => set('activity', event.target.value)}
+                    onChange={(event) => changeActivity(event.target.value as ActivityKind)}
                   >
                     {Object.entries(activities).map(([key, value]) => (
                       <option key={key} value={key}>
@@ -417,11 +485,10 @@ export function HealthView() {
             {draft.type === 'weight' ? (
               <Field label="몸무게 (kg)">
                 <input
-                  autoFocus
                   required
                   type="number"
                   inputMode="decimal"
-                  step="0.1"
+                  step="0.01"
                   min="1"
                   max="500"
                   className="input"
@@ -433,39 +500,63 @@ export function HealthView() {
             ) : draft.activity === 'running' || draft.activity === 'swimming' ? (
               <>
                 <div className="form-grid">
-                  <Field label={`거리 (${draft.activity === 'running' ? 'km' : 'm'})`}>
+                  <Field
+                    label={`거리 (${draft.activity === 'running' ? 'km' : 'm'})`}
+                    hint={
+                      draft.activity === 'running'
+                        ? '예: 500m를 달렸다면 0.5km'
+                        : '예: 25m 풀을 20번 이동했다면 500m'
+                    }
+                  >
                     <input
                       required
                       type="number"
                       inputMode="decimal"
                       step="any"
-                      min="0.01"
+                      min={draft.activity === 'running' ? '0.001' : '1'}
                       className="input"
                       placeholder={draft.activity === 'running' ? '예: 3.5' : '예: 1000'}
                       value={draft.distance}
                       onChange={(event) => set('distance', event.target.value)}
                     />
                   </Field>
-                  <Field label="시간 (분)">
-                    <input
-                      required
-                      type="number"
-                      inputMode="decimal"
-                      step="any"
-                      min="0.01"
-                      className="input"
-                      placeholder="예: 30"
-                      value={draft.duration}
-                      onChange={(event) => set('duration', event.target.value)}
-                    />
-                  </Field>
                 </div>
+                <fieldset className="hdv-fieldset">
+                  <legend>운동 시간</legend>
+                  <div className="form-grid">
+                    <Field label="분" hint="1분 미만이면 0을 입력하세요.">
+                      <input
+                        required
+                        type="number"
+                        inputMode="numeric"
+                        step="1"
+                        min="0"
+                        className="input"
+                        placeholder="예: 12"
+                        value={draft.duration}
+                        onChange={(event) => set('duration', event.target.value)}
+                      />
+                    </Field>
+                    <Field label="초" hint="0~59 · 정확한 초를 모르면 0으로 두세요.">
+                      <input
+                        className="input"
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        max="59"
+                        step="1"
+                        value={draft.seconds}
+                        onChange={(event) => set('seconds', event.target.value)}
+                      />
+                    </Field>
+                  </div>
+                </fieldset>
                 {draft.activity === 'running' &&
                   Number(draft.distance) > 0 &&
-                  Number(draft.duration) > 0 && (
+                  durationMinutes > 0 && (
                     <div className="hdv-info">
                       <Footprints size={18} />
-                      평균 페이스 {pace(Number(draft.distance), Number(draft.duration))} /km
+                      평균 페이스 {pace(Number(draft.distance), durationMinutes)} /km
                     </div>
                   )}
               </>
@@ -486,6 +577,7 @@ export function HealthView() {
                   <input
                     required
                     className="input"
+                    maxLength={200}
                     placeholder="예: 스쿼트"
                     value={draft.exercise}
                     onChange={(event) => set('exercise', event.target.value)}
@@ -523,6 +615,7 @@ export function HealthView() {
               <textarea
                 className="textarea"
                 rows={3}
+                maxLength={5000}
                 placeholder="오늘의 컨디션이나 기억할 내용을 남기세요."
                 value={draft.notes}
                 onChange={(event) => set('notes', event.target.value)}
@@ -534,9 +627,7 @@ export function HealthView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setDraft(null)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">기록 저장</Button>
             </div>
           </form>

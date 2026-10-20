@@ -7,7 +7,7 @@
 }
 .search {
   position: relative;
-  flex: 1;
+  flex: 1 1 220px;
   min-width: 180px;
   max-width: 420px;
 }
@@ -419,6 +419,10 @@
 .photoButton:hover img {
   transform: scale(1.04);
 }
+.photoButton:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: -3px;
+}
 .photoCaption {
   padding: 17px 19px;
 }
@@ -433,8 +437,9 @@
 .photoCaption p {
   margin: 7px 0 0;
   font-size: 11px;
-  color: #94a08b;
+  color: #697761;
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 .photoPreview {
   width: 100%;
@@ -471,7 +476,7 @@
 }
 .uploadHint {
   font-size: 11px;
-  color: #96a18d;
+  color: #697761;
 }
 .galleryPlaceholder {
   position: absolute;
@@ -534,7 +539,7 @@
 }
 .goalBody {
   font-size: 12px;
-  color: #909b89;
+  color: #697761;
   line-height: 1.8;
   margin: 8px 0 16px;
   white-space: pre-wrap;
@@ -556,7 +561,7 @@
 }
 .progressLabel {
   font-size: 10px;
-  color: #8a9b7e;
+  color: #697761;
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -579,19 +584,23 @@
   accent-color: #7b9a64;
   flex-shrink: 0;
 }
+.step > span {
+  min-width: 0;
+}
 .stepDone {
   text-decoration: line-through;
-  color: #a1ad98;
+  color: #697761;
 }
 .goalFooter {
   border-top: 1px solid #eef1e9;
   padding-top: 12px;
   margin-top: 15px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
   font-size: 10px;
-  color: #9ba58e;
+  color: #697761;
   align-items: center;
 }
 .quietButton {
@@ -762,6 +771,7 @@
 }
 .galleryActions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -1050,13 +1060,29 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .toolbar {
+    flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
   .search {
+    flex: 0 1 auto;
     max-width: none;
     min-width: 0;
     width: 100%;
+  }
+  .icon,
+  .filter,
+  .quietButton,
+  .readButton,
+  .memoryReveal,
+  .check,
+  .step {
+    min-height: 44px;
+  }
+  .icon {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
   }
   .note {
     padding: 20px;

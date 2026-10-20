@@ -22,7 +22,17 @@ import {
 } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
 import { LifeRecord, localDate, PageId, numberData } from '@/lib/life-os/types';
-import { Badge, Button, EmptyState, Field, IconButton, Modal, Progress } from './ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Field,
+  IconButton,
+  Modal,
+  ModalCloseButton,
+  Progress,
+} from './ui';
+import { validUrl, shortDate } from './domain-utils';
 
 const taskCategories: Record<string, string> = {
   work: '일과 커리어',
@@ -35,6 +45,13 @@ const taskCategoryLabel = (value: unknown) =>
   taskCategories[String(value)] || String(value || '나를 위한 일');
 const stringValues = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+function durationLabel(minutes: number): string {
+  const seconds = Math.max(0, Math.round(minutes * 60));
+  const wholeMinutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (!remainingSeconds) return `${wholeMinutes}분`;
+  return wholeMinutes ? `${wholeMinutes}분 ${remainingSeconds}초` : `${remainingSeconds}초`;
+}
 
 function Landscape() {
   return (
@@ -80,16 +97,16 @@ export function TodayView({
   date,
   onDate,
 }: {
-  navigate: (page: PageId) => void;
+  navigate: (page: PageId, diaryDate?: string) => void;
   date: string;
   onDate: (date: string) => void;
 }) {
   const { records, addRecord, updateRecord, deleteRecord, notify, user } = useLife();
-  function guard(action: () => void) {
+  function guard(action: () => void, onError: (message: string) => void = notify) {
     try {
       action();
     } catch (error) {
-      notify(
+      onError(
         error instanceof Error ? error.message : '기록을 저장하지 못했어요. 다시 시도해 주세요.',
       );
     }
@@ -101,6 +118,10 @@ export function TodayView({
   const [taskTime, setTaskTime] = useState('');
   const [confirmTaskDelete, setConfirmTaskDelete] = useState(false);
   const [routineTitle, setRoutineTitle] = useState('');
+  const [taskInitial, setTaskInitial] = useState('');
+  const [taskError, setTaskError] = useState('');
+  const [routineError, setRoutineError] = useState('');
+  const [confirmRoutineId, setConfirmRoutineId] = useState<string | null>(null);
   const tasks = records.filter((r) => r.type === 'task' && r.date === date);
   const completed = tasks.filter((r) => r.data.completed).length;
   const routines = records.filter((r) => r.type === 'routine');
@@ -137,6 +158,14 @@ export function TodayView({
     diary: PenLine,
   };
   function openTask(task?: LifeRecord) {
+    setTaskError('');
+    setTaskInitial(
+      JSON.stringify([
+        task?.title || '',
+        taskCategoryLabel(task?.data.category),
+        String(task?.data.time || ''),
+      ]),
+    );
     setConfirmTaskDelete(false);
     setTaskTitle(task?.title || '');
     setTaskCategory(taskCategoryLabel(task?.data.category));
@@ -182,14 +211,14 @@ export function TodayView({
           <span className="overview-icon sage">
             <Footprints size={19} />
           </span>
-          <span className="overview-label">이번 주 운동</span>
+          <span className="overview-label">최근 7일 운동</span>
           <span className="overview-number">
             {weekly.length}
             <small>회</small>
-            <span className="overview-detail">{weekMinutes}분 움직였어요</span>
+            <span className="overview-detail">{durationLabel(weekMinutes)} 움직였어요</span>
           </span>
         </button>
-        <button className="overview-card" onClick={() => navigate('diary')}>
+        <button className="overview-card" onClick={() => navigate('diary', date)}>
           <span className="overview-icon peach">
             <PenLine size={18} />
           </span>
@@ -219,7 +248,7 @@ export function TodayView({
           <span className="overview-icon sand">
             <Wallet size={18} />
           </span>
-          <span className="overview-label">이번 달 지출</span>
+          <span className="overview-label">선택한 달 지출</span>
           <span className="overview-number finance-number">
             {expenses.toLocaleString('ko-KR')}
             <small>원</small>
@@ -347,7 +376,15 @@ export function TodayView({
                 );
               })}
             </div>
-            <button className="add-task-line" onClick={() => setRoutineModal(true)}>
+            <button
+              className="add-task-line"
+              onClick={() => {
+                setRoutineTitle('');
+                setRoutineError('');
+                setConfirmRoutineId(null);
+                setRoutineModal(true);
+              }}
+            >
               <Plus size={15} /> 나만의 루틴 추가
             </button>
           </section>
@@ -365,7 +402,16 @@ export function TodayView({
             </div>
             <div className="reading-list">
               {bookmarks.map((r, i) => (
-                <button className="reading-row" key={r.id} onClick={() => navigate('library')}>
+                <button
+                  className="reading-row"
+                  key={r.id}
+                  aria-label={`${r.title} ${validUrl(String(r.data.url || '')) ? '원문 새 탭에서 열기' : '읽을거리에서 보기'}`}
+                  onClick={() => {
+                    const url = validUrl(String(r.data.url || ''));
+                    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                    else navigate('library');
+                  }}
+                >
                   <span className={`reading-cover ${i ? 'cover-blue' : ''}`}>
                     <BookOpen size={23} />
                     <span>{i ? 'LEARN' : 'READ'}</span>
@@ -398,8 +444,8 @@ export function TodayView({
                 ? todaysDiary.body.slice(0, 100)
                 : '작은 감사 하나, 사소한 기쁨 하나.\n짧은 기록으로도 충분해요.'}
             </p>
-            <Button variant="secondary" onClick={() => navigate('diary')}>
-              {todaysDiary ? '오늘 일기 읽기' : '오늘의 일기 쓰기'}
+            <Button variant="secondary" onClick={() => navigate('diary', date)}>
+              {todaysDiary ? '이날 일기 읽기' : '이날 일기 쓰기'}
               <ArrowUpRight size={15} />
             </Button>
             <span className="reflection-decoration" aria-hidden="true">
@@ -408,7 +454,7 @@ export function TodayView({
           </section>
           <section className="card activity-card">
             <div className="card-heading">
-              <h2>이번 주의 움직임</h2>
+              <h2>최근 7일의 움직임</h2>
               <Waves size={18} className="muted" />
             </div>
             <div className="activity-summary">
@@ -436,7 +482,7 @@ export function TodayView({
                 );
                 return (
                   <div key={day} className={`activity-day ${day === date ? 'current' : ''}`}>
-                    <div className="activity-column" title={`${day}: ${minutes}분`}>
+                    <div className="activity-column" title={`${day}: ${durationLabel(minutes)}`}>
                       <span
                         style={{ height: `${minutes ? Math.max(7, (minutes / max) * 100) : 4}%` }}
                       />
@@ -452,7 +498,7 @@ export function TodayView({
             </div>
             <div className="activity-footer">
               <Footprints size={14} />
-              <span>지난 7일, 총 {weekMinutes}분을 움직였어요</span>
+              <span>지난 7일, 총 {durationLabel(weekMinutes)} 운동했어요</span>
             </div>
           </section>
           <section className="card goals-peek">
@@ -468,11 +514,18 @@ export function TodayView({
             </div>
             {goals.map((g) => {
               const steps = stringValues(g.data.steps);
-              const progress = steps.length
-                ? ((Array.isArray(g.data.completedSteps) ? g.data.completedSteps.length : 0) /
-                    steps.length) *
-                  100
-                : 0;
+              const completedSteps = new Set(
+                Array.isArray(g.data.completedSteps)
+                  ? g.data.completedSteps.filter(
+                      (index) =>
+                        typeof index === 'number' &&
+                        Number.isInteger(index) &&
+                        index >= 0 &&
+                        index < steps.length,
+                    )
+                  : [],
+              );
+              const progress = steps.length ? (completedSteps.size / steps.length) * 100 : 0;
               return (
                 <button className="goal-peek-row" key={g.id} onClick={() => navigate('goals')}>
                   <strong>{g.title}</strong>
@@ -498,10 +551,16 @@ export function TodayView({
         <Modal
           title={taskModal === 'new' ? '오늘의 할 일' : '할 일 수정'}
           onClose={() => setTaskModal(null)}
+          dirty={JSON.stringify([taskTitle, taskCategory, taskTime]) !== taskInitial}
         >
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              if (!taskTitle.trim()) {
+                setTaskError('할 일의 내용을 입력해 주세요.');
+                return;
+              }
+              setTaskError('');
               guard(() => {
                 if (!taskTitle.trim()) return;
                 const input = {
@@ -520,10 +579,11 @@ export function TodayView({
                 else updateRecord(taskModal.id, input);
                 setTaskModal(null);
                 notify('할 일을 저장했어요.');
-              });
+              }, setTaskError);
             }}
             className="page-stack"
           >
+            <p className="muted text-small">{shortDate(date)}에 할 일을 기록합니다.</p>
             <Field label="무엇을 하고 싶으세요?">
               <input
                 className="input"
@@ -541,6 +601,13 @@ export function TodayView({
                   value={taskCategory}
                   onChange={(e) => setTaskCategory(e.target.value)}
                 >
+                  {![
+                    '나를 위한 일',
+                    '일과 커리어',
+                    '공부와 성장',
+                    '가족과 사랑',
+                    '건강과 운동',
+                  ].includes(taskCategory) && <option>{taskCategory}</option>}
                   {['나를 위한 일', '일과 커리어', '공부와 성장', '가족과 사랑', '건강과 운동'].map(
                     (x) => (
                       <option key={x}>{x}</option>
@@ -557,6 +624,11 @@ export function TodayView({
                 />
               </Field>
             </div>
+            {taskError && (
+              <p role="alert" className="feedback-error">
+                {taskError}
+              </p>
+            )}
             <div className="form-actions">
               {taskModal !== 'new' && (
                 <Button
@@ -575,20 +647,27 @@ export function TodayView({
                   {confirmTaskDelete ? '한 번 더 눌러 삭제' : '삭제'}
                 </Button>
               )}
-              <Button variant="secondary" onClick={() => setTaskModal(null)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">저장하기</Button>
             </div>
           </form>
         </Modal>
       )}
       {routineModal && (
-        <Modal title="나를 위한 작은 습관" onClose={() => setRoutineModal(false)}>
+        <Modal
+          title="나를 위한 작은 습관"
+          onClose={() => setRoutineModal(false)}
+          dirty={routineTitle.length > 0}
+        >
           <form
             className="page-stack"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!routineTitle.trim()) {
+                setRoutineError('루틴의 이름을 입력해 주세요.');
+                return;
+              }
+              setRoutineError('');
               guard(() => {
                 if (!routineTitle.trim()) return;
                 addRecord({
@@ -601,7 +680,7 @@ export function TodayView({
                 setRoutineTitle('');
                 setRoutineModal(false);
                 notify('새로운 루틴을 만들었어요.');
-              });
+              }, setRoutineError);
             }}
           >
             <Field label="매일 이어가고 싶은 일">
@@ -614,24 +693,47 @@ export function TodayView({
                 placeholder="예: 아이들과 10분 대화"
               />
             </Field>
+            {routineError && (
+              <p role="alert" className="feedback-error">
+                {routineError}
+              </p>
+            )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setRoutineModal(false)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">루틴 만들기</Button>
             </div>
             {routines.length > 0 && (
               <div className="routine-management">
                 <h3>등록된 루틴</h3>
                 {routines.map((r) => (
-                  <div className="record-row" key={r.id}>
-                    <span>{r.title}</span>
-                    <IconButton
-                      label={`${r.title} 루틴 삭제`}
-                      onClick={() => guard(() => deleteRecord(r.id))}
-                    >
-                      <Trash2 size={15} />
-                    </IconButton>
+                  <div className="record-row" key={r.id} style={{ flexWrap: 'wrap' }}>
+                    <span style={{ flex: '1 1 130px' }}>{r.title}</span>
+                    {confirmRoutineId === r.id ? (
+                      <div className="form-actions" style={{ paddingTop: 0 }}>
+                        <Button
+                          variant="danger"
+                          onClick={() =>
+                            guard(() => {
+                              deleteRecord(r.id);
+                              setConfirmRoutineId(null);
+                              notify('루틴을 삭제했어요.');
+                            })
+                          }
+                        >
+                          삭제 확인
+                        </Button>
+                        <Button variant="secondary" onClick={() => setConfirmRoutineId(null)}>
+                          취소
+                        </Button>
+                      </div>
+                    ) : (
+                      <IconButton
+                        label={`${r.title} 루틴 삭제`}
+                        onClick={() => setConfirmRoutineId(r.id)}
+                      >
+                        <Trash2 size={15} />
+                      </IconButton>
+                    )}
                   </div>
                 ))}
               </div>

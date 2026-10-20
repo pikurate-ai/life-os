@@ -79,11 +79,18 @@ input[type='checkbox'] {
 input[type='date'],
 input[type='time'],
 input[type='month'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   min-width: 0;
   max-width: 100%;
   text-align: left;
 }
 input::-webkit-date-and-time-value {
+  min-inline-size: 0;
   text-align: left;
 }
 input::-webkit-datetime-edit {
@@ -829,6 +836,15 @@ kbd {
   gap: 8px;
   min-width: 0;
   width: 100%;
+}
+.field > input,
+.field > textarea,
+.field > select {
+  flex: 0 1 auto;
+  align-self: stretch;
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 .field-label {
   color: #6d805e;
@@ -1637,7 +1653,10 @@ kbd {
 /* Dialogs and feedback */
 .modal-backdrop {
   position: fixed;
-  inset: 0;
+  top: var(--modal-visible-top, 0px);
+  left: var(--modal-visible-left, 0px);
+  width: var(--modal-visible-width, 100%);
+  height: var(--modal-visible-height, 100dvh);
   z-index: 120;
   display: flex;
   align-items: center;
@@ -1646,12 +1665,12 @@ kbd {
   background: #24332353;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  overflow-y: auto;
+  overflow: hidden;
 }
 .modal {
   width: 100%;
   max-width: 520px;
-  max-height: calc(100dvh - 50px);
+  max-height: calc(var(--modal-visible-height, 100dvh) - 50px);
   border: 1px solid #e1e8d8;
   border-radius: 16px;
   box-shadow: 0 18px 80px #21351e25;
@@ -1659,6 +1678,7 @@ kbd {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 .modal-wide {
@@ -1675,6 +1695,9 @@ kbd {
 }
 .modal-heading h2 {
   margin: 0;
+  max-block-size: 4.8em;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   min-width: 0;
   overflow-wrap: anywhere;
   color: #5b764d;
@@ -1688,6 +1711,30 @@ kbd {
   overscroll-behavior: contain;
   min-height: 0;
   font-size: 13px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 18px;
+}
+.modal-body,
+.modal-body form,
+.modal-body fieldset {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.modal-body[hidden] {
+  display: none;
+}
+.discard-prompt h3,
+.discard-prompt p {
+  margin: 0;
+}
+.form-error {
+  color: #9b5142;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
   overflow-wrap: anywhere;
 }
 .modal-content p {
@@ -3308,7 +3355,53 @@ kbd {
   }
   .modal {
     max-height: calc(
-      100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+      var(--modal-visible-height, 100dvh) - 24px - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px)
     );
+  }
+  .modal-heading {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .modal-content {
+    padding: 18px 16px;
+  }
+  .icon-button {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+  .quick-add,
+  .button,
+  .reflection-card .button,
+  .demo-bar button,
+  .hero-link {
+    min-height: 44px;
+  }
+  .date-selector input {
+    font-size: 16px !important;
+    min-height: 28px;
+    width: 132px;
+  }
+  .life-app input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  .life-app textarea,
+  .life-app select {
+    font-size: 16px;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+  .form-actions > .button {
+    flex: 1 1 auto;
+  }
+  .hdv-mood-picker {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .hdv-mood {
+    min-width: 0;
+    padding-inline: 4px;
+    white-space: normal;
+  }
+  .hdv-mood small {
+    overflow-wrap: anywhere;
   }
 }

@@ -50,6 +50,12 @@ let base = '/';
         try {
           if ((await fs.stat(file)).isDirectory()) file = path.join(file, 'index.html');
         } catch {}
+        // Next static export emits /review.html for the /review route.
+        if (!path.extname(file)) {
+          try {
+            if ((await fs.stat(`${file}.html`)).isFile()) file = `${file}.html`;
+          } catch {}
+        }
         let content,
           status = 200;
         try {

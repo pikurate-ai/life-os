@@ -33,7 +33,8 @@ import { LifeProvider, useLife } from '@/lib/life-os/store';
 import { LifeRecord, localDate, PageId, pageTitles, RecordKind } from '@/lib/life-os/types';
 import { searchRecords, searchableBody } from '@/lib/life-os/search';
 import { storageKey } from '@/lib/life-os/storage';
-import { Badge, Button, Field, IconButton, Modal } from './ui';
+import { lockScroll } from '@/lib/life-os/scroll-lock';
+import { Badge, Button, Field, IconButton, Modal, ModalCloseButton } from './ui';
 import { TodayView } from './TodayView';
 import { SettingsView } from './SettingsView';
 import { HealthView } from './HealthView';
@@ -115,6 +116,7 @@ function Shell() {
   }
   const [page, setPage] = useState<PageId>('today');
   const [date, setDate] = useState(localDate());
+  const [diaryDate, setDiaryDate] = useState<string>();
   const [drawer, setDrawer] = useState(false);
   const [search, setSearch] = useState(false);
   const [query, setQuery] = useState('');
@@ -123,6 +125,16 @@ function Shell() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [url, setUrl] = useState('');
+  const [quickError, setQuickError] = useState('');
+  function guardQuick(action: () => void) {
+    try {
+      action();
+    } catch (error) {
+      setQuickError(
+        error instanceof Error ? error.message : '기록을 저장하지 못했어요. 다시 시도해 주세요.',
+      );
+    }
+  }
   const contentRef = useRef<HTMLElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const [help, setHelp] = useState(false);
@@ -146,7 +158,8 @@ function Shell() {
       document.removeEventListener('visibilitychange', refresh);
     };
   }, []);
-  function navigate(target: PageId) {
+  function navigate(target: PageId, selectedDate?: string) {
+    if (target === 'diary') setDiaryDate(selectedDate);
     setPage(target);
     setDrawer(false);
     setSearch(false);
@@ -164,8 +177,7 @@ function Shell() {
   useEffect(() => {
     if (!drawer) return;
     const previous = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll(document.body);
     const buttons = () =>
       Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('button,a[href]') || []).filter(
         (element) => element.offsetParent !== null,
@@ -188,13 +200,15 @@ function Shell() {
     };
     document.addEventListener('keydown', keydown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlock();
       document.removeEventListener('keydown', keydown);
-      previous?.focus();
+      if (!document.querySelector('[role="dialog"][aria-modal="true"]') && previous?.isConnected)
+        previous.focus({ preventScroll: true });
     };
   }, [drawer]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setQuery('');
@@ -318,7 +332,7 @@ function Shell() {
       case 'memory':
         return <MemoryView />;
       case 'diary':
-        return <DiaryView />;
+        return <DiaryView key={diaryDate || 'all'} initialDate={diaryDate} />;
       case 'health':
         return <HealthView />;
       case 'finance':
@@ -496,7 +510,7 @@ function Shell() {
                   key={r.id}
                   onClick={() => {
                     if (r.type === 'task') setDate(r.date);
-                    navigate(kindPage[r.type]);
+                    navigate(kindPage[r.type], r.type === 'diary' ? r.date : undefined);
                   }}
                 >
                   <span className="search-result-icon">
@@ -521,13 +535,27 @@ function Shell() {
         </Modal>
       )}
       {quick && ready && (
-        <Modal title="떠오른 순간, 빠른 기록" onClose={() => setQuick(false)}>
+        <Modal
+          title="떠오른 순간, 빠른 기록"
+          onClose={() => {
+            setQuick(false);
+            setTitle('');
+            setBody('');
+            setUrl('');
+            setQuickError('');
+          }}
+          dirty={Boolean(title.trim() || body.trim() || url.trim())}
+        >
           <form
             className="page-stack"
             onSubmit={(e) => {
               e.preventDefault();
-              guard(() => {
-                if (!title.trim()) return;
+              setQuickError('');
+              guardQuick(() => {
+                if (!title.trim()) {
+                  setQuickError('제목을 한 글자 이상 입력해 주세요.');
+                  return;
+                }
                 let data: LifeRecord['data'] = {};
                 if (quickKind === 'task')
                   data = { completed: false, category: '나를 위한 일', time: '' };
@@ -542,7 +570,9 @@ function Shell() {
                     )
                       throw new Error();
                   } catch {
-                    notify('계정 정보가 포함되지 않은 http 또는 https 주소를 입력해 주세요.');
+                    setQuickError(
+                      '계정 정보가 포함되지 않은 http 또는 https 주소를 입력해 주세요.',
+                    );
                     return;
                   }
                   data = { url, tags: [], read: false, favorite: false };
@@ -610,10 +640,13 @@ function Shell() {
                 placeholder="조금 더 남기고 싶은 이야기"
               />
             </Field>
+            {quickError && (
+              <p className="form-error" role="alert">
+                {quickError}
+              </p>
+            )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setQuick(false)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">기록 저장하기</Button>
             </div>
           </form>

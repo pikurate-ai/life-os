@@ -5,7 +5,7 @@ import { ArrowUpRight, Bookmark, Check, Globe, Pencil, Plus, Search, Star } from
 import { useLife } from '@/lib/life-os/store';
 import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
 import { attempt, DeleteControl, shortDate, validUrl } from './domain-utils';
 import styles from './domain.module.css';
 
@@ -39,6 +39,7 @@ export function LibraryView() {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<LifeRecord | null | undefined>(undefined);
   const [draft, setDraft] = useState<Draft>(blank);
+  const [initialDraft, setInitialDraft] = useState('');
   const [error, setError] = useState('');
   const bookmarks = useMemo(
     () => records.filter((record) => record.type === 'bookmark'),
@@ -69,18 +70,18 @@ export function LibraryView() {
   const openEditor = (record: LifeRecord | null) => {
     setEditing(record);
     setError('');
-    setDraft(
-      record
-        ? {
-            title: record.title,
-            url: String(record.data.url || ''),
-            body: record.body,
-            tags: Array.isArray(record.data.tags) ? record.data.tags.join(', ') : '',
-            read: Boolean(record.data.read),
-            favorite: Boolean(record.data.favorite),
-          }
-        : blank(),
-    );
+    const nextDraft: Draft = record
+      ? {
+          title: record.title,
+          url: String(record.data.url || ''),
+          body: record.body,
+          tags: Array.isArray(record.data.tags) ? record.data.tags.join(', ') : '',
+          read: Boolean(record.data.read),
+          favorite: Boolean(record.data.favorite),
+        }
+      : blank();
+    setDraft(nextDraft);
+    setInitialDraft(JSON.stringify(nextDraft));
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -124,6 +125,8 @@ export function LibraryView() {
     )
       return;
     setEditing(undefined);
+    setFilter('all');
+    setSearch('');
     notify(editing ? '읽을거리를 수정했어요.' : '다음에 읽을 자료를 담았어요.');
   };
   return (
@@ -150,6 +153,7 @@ export function LibraryView() {
             <button
               key={key}
               className={`${styles.filter} ${filter === key ? styles.selected : ''}`}
+              aria-pressed={filter === key}
               onClick={() => setFilter(String(key))}
             >
               {key === 'favorite' && <Star size={12} />}
@@ -213,6 +217,7 @@ export function LibraryView() {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${record.title} 원문 새 탭에서 열기`}
                   >
                     {record.title}
                   </a>
@@ -282,12 +287,26 @@ export function LibraryView() {
               ? '다른 검색어로 찾아보세요.'
               : 'AI 아티클, 배우고 싶은 기술, 마음에 남은 글의 링크를 저장해 보세요.'
           }
-          action={<Button onClick={() => openEditor(null)}>첫 읽을거리 저장</Button>}
+          action={
+            bookmarks.length ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all');
+                  setSearch('');
+                }}
+              >
+                전체 자료 보기
+              </Button>
+            ) : (
+              <Button onClick={() => openEditor(null)}>첫 읽을거리 저장</Button>
+            )
+          }
         />
       )}
       {bookmarks.length > 0 && (
         <p className={styles.help}>
-          링크 원문은 해당 사이트에서 열려요. 저장한 제목과 메모는 계정 데이터에 보관되며, 원문을
+          링크 원문은 해당 사이트에서 열려요. 저장한 제목과 메모는 현재 기록 공간에 보관되며, 원문을
           오프라인으로 내려받지는 않아요.
         </p>
       )}
@@ -295,6 +314,7 @@ export function LibraryView() {
         <Modal
           title={editing ? '읽을거리 편집' : '다음에 읽을 자료'}
           onClose={() => setEditing(undefined)}
+          dirty={JSON.stringify(draft) !== initialDraft}
         >
           <form onSubmit={submit} className={styles.formStack}>
             <Field label="웹 주소">
@@ -302,7 +322,6 @@ export function LibraryView() {
                 className="input"
                 type="url"
                 required
-                autoFocus
                 maxLength={4000}
                 value={draft.url}
                 placeholder="https://"
@@ -362,9 +381,7 @@ export function LibraryView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setEditing(undefined)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">자료 저장하기</Button>
             </div>
           </form>

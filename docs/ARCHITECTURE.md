@@ -1,6 +1,18 @@
 # Life OS v2 — architecture and operations
 
-Last reviewed: 2026-10-16. This document describes the new `src/lib/life-os` foundation. The old `src/lib/firebase/client.ts`, Supabase helpers, legacy components, and the previous handover describe an earlier application. They must not be reused for authentication or synchronization: email strings are not authentication credentials.
+**2026-10-21 status:** the missing `test:rules` script is connected, formatting and type checks pass, 59 ordinary tests and 9 dedicated emulator rules tests pass, and the normal static build succeeds. See [latest verification](QA_2026-10-21.md). CLI Google login succeeded but the configured project's management lookup failed; actual app OAuth, deployed rules and two-device sync remain unverified. The 2026-10-18 addendum below is historical where these statuses differ.
+
+Foundation reviewed: 2026-10-16; working-copy addendum: 2026-10-18. This document describes the new `src/lib/life-os` foundation. The old `src/lib/firebase/client.ts`, Supabase helpers, and legacy components describe an earlier application. They must not be reused for authentication or synchronization: email strings are not authentication credentials. The current [handover](../PROJECT_HANDOVER.md) and [dated snapshot](HANDOVER_SNAPSHOT_2026-10-18.md) describe the latest uncommitted work and its verification limits.
+
+## Working-copy addendum — 2026-10-18
+
+- New `backup.ts` strictly inspects v1 universal JSON backups and v2 backups. The provider exposes preview metadata and a session-only approval token bound to the same File, active scope and unchanged record versions. Changing file, cancelling or switching owner invalidates approval.
+- Changed legacy records preserve the existing version and create a deterministic review memory containing a validated import snapshot. This avoids silently overwriting edits or double-counting finance/health aggregates. Repeated changes deduplicate and deleted records are not resurrected. Vault copies remain encrypted.
+- The exact v1 backup includes seven arrays: essentialInfo, financialLogs, assets, encryptedVault, workout1RM, healthMetrics and archivedDiaries. Photos, general memos, pull-up sets and routines were never included in that exporter; use explicit same-origin legacy import for those supported records.
+- New `scroll-lock.ts` reference-counts body scroll locks so drawer/modal overlaps restore the original style only after the final owner releases it. Shared Modal adds dirty-close confirmation, safe focus restoration and VisualViewport-aware sizing. These are UI protections, not persistent draft recovery.
+- Workout duration remains **minutes** in storage; the UI now accepts separate minutes/seconds and converts with `minutes + seconds / 60`.
+- `firebase.rules-test.json` and `tests/firestore-rules.integration.mjs` target only a synthetic loopback emulator. CI currently calls a missing `test:rules` package script: wiring and execution remain unfinished. Normal `npm test` does not execute that integration file.
+- Latest local typecheck and 59 ordinary tests passed. Five source/test files still fail formatting, the latest complete build is pending, and actual OAuth/Firestore/iPhone/two-device verification is not complete. Consult the dated snapshot rather than interpreting implementation as deployment evidence.
 
 ## Product boundaries
 

@@ -2,6 +2,12 @@
 /node_modules
 /.npm-cache/
 /artifacts/
+/PROJECT_HANDOVER_*.zip
+/.firebase/
+/.tools/
+firebase-debug*.log
+firestore-debug*.log
+ui-debug*.log
 /.pnp
 .pnp.js
 .yarn/install-state.gz

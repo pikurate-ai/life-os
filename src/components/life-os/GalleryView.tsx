@@ -5,12 +5,14 @@ import { Camera, ImagePlus, Plus, ShieldCheck } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
 import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
-import { attempt, DeleteControl, shortDate, validDate } from './domain-utils';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
+import { attempt, DeleteControl, shortDate, validDate, validUrl } from './domain-utils';
 import styles from './domain.module.css';
 
 const categories = { family: '가족', daily: '일상', travel: '여행', growth: '나의 성장' };
 type Category = keyof typeof categories;
+const photoCategory = (value: unknown): Category =>
+  typeof value === 'string' && Object.hasOwn(categories, value) ? (value as Category) : 'daily';
 type Draft = { title: string; body: string; date: string; category: Category; image: string };
 const blank = (): Draft => ({
   title: '',
@@ -72,6 +74,7 @@ export function GalleryView() {
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState<LifeRecord | null | undefined>(undefined);
   const [draft, setDraft] = useState<Draft>(blank);
+  const [initialDraft, setInitialDraft] = useState('');
   const [view, setView] = useState<LifeRecord | null>(null);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -83,7 +86,9 @@ export function GalleryView() {
         .sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt)),
     [records],
   );
-  const filtered = photos.filter((record) => filter === 'all' || record.data.category === filter);
+  const filtered = photos.filter(
+    (record) => filter === 'all' || photoCategory(record.data.category) === filter,
+  );
   const storageUsed = photos.reduce((sum, photo) => sum + String(photo.data.image || '').length, 0);
   const closeEditor = () => {
     photoRequest.current++;
@@ -96,24 +101,22 @@ export function GalleryView() {
     setEditing(photo);
     setError('');
     setProcessing(false);
-    setDraft(
-      photo
-        ? {
-            title: photo.title,
-            body: photo.body,
-            date: photo.date,
-            category:
-              typeof photo.data.category === 'string' && photo.data.category in categories
-                ? (photo.data.category as Category)
-                : 'daily',
-            image: isSafeImage(photo.data.image) ? photo.data.image : '',
-          }
-        : blank(),
-    );
+    const nextDraft: Draft = photo
+      ? {
+          title: photo.title,
+          body: photo.body,
+          date: photo.date,
+          category: photoCategory(photo.data.category),
+          image: isSafeImage(photo.data.image) ? photo.data.image : '',
+        }
+      : blank();
+    setDraft(nextDraft);
+    setInitialDraft(JSON.stringify(nextDraft));
   };
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    event.target.value = '';
     const requestId = ++photoRequest.current;
     setProcessing(true);
     setError('');
@@ -129,12 +132,20 @@ export function GalleryView() {
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!draft.title.trim() || !validDate(draft.date) || !isSafeImage(draft.image)) {
+    if (processing) return;
+    const existingLink = editing && validUrl(String(editing.data.legacyUrl || ''));
+    if (
+      !draft.title.trim() ||
+      !validDate(draft.date) ||
+      (!isSafeImage(draft.image) && !(existingLink && !draft.image))
+    ) {
       setError('사진, 제목, 올바른 날짜를 모두 입력해 주세요.');
       return;
     }
-    const newTotal = storageUsed - String(editing?.data.image || '').length + draft.image.length;
-    if (newTotal > MAX_GALLERY_BYTES) {
+    const currentPhoto = editing ? photos.find((photo) => photo.id === editing.id) : undefined;
+    const newTotal =
+      storageUsed - String(currentPhoto?.data.image || '').length + draft.image.length;
+    if (newTotal > MAX_GALLERY_BYTES && newTotal > storageUsed) {
       setError('현재 사진 보관 한도에 도달했어요. 설정에서 백업한 뒤 기존 사진을 정리해 주세요.');
       return;
     }
@@ -146,7 +157,16 @@ export function GalleryView() {
       data: preserveRecordData(
         records.filter((record) => record.type === 'photo'),
         editing?.id,
-        { category: draft.category, image: draft.image, bytes: draft.image.length },
+        {
+          category:
+            editing &&
+            typeof editing.data.category === 'string' &&
+            draft.category === photoCategory(editing.data.category)
+              ? editing.data.category
+              : draft.category,
+          image: draft.image,
+          bytes: draft.image.length,
+        },
       ),
     };
     if (
@@ -157,6 +177,7 @@ export function GalleryView() {
     )
       return;
     closeEditor();
+    setFilter('all');
     notify('소중한 순간을 보관했어요.');
   };
   return (
@@ -178,11 +199,16 @@ export function GalleryView() {
             <button
               key={key}
               className={`${styles.filter} ${filter === key ? styles.selected : ''}`}
+              aria-pressed={filter === key}
               onClick={() => setFilter(key)}
             >
               {label}
               <span className={styles.count}>
-                {photos.filter((photo) => key === 'all' || photo.data.category === key).length}
+                {
+                  photos.filter(
+                    (photo) => key === 'all' || photoCategory(photo.data.category) === key,
+                  ).length
+                }
               </span>
             </button>
           ))}
@@ -208,7 +234,7 @@ export function GalleryView() {
               </button>
               <div className={styles.photoCaption}>
                 <div className={styles.categoryGroup}>
-                  <Badge>{categories[photo.data.category as Category] || '일상'}</Badge>
+                  <Badge>{categories[photoCategory(photo.data.category)]}</Badge>
                 </div>
                 <h3 style={{ marginTop: 9 }}>{photo.title}</h3>
                 <p>
@@ -223,9 +249,19 @@ export function GalleryView() {
       ) : (
         <EmptyState
           icon={<Camera size={30} />}
-          title="다시 꺼내 보고 싶은 날이 있나요?"
+          title={
+            photos.length ? '이 분류에 담긴 순간이 아직 없어요' : '다시 꺼내 보고 싶은 날이 있나요?'
+          }
           description="가족의 웃음, 처음 달린 날, 나를 응원하는 한 장. 앨범에서 직접 골라 담아 보세요."
-          action={<Button onClick={() => openEditor(null)}>첫 순간 담기</Button>}
+          action={
+            photos.length ? (
+              <Button variant="secondary" onClick={() => setFilter('all')}>
+                모든 순간 보기
+              </Button>
+            ) : (
+              <Button onClick={() => openEditor(null)}>첫 순간 담기</Button>
+            )
+          }
         />
       )}
       <div className={styles.dataNote}>
@@ -246,12 +282,22 @@ export function GalleryView() {
             )}
           </div>
           <div className={styles.categoryGroup}>
-            <Badge>{categories[view.data.category as Category] || '일상'}</Badge>
+            <Badge>{categories[photoCategory(view.data.category)]}</Badge>
             <time className={styles.smallDate} dateTime={view.date}>
               {shortDate(view.date)}
             </time>
           </div>
           {view.body && <p className={styles.wideText}>{view.body}</p>}
+          {validUrl(String(view.data.legacyUrl || '')) && (
+            <a
+              className={styles.linkTitle}
+              href={validUrl(String(view.data.legacyUrl))!}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              이전 사진 링크 열기 ↗
+            </a>
+          )}
           <div className={styles.galleryActions}>
             <Button variant="secondary" onClick={() => setView(null)}>
               닫기
@@ -268,14 +314,18 @@ export function GalleryView() {
         </Modal>
       )}
       {editing !== undefined && (
-        <Modal title={editing ? '순간의 이야기 편집' : '기억하고 싶은 순간'} onClose={closeEditor}>
+        <Modal
+          title={editing ? '순간의 이야기 편집' : '기억하고 싶은 순간'}
+          onClose={closeEditor}
+          dirty={processing || JSON.stringify(draft) !== initialDraft}
+        >
           <form onSubmit={submit} className={styles.formStack}>
             {draft.image && (
               <img className={styles.photoPreview} src={draft.image} alt="선택한 사진 미리보기" />
             )}
             <label className={styles.upload}>
               <ImagePlus />
-              <span>
+              <span role="status" aria-live="polite">
                 {processing
                   ? '사진을 작게 다듬고 있어요…'
                   : draft.image
@@ -348,10 +398,13 @@ export function GalleryView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={closeEditor}>
-                취소
-              </Button>
-              <Button type="submit" disabled={processing || !draft.image}>
+              <ModalCloseButton>취소</ModalCloseButton>
+              <Button
+                type="submit"
+                disabled={
+                  processing || (!draft.image && !validUrl(String(editing?.data.legacyUrl || '')))
+                }
+              >
                 {processing ? '사진 처리 중' : '순간 저장하기'}
               </Button>
             </div>

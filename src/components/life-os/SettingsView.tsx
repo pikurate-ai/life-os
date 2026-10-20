@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowUpRight,
   Cloud,
@@ -19,7 +19,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
-import { Badge, Button, Field, Modal, SectionHeader } from './ui';
+import { Badge, Button, Modal, ModalCloseButton, SectionHeader } from './ui';
+import type { BackupImportPreview } from '@/lib/life-os/backup';
 
 const previewBuild = process.env.NEXT_PUBLIC_LIFE_OS_PREVIEW === 'true';
 
@@ -35,6 +36,8 @@ export function SettingsView() {
     signOut,
     exportBackup,
     importBackup,
+    previewBackup,
+    discardBackupPreview,
     importLegacy,
     migrationReport,
     notify,
@@ -43,8 +46,53 @@ export function SettingsView() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [backupPreview, setBackupPreview] = useState<BackupImportPreview | null>(null);
+  const [inspecting, setInspecting] = useState(false);
+  const [backupError, setBackupError] = useState('');
+  const [inspectionAttempt, setInspectionAttempt] = useState(0);
   const [confirmLegacy, setConfirmLegacy] = useState(false);
   const [install, setInstall] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setBackupPreview(null);
+    setBackupError('');
+    if (!file) {
+      setInspecting(false);
+      discardBackupPreview();
+      return;
+    }
+    setInspecting(true);
+    previewBackup(file)
+      .then((result) => {
+        if (!cancelled) setBackupPreview(result);
+      })
+      .catch((reason) => {
+        if (!cancelled)
+          setBackupError(reason instanceof Error ? reason.message : '파일을 확인하지 못했습니다.');
+      })
+      .finally(() => {
+        if (!cancelled) setInspecting(false);
+      });
+    return () => {
+      cancelled = true;
+      discardBackupPreview();
+    };
+  }, [file, previewBackup, discardBackupPreview, inspectionAttempt]);
+  useEffect(() => {
+    setFile(null);
+    setBackupPreview(null);
+    setConfirmLegacy(false);
+    setBackupError('');
+    discardBackupPreview();
+  }, [demo, user?.uid, discardBackupPreview]);
+  const closeBackup = () => {
+    if (!pending) {
+      discardBackupPreview();
+      setFile(null);
+      setBackupPreview(null);
+      setBackupError('');
+    }
+  };
   async function action(fn: () => Promise<unknown>) {
     setPending(true);
     setError('');
@@ -217,6 +265,7 @@ export function SettingsView() {
               <input
                 type="file"
                 accept="application/json,.json"
+                disabled={pending}
                 onChange={(e) => {
                   setFile(e.target.files?.[0] || null);
                   e.target.value = '';
@@ -273,30 +322,121 @@ export function SettingsView() {
         <span>Life OS · 2.0</span>
       </div>
       {file && (
-        <Modal title="백업 가져오기" onClose={() => setFile(null)}>
+        <Modal title="백업 가져오기 확인" onClose={closeBackup}>
           <div className="page-stack">
             <p>
               <strong>{file.name}</strong> ({(file.size / 1024).toFixed(0)} KB)
             </p>
-            <p className="muted">
-              현재 공간에 기록을 병합합니다. 동일한 ID는 더 최근에 수정된 기록을 유지하며, 삭제
-              이력도 적용됩니다. 계정별로 금고 마스터 비밀번호가 다르다면 기존 금고를 먼저 백업해
-              주세요.
-            </p>
+            {inspecting && (
+              <p role="status">파일을 읽고 기록을 검증하고 있어요. 아직 저장하지 않았습니다.</p>
+            )}
+            {backupError && (
+              <div className="page-stack">
+                <p className="feedback-error" role="alert">
+                  {backupError}
+                </p>
+                <Button
+                  variant="secondary"
+                  disabled={pending || inspecting}
+                  onClick={() => setInspectionAttempt((value) => value + 1)}
+                >
+                  미리보기 다시 확인
+                </Button>
+              </div>
+            )}
+            {backupPreview && (
+              <>
+                <div className="setting-note">
+                  <strong>가져올 대상</strong>
+                  <p>{backupPreview.targetLabel}</p>
+                  {backupPreview.targetKind === 'demo' && (
+                    <p>
+                      현재 예시 공간입니다. 실제 기록을 보관하려면 취소 후 ‘내 기록 시작하기’로
+                      전환해 주세요.
+                    </p>
+                  )}
+                </div>
+                <dl className="sync-info-grid">
+                  <div>
+                    <dt className="muted text-small">파일 출처</dt>
+                    <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>
+                      <strong>
+                        {backupPreview.source === 'v1'
+                          ? '이전 Life OS v1 전체 백업'
+                          : 'Life OS v2 전체 백업'}
+                      </strong>
+                      <p>
+                        {backupPreview.sourceWorkspace === 'demo'
+                          ? '예시 데이터 백업'
+                          : backupPreview.sourceWorkspace === 'guest'
+                            ? '비로그인 기기 백업'
+                            : backupPreview.sourceWorkspace === 'account'
+                              ? '계정 기록 백업'
+                              : '이전 형식 · 계정 정보 미포함'}
+                      </p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="muted text-small">검증된 기록</dt>
+                    <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>
+                      <strong>{backupPreview.total.toLocaleString()}개</strong>
+                      <p>
+                        일반 {backupPreview.active.toLocaleString()}개 · 삭제 이력{' '}
+                        {backupPreview.deleted.toLocaleString()}개
+                      </p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="muted text-small">건너뛰기·중복</dt>
+                    <dd style={{ margin: 0, minWidth: 0, overflowWrap: 'anywhere' }}>
+                      <strong>지원 불가 {backupPreview.skipped.toLocaleString()}개</strong>
+                      <p>중복·이미 보관 {backupPreview.duplicates.toLocaleString()}개</p>
+                    </dd>
+                  </div>
+                </dl>
+                {backupPreview.conflicts > 0 && (
+                  <p className="setting-note">
+                    원본과 다른 이전 변경분 {backupPreview.conflicts}개를 검토 사본으로 보관합니다.
+                    가계·자산·운동 집계에는 자동 반영하지 않습니다.
+                  </p>
+                )}
+                {backupPreview.warnings.length > 0 && (
+                  <ul className="migration-report">
+                    {backupPreview.warnings.map((warning, index) => (
+                      <li key={index}>{warning}</li>
+                    ))}
+                  </ul>
+                )}
+                <p className="muted">
+                  {backupPreview.source === 'v2'
+                    ? '동일한 ID는 최신 기록을 유지하고 삭제 이력도 적용합니다. '
+                    : '이전 원본과 현재 기록을 삭제하지 않고 보존합니다. '}
+                  원본 파일은 변경하지 않습니다. 대상 공간과 건너뛸 항목을 확인한 뒤 저장해 주세요.
+                </p>
+              </>
+            )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setFile(null)}>
-                취소
-              </Button>
+              <ModalCloseButton disabled={pending}>취소</ModalCloseButton>
               <Button
-                disabled={pending}
+                disabled={pending || inspecting || !backupPreview}
                 onClick={() =>
                   action(async () => {
-                    await importBackup(file);
+                    try {
+                      await importBackup(file, backupPreview?.token);
+                    } catch (reason) {
+                      setBackupError(
+                        reason instanceof Error
+                          ? reason.message
+                          : '가져오기를 완료하지 못했습니다. 파일을 다시 선택해 주세요.',
+                      );
+                      throw reason;
+                    }
                     setFile(null);
+                    setBackupPreview(null);
                   })
                 }
               >
-                {pending ? '확인 중…' : '검증하고 가져오기'}
+                {pending ? '저장 중…' : '대상 확인 · 가져오기'}
               </Button>
             </div>
           </div>

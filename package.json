@@ -12,6 +12,7 @@
     "preview": "node scripts/serve.cjs",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test --test-isolation=none tests/*.test.mjs && node scripts/test-health-vault.cjs",
+    "test:rules": "firebase emulators:exec --non-interactive --only firestore --project demo-life-os-qa --config firebase.rules-test.json \"node --test --test-isolation=none tests/firestore-rules.integration.mjs\"",
     "check": "npm run typecheck && npm test && npm run build",
     "format": "prettier --write src/components/life-os src/lib/life-os src/app docs scripts tests public/sw.js AGENTS.md PROJECT_HANDOVER.md PROJECT_STATE.md README.md next.config.ts package.json .github/workflows",
     "format:check": "prettier --check src/components/life-os src/lib/life-os src/app docs scripts tests public/sw.js AGENTS.md PROJECT_HANDOVER.md PROJECT_STATE.md README.md next.config.ts package.json .github/workflows"
@@ -32,10 +33,12 @@
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
+    "@firebase/rules-unit-testing": "5.0.2",
     "@tailwindcss/postcss": "^4.0.9",
     "@types/node": "^22.13.9",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "firebase-tools": "15.34.0",
     "postcss": "^8.5.3",
     "prettier": "3.9.10",
     "sharp": "0.35.5",

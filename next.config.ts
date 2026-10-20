@@ -5,6 +5,7 @@ const build = resolveBuildConfig();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   env: {
     NEXT_PUBLIC_BASE_PATH: build.basePath,
     NEXT_PUBLIC_LIFE_OS_PREVIEW: String(build.preview),

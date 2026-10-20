@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Copy, Eye, EyeOff, Search, Plus, Pin, Pencil, StickyNote } from 'lucide-react';
 import { useLife } from '@/lib/life-os/store';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
 import { attempt, DeleteControl, shortDate } from './domain-utils';
 import styles from './domain.module.css';
 
 const categories = { daily: '일상', family: '가족', work: '일', study: '배움' };
 type Category = keyof typeof categories;
+const memoryCategory = (value: unknown): Category =>
+  typeof value === 'string' && Object.hasOwn(categories, value) ? (value as Category) : 'daily';
 type Draft = {
   title: string;
   body: string;
@@ -33,6 +35,8 @@ export function MemoryView() {
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState<LifeRecord | null | undefined>(undefined);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [initialDraft, setInitialDraft] = useState('');
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState('');
   const [revealed, setRevealed] = useState<string[]>([]);
@@ -42,13 +46,16 @@ export function MemoryView() {
     return () => document.removeEventListener('visibilitychange', hide);
   }, []);
   const memories = useMemo(() => records.filter((record) => record.type === 'memory'), [records]);
+  const viewing = memories.find((record) => record.id === viewingId);
   const filtered = useMemo(
     () =>
       memories
         .filter(
           (record) =>
             (filter === 'all' ||
-              (filter === 'pinned' ? record.data.pinned : record.data.category === filter)) &&
+              (filter === 'pinned'
+                ? record.data.pinned
+                : memoryCategory(record.data.category) === filter)) &&
             `${record.title} ${isSensitive(record) ? '' : record.body}`
               .toLowerCase()
               .includes(search.toLowerCase()),
@@ -61,22 +68,20 @@ export function MemoryView() {
     [memories, filter, search],
   );
   const openEditor = (record: LifeRecord | null) => {
+    setViewingId(null);
     setEditing(record);
     setError('');
-    setDraft(
-      record
-        ? {
-            title: record.title,
-            body: record.body,
-            category:
-              typeof record.data.category === 'string' && record.data.category in categories
-                ? (record.data.category as Category)
-                : 'daily',
-            pinned: Boolean(record.data.pinned),
-            sensitive: isSensitive(record),
-          }
-        : emptyDraft(),
-    );
+    const nextDraft: Draft = record
+      ? {
+          title: record.title,
+          body: record.body,
+          category: memoryCategory(record.data.category),
+          pinned: Boolean(record.data.pinned),
+          sensitive: isSensitive(record),
+        }
+      : emptyDraft();
+    setDraft(nextDraft);
+    setInitialDraft(JSON.stringify(nextDraft));
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -106,6 +111,8 @@ export function MemoryView() {
       return;
     setRevealed([]);
     setEditing(undefined);
+    setFilter('all');
+    setSearch('');
     notify(editing ? '메모를 수정했어요.' : '새로운 기억을 담았어요.');
   };
   const copy = async (record: LifeRecord) => {
@@ -137,6 +144,7 @@ export function MemoryView() {
               <button
                 key={key}
                 className={`${styles.filter} ${filter === key ? styles.selected : ''}`}
+                aria-pressed={filter === key}
                 onClick={() => setFilter(key)}
               >
                 {key === 'pinned' && <Pin size={12} />}
@@ -171,7 +179,7 @@ export function MemoryView() {
               className={`${styles.note} ${record.data.pinned ? styles.notePinned : ''}`}
             >
               <div className={styles.noteTop}>
-                <Badge>{categories[record.data.category as Category] || '일상'}</Badge>
+                <Badge>{categories[memoryCategory(record.data.category)]}</Badge>
                 <div className={styles.actions}>
                   <button
                     className={`${styles.icon} ${record.data.pinned ? styles.pin : ''}`}
@@ -200,7 +208,25 @@ export function MemoryView() {
                   </button>
                 </div>
               </div>
-              <h3 className={styles.noteTitle}>{record.title}</h3>
+              <h3 className={styles.noteTitle}>
+                <button
+                  type="button"
+                  onClick={() => setViewingId(record.id)}
+                  style={{
+                    border: 0,
+                    background: 'none',
+                    padding: 0,
+                    color: 'inherit',
+                    textAlign: 'left',
+                    font: 'inherit',
+                    overflowWrap: 'anywhere',
+                    maxWidth: '100%',
+                  }}
+                  aria-label={`${record.title} 전체 내용 보기`}
+                >
+                  {record.title}
+                </button>
+              </h3>
               <div className={styles.memoryContent}>
                 {isSensitive(record) && !revealed.includes(record.id) ? (
                   <p className={styles.maskedMemory}>
@@ -230,16 +256,21 @@ export function MemoryView() {
                   </button>
                 )}
               </div>
-              <div className={styles.noteFooter}>
+              <div className={styles.noteFooter} style={{ flexWrap: 'wrap' }}>
                 <time dateTime={record.date}>{shortDate(record.date)}</time>
-                <button
-                  className={styles.quietButton}
-                  onClick={() => copy(record)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-                >
-                  <Copy size={12} />
-                  {copied === record.id ? '복사했어요' : '내용 복사'}
-                </button>
+                <div className={styles.actions} style={{ flexWrap: 'wrap', gap: 12 }}>
+                  <button className={styles.quietButton} onClick={() => setViewingId(record.id)}>
+                    전체 보기
+                  </button>
+                  <button
+                    className={styles.quietButton}
+                    onClick={() => copy(record)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+                  >
+                    <Copy size={12} />
+                    {copied === record.id ? '복사했어요' : '내용 복사'}
+                  </button>
+                </div>
               </div>
             </article>
           ))}
@@ -257,19 +288,76 @@ export function MemoryView() {
               ? '다른 검색어나 카테고리로 찾아보세요.'
               : '집중하고 싶은 생각, 가족의 취향, 자주 찾는 정보를 담아 두세요.'
           }
-          action={!search && <Button onClick={() => openEditor(null)}>메모 작성하기</Button>}
+          action={
+            memories.length ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all');
+                  setSearch('');
+                }}
+              >
+                전체 메모 보기
+              </Button>
+            ) : (
+              <Button onClick={() => openEditor(null)}>메모 작성하기</Button>
+            )
+          }
         />
+      )}
+      {viewing && (
+        <Modal title={viewing.title} onClose={() => setViewingId(null)} wide>
+          <div className="page-stack">
+            <div className={styles.categoryGroup}>
+              <Badge>{categories[memoryCategory(viewing.data.category)]}</Badge>
+              <time className={styles.smallDate} dateTime={viewing.date}>
+                {shortDate(viewing.date)}
+              </time>
+            </div>
+            {isSensitive(viewing) && !revealed.includes(viewing.id) ? (
+              <p className={styles.maskedMemory}>
+                <EyeOff size={17} />
+                민감한 내용은 가려져 있어요.
+              </p>
+            ) : (
+              <p className={styles.wideText}>{viewing.body}</p>
+            )}
+            {isSensitive(viewing) && (
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setRevealed((current) =>
+                    current.includes(viewing.id)
+                      ? current.filter((id) => id !== viewing.id)
+                      : [...current, viewing.id],
+                  )
+                }
+              >
+                {revealed.includes(viewing.id) ? <EyeOff size={14} /> : <Eye size={14} />}
+                {revealed.includes(viewing.id) ? '다시 가리기' : '내용 보기'}
+              </Button>
+            )}
+            <div className="form-actions">
+              <ModalCloseButton>닫기</ModalCloseButton>
+              <Button variant="secondary" onClick={() => copy(viewing)}>
+                <Copy size={14} />
+                내용 복사
+              </Button>
+              <Button onClick={() => openEditor(viewing)}>수정하기</Button>
+            </div>
+          </div>
+        </Modal>
       )}
       {editing !== undefined && (
         <Modal
           title={editing ? '기억 다듬기' : '새로운 기억'}
           onClose={() => setEditing(undefined)}
+          dirty={JSON.stringify(draft) !== initialDraft}
         >
           <form onSubmit={submit} className={styles.formStack}>
             <Field label="제목">
               <input
                 className="input"
-                autoFocus
                 value={draft.title}
                 maxLength={120}
                 required
@@ -330,9 +418,7 @@ export function MemoryView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setEditing(undefined)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">기억 저장하기</Button>
             </div>
           </form>

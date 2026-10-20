@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useId, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { X, Inbox } from 'lucide-react';
+import { lockScroll } from '@/lib/life-os/scroll-lock';
 
 export function Button({
   children,
@@ -28,25 +29,86 @@ export function IconButton({
     </button>
   );
 }
+
+const ModalCloseContext = createContext<(() => void) | null>(null);
+
+/** Cancel, Escape, backdrop and the close icon all follow the same draft guard. */
+export function ModalCloseButton({
+  children = '취소',
+  ...props
+}: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {
+  const close = useContext(ModalCloseContext);
+  return (
+    <Button variant="secondary" {...props} onClick={() => close?.()}>
+      {children}
+    </Button>
+  );
+}
+
 export function Modal({
   title,
   onClose,
   children,
   wide = false,
+  dirty = false,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   wide?: boolean;
+  dirty?: boolean;
 }) {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
+  const backdrop = useRef<HTMLDivElement>(null);
+  const continueButton = useRef<HTMLButtonElement>(null);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const requestClose = () => {
+    if (dirtyRef.current) setConfirmDiscard(true);
+    else closeRef.current();
+  };
+  const requestRef = useRef(requestClose);
+  requestRef.current = requestClose;
+  const confirmRef = useRef(confirmDiscard);
+  confirmRef.current = confirmDiscard;
+  const previousConfirmation = useRef(false);
+  useEffect(() => {
+    if (confirmDiscard) continueButton.current?.focus({ preventScroll: true });
+    else if (previousConfirmation.current) ref.current?.focus({ preventScroll: true });
+    previousConfirmation.current = confirmDiscard;
+  }, [confirmDiscard]);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const node = backdrop.current;
+        if (!node) return;
+        // Safari's layout viewport does not necessarily shrink with the keyboard.
+        node.style.setProperty('--modal-visible-height', `${viewport.height}px`);
+        node.style.setProperty('--modal-visible-width', `${viewport.width}px`);
+        node.style.setProperty('--modal-visible-top', `${viewport.offsetTop}px`);
+        node.style.setProperty('--modal-visible-left', `${viewport.offsetLeft}px`);
+      });
+    };
+    update();
+    viewport.addEventListener('resize', update);
+    viewport.addEventListener('scroll', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener('resize', update);
+      viewport.removeEventListener('scroll', update);
+    };
+  }, []);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll(document.body);
     const focusable = () =>
       Array.from(
         ref.current?.querySelectorAll<HTMLElement>(
@@ -56,11 +118,13 @@ export function Modal({
     const initial = ref.current?.querySelector<HTMLElement>(
       'input:not([type="file"]):not([disabled]), textarea:not([disabled]), select:not([disabled])',
     );
-    (initial || focusable()[0])?.focus();
+    const compact = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+    (compact ? ref.current : initial || focusable()[0])?.focus({ preventScroll: true });
     const keydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        closeRef.current();
+        if (confirmRef.current) setConfirmDiscard(false);
+        else requestRef.current();
       }
       if (e.key === 'Tab') {
         const list = focusable(),
@@ -70,16 +134,11 @@ export function Modal({
           e.preventDefault();
           return;
         }
-        if (
-          e.shiftKey &&
-          (document.activeElement === first || !ref.current?.contains(document.activeElement))
-        ) {
+        const position = list.indexOf(document.activeElement as HTMLElement);
+        if (e.shiftKey && position <= 0) {
           e.preventDefault();
           last?.focus();
-        } else if (
-          !e.shiftKey &&
-          (document.activeElement === last || !ref.current?.contains(document.activeElement))
-        ) {
+        } else if (!e.shiftKey && (position < 0 || document.activeElement === last)) {
           e.preventDefault();
           first.focus();
         }
@@ -88,15 +147,19 @@ export function Modal({
     document.addEventListener('keydown', keydown);
     return () => {
       document.removeEventListener('keydown', keydown);
-      document.body.style.overflow = oldOverflow;
-      previous?.focus();
+      unlock();
+      const target = previous?.isConnected
+        ? previous
+        : document.querySelector<HTMLElement>('.quick-add');
+      target?.focus({ preventScroll: true });
     };
   }, []);
   return (
     <div
+      ref={backdrop}
       className="modal-backdrop"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) requestClose();
       }}
     >
       <div
@@ -104,15 +167,43 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={id}
+        tabIndex={-1}
         className={`modal ${wide ? 'modal-wide' : ''}`}
       >
         <div className="modal-heading">
           <h2 id={id}>{title}</h2>
-          <IconButton label="닫기" onClick={onClose}>
+          <IconButton label="닫기" onClick={requestClose}>
             <X size={19} />
           </IconButton>
         </div>
-        <div className="modal-content">{children}</div>
+        <div className="modal-content">
+          <ModalCloseContext.Provider value={requestClose}>
+            {confirmDiscard && (
+              <div className="page-stack discard-prompt" role="alert">
+                <h3>작성한 내용을 버릴까요?</h3>
+                <p>
+                  아직 저장하지 않은 내용이 있어요. 계속 작성하거나, 내용을 버리고 닫을 수 있어요.
+                </p>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    ref={continueButton}
+                    className="button button-secondary"
+                    onClick={() => setConfirmDiscard(false)}
+                  >
+                    계속 작성
+                  </button>
+                  <Button variant="danger" onClick={() => closeRef.current()}>
+                    버리고 닫기
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="modal-body" hidden={confirmDiscard}>
+              {children}
+            </div>
+          </ModalCloseContext.Provider>
+        </div>
       </div>
     </div>
   );

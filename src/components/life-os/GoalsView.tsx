@@ -15,7 +15,7 @@ import {
 import { useLife } from '@/lib/life-os/store';
 import { preserveRecordData } from '@/lib/life-os/editing';
 import { localDate, type LifeRecord } from '@/lib/life-os/types';
-import { Badge, Button, EmptyState, Field, Modal, SectionHeader } from './ui';
+import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeader } from './ui';
 import { attempt, DeleteControl, shortDate, validDate } from './domain-utils';
 import styles from './domain.module.css';
 
@@ -36,6 +36,8 @@ const icons: Record<string, ReactNode> = {
   personal: <Flag />,
 };
 type Category = keyof typeof categories;
+const goalCategory = (value: unknown): Category =>
+  typeof value === 'string' && Object.hasOwn(categories, value) ? (value as Category) : 'personal';
 type Draft = {
   title: string;
   body: string;
@@ -58,7 +60,17 @@ const goalSteps = (record: LifeRecord): string[] =>
     : [];
 const completedSteps = (record: LifeRecord): number[] =>
   Array.isArray(record.data.completedSteps)
-    ? record.data.completedSteps.filter((step): step is number => typeof step === 'number')
+    ? Array.from(
+        new Set(
+          record.data.completedSteps.filter(
+            (step): step is number =>
+              typeof step === 'number' &&
+              Number.isInteger(step) &&
+              step >= 0 &&
+              step < goalSteps(record).length,
+          ),
+        ),
+      )
     : [];
 
 export function GoalsView() {
@@ -67,6 +79,7 @@ export function GoalsView() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [editing, setEditing] = useState<LifeRecord | null | undefined>(undefined);
   const [draft, setDraft] = useState<Draft>(blank);
+  const [initialDraft, setInitialDraft] = useState('');
   const [error, setError] = useState('');
   const goals = useMemo(
     () =>
@@ -80,26 +93,23 @@ export function GoalsView() {
     (goal) =>
       (filter === 'all' ||
         (filter === 'done' ? goal.data.status === 'done' : goal.data.status !== 'done')) &&
-      (categoryFilter === 'all' || goal.data.category === categoryFilter),
+      (categoryFilter === 'all' || goalCategory(goal.data.category) === categoryFilter),
   );
   const openEditor = (goal: LifeRecord | null) => {
     setEditing(goal);
     setError('');
-    setDraft(
-      goal
-        ? {
-            title: goal.title,
-            body: goal.body,
-            category:
-              typeof goal.data.category === 'string' && goal.data.category in categories
-                ? (goal.data.category as Category)
-                : 'personal',
-            steps: goalSteps(goal).join('\n'),
-            targetDate: String(goal.data.targetDate || ''),
-            done: goal.data.status === 'done',
-          }
-        : blank(),
-    );
+    const nextDraft: Draft = goal
+      ? {
+          title: goal.title,
+          body: goal.body,
+          category: goalCategory(goal.data.category),
+          steps: goalSteps(goal).join('\n'),
+          targetDate: String(goal.data.targetDate || ''),
+          done: goal.data.status === 'done',
+        }
+      : blank();
+    setDraft(nextDraft);
+    setInitialDraft(JSON.stringify(nextDraft));
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -121,17 +131,18 @@ export function GoalsView() {
     }
     const previousSteps = editing ? goalSteps(editing) : [];
     const previousDone = editing ? completedSteps(editing) : [];
+    const matchedPreviousSteps = new Set<number>();
     const doneSteps = draft.done
       ? steps.map((_, index) => index)
-      : steps.flatMap((step, index) =>
-          previousSteps.some(
-            (oldStep, oldIndex) => oldStep === step && previousDone.includes(oldIndex),
-          )
-            ? [index]
-            : [],
-        );
-    const status =
-      draft.done || (steps.length > 0 && doneSteps.length === steps.length) ? 'done' : 'active';
+      : steps.flatMap((step, index) => {
+          const previousIndex = previousSteps.findIndex(
+            (oldStep, oldIndex) => oldStep === step && !matchedPreviousSteps.has(oldIndex),
+          );
+          if (previousIndex < 0) return [];
+          matchedPreviousSteps.add(previousIndex);
+          return previousDone.includes(previousIndex) ? [index] : [];
+        });
+    const status = draft.done ? 'done' : 'active';
     const value = {
       type: 'goal' as const,
       title: draft.title.trim(),
@@ -141,7 +152,12 @@ export function GoalsView() {
         records.filter((record) => record.type === 'goal'),
         editing?.id,
         {
-          category: draft.category,
+          category:
+            editing &&
+            typeof editing.data.category === 'string' &&
+            draft.category === goalCategory(editing.data.category)
+              ? editing.data.category
+              : draft.category,
           steps,
           completedSteps: doneSteps,
           targetDate: draft.targetDate,
@@ -157,6 +173,8 @@ export function GoalsView() {
     )
       return;
     setEditing(undefined);
+    setFilter(status === 'done' ? 'done' : 'active');
+    setCategoryFilter('all');
     notify(editing ? '목표를 다듬었어요.' : '새로운 방향을 세웠어요.');
   };
   const toggleStep = (goal: LifeRecord, index: number) => {
@@ -216,6 +234,7 @@ export function GoalsView() {
             <button
               key={key}
               className={`${styles.filter} ${filter === key ? styles.selected : ''}`}
+              aria-pressed={filter === key}
               onClick={() => setFilter(key)}
             >
               {label}
@@ -246,12 +265,7 @@ export function GoalsView() {
       </div>
       {filtered.length ? (
         Object.entries(categories).map(([category, label]) => {
-          const group = filtered.filter(
-            (goal) =>
-              (typeof goal.data.category === 'string' && goal.data.category in categories
-                ? goal.data.category
-                : 'personal') === category,
-          );
+          const group = filtered.filter((goal) => goalCategory(goal.data.category) === category);
           return group.length ? (
             <section key={category} className={styles.goalSection}>
               <div className={styles.goalHeader}>
@@ -338,7 +352,9 @@ export function GoalsView() {
                                     data: {
                                       ...goal.data,
                                       status: isDone ? 'active' : 'done',
-                                      completedSteps: isDone ? [] : steps.map((_, index) => index),
+                                      completedSteps: isDone
+                                        ? completedSteps(goal)
+                                        : steps.map((_, index) => index),
                                     },
                                   }),
                                 notify,
@@ -346,11 +362,13 @@ export function GoalsView() {
                             )
                               return;
                             notify(
-                              isDone ? '진행 중인 목표로 옮겼어요.' : '이룬 목표로 기록했어요.',
+                              isDone
+                                ? '단계 기록을 유지한 채 진행 중으로 옮겼어요.'
+                                : '이룬 목표로 기록했어요.',
                             );
                           }}
                         >
-                          {isDone ? '다시 시작' : '목표 완료'}
+                          {isDone ? '진행 재개' : '목표 완료'}
                         </button>
                       </div>
                     </article>
@@ -369,19 +387,33 @@ export function GoalsView() {
               ? '완료한 목표가 이곳에 차곡차곡 모여요.'
               : 'AI·클라우드 공부, 새로운 커리어, 가족과 함께하는 시간. 작은 목표부터 시작해 보세요.'
           }
-          action={<Button onClick={() => openEditor(null)}>나의 첫 목표 만들기</Button>}
+          action={
+            goals.length ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all');
+                  setCategoryFilter('all');
+                }}
+              >
+                전체 목표 보기
+              </Button>
+            ) : (
+              <Button onClick={() => openEditor(null)}>나의 첫 목표 만들기</Button>
+            )
+          }
         />
       )}
       {editing !== undefined && (
         <Modal
           title={editing ? '목표 다듬기' : '새로운 방향 세우기'}
           onClose={() => setEditing(undefined)}
+          dirty={JSON.stringify(draft) !== initialDraft}
         >
           <form onSubmit={submit} className={styles.formStack}>
             <Field label="이루고 싶은 목표">
               <input
                 className="input"
-                autoFocus
                 required
                 maxLength={160}
                 value={draft.title}
@@ -451,9 +483,7 @@ export function GoalsView() {
               </p>
             )}
             <div className="form-actions">
-              <Button variant="secondary" onClick={() => setEditing(undefined)}>
-                취소
-              </Button>
+              <ModalCloseButton>취소</ModalCloseButton>
               <Button type="submit">목표 저장하기</Button>
             </div>
           </form>

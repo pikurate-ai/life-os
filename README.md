@@ -1,5 +1,9 @@
 # Life OS
 
+**2026-10-21 갱신:** [여기서 시작하기](HANDOVER_START_HERE.md) · [종합 인계](PROJECT_HANDOVER.md) · [현재 상태](PROJECT_STATE.md) · [최신 검증](docs/QA_2026-10-21.md).
+
+`codex/life-os-v2`에서 모바일 입력·초안 보호·백업·분류·금고 가져오기를 보완했습니다. 포맷·타입·59개 자동 테스트·별도 규칙 통합 9개·일반 빌드가 통과했습니다. 실제 iPhone/앱 사용자 로그인/두 기기 동기화는 별도 검증이 필요합니다. 공개 테스트는 기기 저장 버전이며 최신 배포 커밋은 현재 상태 문서를 확인하세요. 아래 49개 검사와 초기 공개 배포 설명은 2026-10-17의 이력입니다.
+
 하루의 계획, 운동, 일기, 가족의 기억, 돈의 흐름, 다시 읽을 자료를 한곳에 남기는 개인 라이프 운영 도구입니다. 기존 앱의 목적을 유지하면서 화면과 데이터 구조를 v2로 재설계했습니다.
 
 Next.js App Router, React, TypeScript, 공통 디자인 토큰과 Firebase Auth / Firestore를 사용합니다. 데스크톱과 모바일 브라우저에서 같은 기록 모델을 공유합니다. 기본 화면은 **가상 체험 데이터**이며 개인·계정 데이터와 분리됩니다.
@@ -17,7 +21,7 @@ npm run preview
 
 `build:iphone`은 `/life-os-preview/` 경로와 전용 설치 이름·manifest·아이콘으로 `out/`을 생성합니다. 운영 빌드와 로컬 저장 공간의 이름을 분리합니다. 개발 서버와 빌드는 동시에 실행하지 마세요. 로컬 390×844 화면 검사와 빌드 근거는 [QA 기록](docs/QA.md)에 있습니다.
 
-설정 화면의 기기 저장 안내 보완을 포함한 최종 포맷·타입·자동 테스트 49개·암호화/가져오기 검사와 일반·iPhone 빌드가 통과했습니다. 공개 사이트의 HTML·manifest·service worker·설치 아이콘·스크립트와 390×844 Chromium의 달리기 저장·새로고침 유지도 확인했습니다. 실제 iPhone Safari·설치 검증과는 구분합니다.
+2026-10-17 당시 설정 화면의 기기 저장 안내 보완을 포함한 포맷·타입·자동 테스트 49개·암호화/가져오기 검사와 일반·iPhone 빌드가 통과했습니다. 공개 사이트의 HTML·manifest·service worker·설치 아이콘·스크립트와 390×844 Chromium의 달리기 저장·새로고침 유지도 확인했습니다. 이후 로컬 변경의 전체 빌드나 실제 iPhone Safari·설치 검증과는 구분합니다.
 
 ## 시작하기
 
@@ -62,13 +66,16 @@ Google Docs, iPhone 앨범, Apple Health, 은행, 비밀번호 관리 서비스�
 
 ## 개발 인계
 
+- [인계 시작 안내](HANDOVER_START_HERE.md)
 - [전체 인계](PROJECT_HANDOVER.md)
 - [현재 상태](PROJECT_STATE.md)
+- [2026-10-18 미커밋 작업과 다음 순서](docs/HANDOVER_SNAPSHOT_2026-10-18.md)
 - [아키텍처와 데이터 정책](docs/ARCHITECTURE.md)
 - [배포와 실제 기기 검증](docs/DEPLOYMENT.md)
 - [디자인 시스템](docs/DESIGN_SYSTEM.md)
 - [제품 기획](docs/PRODUCT_BRIEF.md)
 - [검증 기록과 화면](docs/QA.md)
+- [2026-10-20–21 후속 검증](docs/QA_2026-10-21.md)
 - [iPhone 테스트 가이드](docs/IPHONE_TEST_GUIDE.md)
 
 기존 원격 master를 확인해 `codex/life-os-v2` 브랜치로 Git 연결을 복구했습니다. 변경은 초안 PR로 검토하며 운영 배포는 별도입니다. 기존 [저장소](https://github.com/pikurate-ai/life-os)와 [서비스](https://pikurate-ai.github.io/life-os/)는 별도 운영 확인과 배포 준비가 필요합니다.
