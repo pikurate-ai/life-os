@@ -2,7 +2,7 @@
 
 ## 2026-10-21 재개 결과
 
-**공개 테스트 갱신 완료:** 소스 `4c6e111` / 정적 `cc81539d471157d183865ae3dc18d2a13bc7c0b7`. [소스 CI](https://github.com/pikurate-ai/life-os/actions/runs/39502501547)와 [Pages](https://github.com/pikurate-ai/life-os-preview/actions/runs/39502781234)가 성공했습니다. [테스트 앱](https://pikurate-ai.github.io/life-os-preview/)의 최신 HTML·리뷰·manifest·SW·설치 아이콘·스크립트/CSS와 390px 일기 입력을 확인했습니다. 자세한 측정은 [최신 QA](QA_2026-10-21.md)에 있습니다. 기존 master 서비스·DB·규칙은 변경하지 않았고 cloud-off 정책을 유지합니다.
+**공개 테스트 갱신 완료:** 소스 `078ebcc` / 정적 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`. [소스 CI](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)와 [Pages](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724)가 성공했습니다. [테스트 앱](https://pikurate-ai.github.io/life-os-preview/)의 최신 HTML·리뷰·manifest·SW·설치 아이콘·스크립트/CSS와 390px 일기 입력을 확인했습니다. 자세한 측정은 [최신 QA](QA_2026-10-21.md)에 있습니다. 기존 master 서비스·DB·규칙은 변경하지 않았고 cloud-off 정책을 유지합니다.
 
 포맷·타입·59개 일반 테스트·9개 전용 규칙 검사·일반 빌드가 통과했습니다. `test:rules` 누락을 해결했고 CI는 Temurin Java 21을 준비합니다. 로컬에서는 체크섬을 확인한 portable Java를 `.tools`에만 준비했습니다. 실제 운영 규칙은 배포하지 않았습니다. [최신 검증](QA_2026-10-21.md)에 구체적인 근거가 있습니다.
 

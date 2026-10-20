@@ -2,7 +2,7 @@
 
 기준일: **2026-10-21 / Asia·Seoul**. 대상 작업 폴더: `E:\코덱스 프로젝트\라이프 오에스`.
 
-이 문서는 현재 로컬 소스, 제품 의도, 설계 결정, 검증 근거와 미완료 작업을 함께 인계합니다. **검증된 구현 소스 `4c6e111`을 기능 브랜치에 push했고, 별도 공개 테스트는 정적 `cc81539`로 갱신했습니다.** 상용 판매 준비·실제 iPhone 검증·기기 간 클라우드 동기화 완료를 선언하는 문서가 아닙니다.
+이 문서는 현재 로컬 소스, 제품 의도, 설계 결정, 검증 근거와 미완료 작업을 함께 인계합니다. **검증된 구현 소스 `078ebcc`을 기능 브랜치에 push했고, 별도 공개 테스트는 정적 `d0db06e`로 갱신했습니다.** 상용 판매 준비·실제 iPhone 검증·기기 간 클라우드 동기화 완료를 선언하는 문서가 아닙니다.
 
 처음 인계받았다면 [바로 시작하기](HANDOVER_START_HERE.md) → 이 문서 → [날짜별 작업 스냅샷](docs/HANDOVER_SNAPSHOT_2026-10-18.md)을 읽으세요. 오래된 문서와 충돌할 때 현재 코드와 이 날짜의 검증 범위를 우선합니다. 인증값, 실제 일기·금융·가족 정보, 금고 비밀번호는 인계 문서에 복제하지 않았습니다.
 
@@ -13,19 +13,19 @@
 | 구분             | 확인된 상태                                                                                                          |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
 | 개발 브랜치      | `codex/life-os-v2`                                                                                                   |
-| 검증된 구현 커밋 | `4c6e11164061b8a94fe70677ce1584fca4656cd6` — 후속 검증 문서 커밋과 구분                                              |
+| 검증된 구현 커밋 | `078ebccffb32d4f8a84d41923c65ee584f1a900b` — 후속 검증 문서 커밋과 구분                                              |
 | 최신 기능        | 사용성·입력·백업·모달·규칙 검사 개선을 커밋하고 원격 기능 브랜치에 반영                                              |
-| 원격 소스        | [pikurate-ai/life-os](https://github.com/pikurate-ai/life-os), `codex/life-os-v2`의 구현 기준 `4c6e111`              |
+| 원격 소스        | [pikurate-ai/life-os](https://github.com/pikurate-ai/life-os), `codex/life-os-v2`의 구현 기준 `078ebcc`              |
 | 검토 PR          | [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1). 최신 로컬 변경 반영 여부를 확인하고 갱신할 것           |
 | 기존 서비스      | [life-os](https://pikurate-ai.github.io/life-os/). 최신 v2 변경의 운영 배포가 확인된 주소가 아님                     |
-| 공개 테스트      | [life-os-preview](https://pikurate-ai.github.io/life-os-preview/), 소스 `4c6e111` / 정적 `cc81539`. 클라우드 OFF     |
+| 공개 테스트      | [life-os-preview](https://pikurate-ai.github.io/life-os-preview/), 소스 `078ebcc` / 정적 `d0db06e`. 클라우드 OFF     |
 | 최신 로컬 검사   | 포맷·타입·59개 자동 테스트·추가 CSV/일기/암호화 검사 통과. 별도 규칙 통합 9개 통과                                   |
 | 포맷 검사        | 기존 5개 서식 오류 정리 후 통과                                                                                      |
 | 최신 전체 빌드   | 일반·iPhone 테스트 정적 빌드 통과, 소스 CI와 공개 Pages/HTTPS 확인                                                   |
 | 실제 계정·동기화 | CLI 관리자 로그인 성공. 현재 계정의 프로젝트 목록 0개/기존 프로젝트 조회 실패. 앱 사용자 OAuth·두 기기 검증은 미완료 |
 | 사용성 평가      | 합성 시나리오 1–6 일부와 후속 7–10 주요 흐름 검사. 실제 사람 10명 평가가 아님                                        |
 
-**다른 PC에서는 master가 아닌 `codex/life-os-v2` 브랜치를 받으세요.** 검증된 구현 커밋은 `4c6e111`이며 이후에는 검증 문서 갱신 커밋이 있을 수 있습니다. 로컬 추가 변경이 있는지 Git 상태도 확인하세요. `.env.local`·개인 백업·원본 CSV·인증 토큰은 소스와 분리하고 사용자 데이터는 별도 앱 백업으로 옮깁니다.
+**다른 PC에서는 master가 아닌 `codex/life-os-v2` 브랜치를 받으세요.** 검증된 구현 커밋은 `078ebcc`이며 이후에는 검증 문서 갱신 커밋이 있을 수 있습니다. 로컬 추가 변경이 있는지 Git 상태도 확인하세요. `.env.local`·개인 백업·원본 CSV·인증 토큰은 소스와 분리하고 사용자 데이터는 별도 앱 백업으로 옮깁니다.
 
 ## 2. 제품의 목적과 사용자 맥락
 
@@ -335,7 +335,7 @@ Chromium 390×500 모의 화면에서 모달 366×476, 입력 폭 326px·글자 
 | [공개 테스트](https://pikurate-ai.github.io/life-os-preview/)   | 2026-10-21 기기 저장 테스트 빌드      |
 | [테스트 저장소](https://github.com/pikurate-ai/life-os-preview) | 소스 대신 `out/` 정적 파일 게시       |
 
-2026-10-21 공개 preview의 소스는 `4c6e111`, 정적 커밋은 `cc81539d471157d183865ae3dc18d2a13bc7c0b7`입니다. [Pages 실행 39502781234](https://github.com/pikurate-ai/life-os-preview/actions/runs/39502781234)의 build/deploy가 성공했고, 실제 HTTPS의 최신 HTML·리뷰·manifest·SW·설치 아이콘·스크립트/CSS를 확인했습니다. [소스 CI 실행 39502501547](https://github.com/pikurate-ai/life-os/actions/runs/39502501547)의 validate와 Firestore 규칙 job도 성공했습니다. 이전 `649b020`/`b408294` 배포는 2026-10-17 이력입니다.
+2026-10-21 공개 preview의 소스는 `078ebcc`, 정적 커밋은 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`입니다. [Pages 실행 39504064724](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724)의 build/deploy가 성공했고, 실제 HTTPS의 최신 HTML·리뷰·manifest·SW·설치 아이콘·스크립트/CSS를 확인했습니다. [소스 CI 실행 39503884788](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)의 validate와 Firestore 규칙 job도 성공했습니다. 이전 `649b020`/`b408294` 배포는 2026-10-17 이력입니다.
 
 preview는 main/루트의 Pages 브랜치 배포, HTTPS 강제입니다. API의 build_type `legacy`는 Pages 설정 명칭이며 v1 앱 사용이라는 뜻이 아닙니다. `build:iphone`은 Firebase 웹 값을 비우고 앱에서도 강제로 클라우드를 끕니다. **이 명령으로 PC·iPhone 동기화 출시를 시도하면 안 됩니다.** 실제 클라우드 검증에는 Firebase가 켜진 별도 빌드가 필요합니다.
 
@@ -405,7 +405,7 @@ docs/HANDOVER_SNAPSHOT_2026-10-18.md, docs/PRODUCT_BRIEF.md,
 docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/DEPLOYMENT.md,
 AGENTS.md를 먼저 읽으세요.
 
-검증된 구현은 codex/life-os-v2의 4c6e111로 원격에 반영됐습니다.
+검증된 구현은 codex/life-os-v2의 078ebcc로 원격에 반영됐습니다.
 최신 문서 커밋·로컬 변경과 master를 구분해 확인하세요.
 목표는 개인의 일상 기록·검색·회복을 돕는 상용 수준의 차분한 Life OS입니다.
 현재 v2 모듈과 디자인 토큰을 사용하고 demo/guest/UID를 분리하세요.
@@ -415,7 +415,7 @@ AGENTS.md를 먼저 읽으세요.
 포맷·타입·59개 테스트·규칙 9개와 일반 빌드는 통과했습니다.
 최신 검증 문서를 읽고 남은 금고 CSV·백업 다운로드·실제 iPhone 검사를 진행하세요.
 그 다음 실제 OAuth·권한 규칙·두 기기 동기화·최신 공개 배포를 완성하세요.
-preview는 cloud-off이고 소스 4c6e111 / 정적 cc81539 기준임을 유의하세요.
+preview는 cloud-off이고 소스 078ebcc / 정적 d0db06e 기준임을 유의하세요.
 실제 사람 10명 평가나 실제 기기 검증을 합성 검사로 대체해 완료라 표현하지 마세요.
 기록 보존을 우선하며 구현·검증·배포 상태를 각각 근거와 함께 갱신하세요.
 ```

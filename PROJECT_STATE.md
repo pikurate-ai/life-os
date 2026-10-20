@@ -35,7 +35,7 @@ Firebase CLI 관리자 Google 로그인은 성공했습니다. 그러나 프로�
 
 기능 브랜치는 `codex/life-os-v2`, 검토 대상은 [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)입니다. 최신 변경을 이 브랜치에 보존하며 master를 덮어쓰지 않습니다.
 
-2026-10-21 [공개 테스트](https://pikurate-ai.github.io/life-os-preview/)를 **소스 `4c6e111` / 정적 `cc81539d471157d183865ae3dc18d2a13bc7c0b7`**로 갱신했습니다. 일반·iPhone 빌드가 모두 성공했고, [소스 CI 39502501547](https://github.com/pikurate-ai/life-os/actions/runs/39502501547)의 validate/규칙 검사와 [Pages 39502781234](https://github.com/pikurate-ai/life-os-preview/actions/runs/39502781234)의 build/deploy가 성공했습니다. 이후 문서 커밋은 이 구현/정적 배포와 구분합니다.
+2026-10-21 [공개 테스트](https://pikurate-ai.github.io/life-os-preview/)를 **소스 `078ebcc` / 정적 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`**로 갱신했습니다. 일반·iPhone 빌드가 모두 성공했고, [소스 CI 39503884788](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)의 validate/규칙 검사와 [Pages 39504064724](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724)의 build/deploy가 성공했습니다. 이후 문서 커밋은 이 구현/정적 배포와 구분합니다.
 
 실제 HTTPS HTML 200·최신 번들, manifest 경로, 리뷰·SW·설치 아이콘·스크립트/CSS 총 20개 응답을 확인했습니다. 공개 Chromium 390×844의 일기 모달 366px·입력 16px·가로 넘침 없음, 콘솔 경고/오류 0건을 확인했습니다. 공개 UI의 Google 로그인 숨김과 자동 동기화 없음 안내도 확인했습니다.
 
