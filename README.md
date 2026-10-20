@@ -10,7 +10,7 @@ Next.js App Router, React, TypeScript, 공통 디자인 토큰과 Firebase Auth 
 
 ## iPhone에서 테스트하기
 
-**[Life OS 테스트 열기](https://pikurate-ai.github.io/life-os-preview/)** — 2026-10-17 별도 [테스트 저장소](https://github.com/pikurate-ai/life-os-preview)의 GitHub Pages에 배포하고 실제 HTTPS 접속을 확인했습니다. 기존 `/life-os/` 서비스는 변경하지 않았습니다. iPhone에서는 Safari로 열어 **공유 → 홈 화면에 추가**를 선택하세요.
+**[Life OS 테스트 열기](https://pikurate-ai.github.io/life-os-preview/)** — 2026-10-21 소스 `4c6e111`/정적 `cc81539`로 [테스트 저장소](https://github.com/pikurate-ai/life-os-preview)의 GitHub Pages를 갱신하고 실제 HTTPS·모바일 일기 화면을 확인했습니다. 기존 `/life-os/` 서비스는 변경하지 않았습니다. iPhone에서는 Safari로 열어 **공유 → 홈 화면에 추가**를 선택하세요.
 
 테스트 빌드는 클라우드를 강제로 비활성화합니다. 예시 화면, 이 기기의 개인 기록, JSON 백업을 확인하는 범위이며 Google 로그인이나 PC·iPhone 자동 동기화는 제공하지 않습니다. Safari의 홈 화면에 추가하는 PWA로 준비했으며, 실제 iPhone 13 Pro에서의 설치·사용 검증은 별도입니다. [아이폰 테스트 절차](docs/IPHONE_TEST_GUIDE.md)를 참고하세요.
 

@@ -35,11 +35,15 @@ Firebase CLI 관리자 Google 로그인은 성공했습니다. 그러나 프로�
 
 기능 브랜치는 `codex/life-os-v2`, 검토 대상은 [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)입니다. 최신 변경을 이 브랜치에 보존하며 master를 덮어쓰지 않습니다.
 
-현재 마지막 확인한 [공개 테스트](https://pikurate-ai.github.io/life-os-preview/)는 소스 `649b020`/정적 `b408294361964e229f54aedbf167b472f088d718` 기준입니다. 이번 개선을 재배포한 뒤 소스·정적 커밋과 HTTPS 근거를 아래에 추가합니다. 이 테스트 빌드는 클라우드를 강제로 끄며 기기 저장·백업을 위한 버전입니다. 기존 [master 서비스](https://pikurate-ai.github.io/life-os/)와 구분합니다.
+2026-10-21 [공개 테스트](https://pikurate-ai.github.io/life-os-preview/)를 **소스 `4c6e111` / 정적 `cc81539d471157d183865ae3dc18d2a13bc7c0b7`**로 갱신했습니다. 일반·iPhone 빌드가 모두 성공했고, [소스 CI 39502501547](https://github.com/pikurate-ai/life-os/actions/runs/39502501547)의 validate/규칙 검사와 [Pages 39502781234](https://github.com/pikurate-ai/life-os-preview/actions/runs/39502781234)의 build/deploy가 성공했습니다. 이후 문서 커밋은 이 구현/정적 배포와 구분합니다.
+
+실제 HTTPS HTML 200·최신 번들, manifest 경로, 리뷰·SW·설치 아이콘·스크립트/CSS 총 20개 응답을 확인했습니다. 공개 Chromium 390×844의 일기 모달 366px·입력 16px·가로 넘침 없음, 콘솔 경고/오류 0건을 확인했습니다. 공개 UI의 Google 로그인 숨김과 자동 동기화 없음 안내도 확인했습니다.
+
+이 테스트 빌드는 클라우드를 강제로 끄며 기기 저장·백업을 위한 버전입니다. 기존 [master 서비스](https://pikurate-ai.github.io/life-os/)는 변경하지 않았습니다. 이전 `649b020`/`b408294`는 2026-10-17 배포 이력입니다.
 
 ## 다음 작업
 
-1. 최신 테스트 빌드·기능 브랜치/PR·공개 preview 갱신과 CI/HTTPS 확인.
+1. 사용자의 Firebase 프로젝트 방향 결정과 접근 권한 확인. 최신 구현/테스트 배포는 위 커밋과 검증 기록으로 이어갑니다.
 2. 사용자의 Firebase 프로젝트 방향 결정 후 실제 계정/도메인/Firestore 설정·규칙 전환 검토.
 3. 같은 계정 PC/iPhone의 생성·수정·삭제·오프라인·충돌, 다른 계정/익명 차단 검증.
 4. 실제 iPhone Safari 날짜·키보드·사진·백업 다운로드·홈 화면 설치 확인.
