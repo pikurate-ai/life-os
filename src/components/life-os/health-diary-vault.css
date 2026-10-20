@@ -312,7 +312,7 @@
   border: 1px solid #e6e9e3;
   background: #fff;
   cursor: pointer;
-  color: #7a8477;
+  color: #55654f;
   min-width: 0;
   transition:
     background 0.15s,
@@ -327,7 +327,7 @@
   font-size: 11px;
   line-height: 1.5;
   display: block;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .hdv-mood.active {
   background: #f0f5ec;
@@ -589,7 +589,7 @@
     font-size: 24px;
   }
   .hdv-mood small {
-    font-size: 10px;
+    font-size: 11px;
   }
   .hdv-vault .hdv-record {
     flex-wrap: wrap;

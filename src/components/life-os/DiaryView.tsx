@@ -21,11 +21,11 @@ import { Badge, Button, EmptyState, Field, Modal, ModalCloseButton, SectionHeade
 import './health-diary-vault.css';
 
 const moods = [
-  { value: 1, icon: '😔', label: '힘든 하루' },
-  { value: 2, icon: '😕', label: '조금 아쉬워요' },
-  { value: 3, icon: '🙂', label: '평온해요' },
-  { value: 4, icon: '😊', label: '좋았어요' },
-  { value: 5, icon: '🤗', label: '참 행복해요' },
+  { value: 1, icon: '😔', label: '힘든 하루', compact: '힘듦' },
+  { value: 2, icon: '😕', label: '조금 아쉬워요', compact: '아쉬움' },
+  { value: 3, icon: '🙂', label: '평온해요', compact: '평온' },
+  { value: 4, icon: '😊', label: '좋았어요', compact: '좋음' },
+  { value: 5, icon: '🤗', label: '참 행복해요', compact: '행복' },
 ];
 type DiaryDraft = {
   id?: string;
@@ -363,11 +363,13 @@ export function DiaryView({ initialDate }: { initialDate?: string } = {}) {
                     type="button"
                     key={mood.value}
                     aria-pressed={draft.mood === mood.value}
+                    aria-label={mood.label}
+                    title={mood.label}
                     className={draft.mood === mood.value ? 'hdv-mood active' : 'hdv-mood'}
                     onClick={() => set('mood', mood.value)}
                   >
-                    <span>{mood.icon}</span>
-                    <small>{mood.label}</small>
+                    <span aria-hidden="true">{mood.icon}</span>
+                    <small>{mood.compact}</small>
                   </button>
                 ))}
               </div>
