@@ -126,7 +126,7 @@ export function SettingsView() {
             <h2>내 계정</h2>
             <p>
               {previewBuild
-                ? '테스트 기록은 현재 기기에 보관됩니다.'
+                ? '현재 기록은 이 기기에 보관됩니다.'
                 : '같은 계정으로 로그인하면 기기가 달라도 같은 기록을 봅니다.'}
             </p>
           </div>
@@ -179,7 +179,7 @@ export function SettingsView() {
         </div>
         {previewBuild && (
           <div className="setting-note">
-            테스트 기록은 이 브라우저에만 저장돼요. 중요한 기록은 백업 파일로 보관하고, 다른
+            로그인 전 기록은 이 브라우저에만 저장돼요. 중요한 기록은 백업 파일로 보관하고, 다른
             기기에서 이어 쓰려면 해당 파일을 가져와 주세요.
           </div>
         )}
@@ -227,7 +227,7 @@ export function SettingsView() {
         <div className="setting-note">
           <MonitorSmartphone size={17} />
           {previewBuild
-            ? '이 테스트 버전은 PC와 아이폰 간 자동 동기화를 제공하지 않아요. 다른 기기로 옮길 때는 백업 파일을 사용해 주세요.'
+            ? '현재 미리보기에서는 PC와 아이폰 간 자동 동기화를 제공하지 않아요. 다른 기기로 옮길 때는 백업 파일을 사용해 주세요.'
             : 'PC와 모바일에서 같은 Google 계정으로 로그인해 주세요. 네트워크가 끊기면 기록은 기기에 보관되고, 연결이 돌아오면 다시 전송됩니다.'}
         </div>
       </section>

@@ -10,8 +10,8 @@ function resolveBuildConfig(env = process.env) {
     basePath,
     scope: `${basePath}/`,
     preview,
-    appName: preview ? 'Life OS 테스트' : 'Life OS',
-    title: preview ? 'Life OS 테스트 — iPhone 미리보기' : 'Life OS — 나를 위한 일상의 공간',
+    appName: 'Life OS',
+    title: preview ? 'Life OS — iPhone 미리보기' : 'Life OS — 나를 위한 일상의 공간',
   };
 }
 module.exports = { resolveBuildConfig };

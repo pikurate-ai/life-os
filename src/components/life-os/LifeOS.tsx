@@ -397,7 +397,7 @@ function Shell() {
         </header>
         {previewBuild && (
           <div className="preview-notice" role="note">
-            iPhone 테스트 버전 · 기록은 이 기기에 저장돼요 · 클라우드 연결 없음
+            iPhone 미리보기 · 기록은 이 기기에 저장돼요 · 클라우드 연결 없음
           </div>
         )}
         {demo && (
@@ -433,7 +433,7 @@ function Shell() {
       </div>
       <nav className="mobile-bottom-nav" aria-label="모바일 메뉴">
         {navigation
-          .filter((n) => ['today', 'diary', 'health', 'library'].includes(n.id))
+          .filter((n) => ['today', 'diary', 'memory', 'health'].includes(n.id))
           .map((n) => (
             <button
               key={n.id}
@@ -443,12 +443,12 @@ function Shell() {
             >
               <n.icon size={21} />
               <span>
-                {n.id === 'library'
-                  ? '읽을거리'
-                  : n.id === 'health'
-                    ? '건강'
-                    : n.id === 'diary'
-                      ? '일기'
+                {n.id === 'health'
+                  ? '건강'
+                  : n.id === 'diary'
+                    ? '일기'
+                    : n.id === 'memory'
+                      ? '기억'
                       : n.label}
               </span>
             </button>

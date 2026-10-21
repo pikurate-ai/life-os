@@ -1,23 +1,23 @@
 {
-  "id": "/",
-  "name": "Life OS — 나를 위한 일상의 공간",
+  "id": "/life-os-preview/",
+  "name": "Life OS — iPhone 미리보기",
   "short_name": "Life OS",
   "description": "하루의 기록이 내일의 방향이 되도록.",
   "lang": "ko",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/life-os-preview/",
+  "scope": "/life-os-preview/",
   "display": "standalone",
   "background_color": "#f6f7f5",
   "theme_color": "#386750",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/life-os-preview/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/life-os-preview/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
