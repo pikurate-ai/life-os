@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function validRecord(recordId) {
+      let value = request.resource.data;
+      return value.keys().hasAll(['id', 'type', 'title', 'body', 'date', 'updatedAt', 'data'])
+        && value.keys().hasOnly(['id', 'type', 'title', 'body', 'date', 'updatedAt', 'deletedAt', 'data'])
+        && value.id == recordId
+        && recordId.matches('^[A-Za-z0-9_-]{1,160}$')
+        && !(recordId in ['__proto__', 'constructor', 'prototype'])
+        && value.type in ['task', 'routine', 'diary', 'memory', 'transaction', 'asset', 'workout', 'weight', 'bookmark', 'photo', 'goal', 'vault']
+        && value.title is string && value.title.size() <= 300
+        && value.body is string && value.body.size() <= 120000
+        && value.date is string && value.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && value.updatedAt is string && value.updatedAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$')
+        && (!('deletedAt' in value) || (value.deletedAt is string && value.deletedAt == value.updatedAt && value.title == '' && value.body == '' && value.data.size() == 0))
+        && value.data is map && value.data.size() <= 50
+        && (value.type != 'vault' || ('deletedAt' in value) || (
+          value.body == ''
+          && ((('legacy' in value.data) && value.data.legacy == true
+              && value.title == '이전 암호금고 항목'
+              && value.data.keys().hasOnly(['encrypted', 'legacy', 'legacyFormat', 'source']))
+            || ((!('legacy' in value.data))
+              && value.title in ['암호화된 금고 설정', '암호화된 항목']
+              && value.data.keys().hasOnly(['role', 'version', 'iv', 'ciphertext', 'salt', 'iterations', 'keyId'])))
+          && ((('ciphertext' in value.data) && value.data.ciphertext is string && value.data.ciphertext.size() >= 16)
+            || (('encrypted' in value.data) && value.data.encrypted is string && value.data.encrypted.size() >= 16)
+            || (('payload' in value.data) && value.data.payload is string && value.data.payload.size() >= 16))
+        ));
+    }
+    match /users/{uid}/records/{recordId} {
+      allow read: if owner(uid);
+      allow create: if owner(uid) && validRecord(recordId);
+      allow update: if owner(uid) && validRecord(recordId)
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.updatedAt >= resource.data.updatedAt;
+      // Tombstones preserve deletion across offline devices; hard deletion is a server-side retention operation.
+      allow delete: if false;
+    }
+    // Deny legacy userData / email-address documents and every unspecified path.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

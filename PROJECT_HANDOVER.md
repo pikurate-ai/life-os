@@ -1,291 +1,442 @@
-# 🏛️ Life-OS 프로젝트 종합 인계 가이드 (Master Handover Document)
+# Life OS v2 종합 개발 인계
 
-> **문서 버전:** 1.0.0  
-> **최종 갱신일:** 2026-10-16  
-> **프로젝트 저장소:** `https://github.com/pikurate-ai/life-os.git` (Branch: `master`)  
-> **실시간 배포 주소:** [https://pikurate-ai.github.io/life-os/](https://pikurate-ai.github.io/life-os/)  
-> **작성 목적:** 다른 PC 환경에서 다른 AI 모델(Claude, GPT, Gemini 등) 또는 개발자가 본 프로젝트를 즉시 인계받아 코드 구조와 기획 의도를 100% 이해하고 연속성 있게 개발/유지보수할 수 있도록 완벽한 정보를 제공합니다.
+기준일: **2026-10-21 / Asia·Seoul**. 대상 작업 폴더: `E:\코덱스 프로젝트\라이프 오에스`.
 
----
+이 문서는 현재 로컬 소스, 제품 의도, 설계 결정, 검증 근거와 미완료 작업을 함께 인계합니다. **2026-10-21 후속 인증 변경은 아래 현재 상태와 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 우선합니다.** 과거 `078ebcc`/`d0db06e`는 기기 저장 빌드의 검증 이력이며 현재 인증 배포 기준이 아닙니다. 상용 판매 준비·실제 iPhone·두 기기 동기화 완료를 선언하는 문서는 아닙니다.
 
-## 📑 목차 (Table of Contents)
-1. [프로젝트 비전 및 핵심 기획](#1-프로젝트-비전-및-핵심-기획)
-2. [기술 스택 및 인프라 구조](#2-기술-스택-및-인프라-구조)
-3. [프로젝트 디렉터리 구조도](#3-프로젝트-디렉터리-구조도)
-4. [주요 5대 탭 및 핵심 기능 명세](#4-주요-5대-탭-및-핵심-기능-명세)
-5. [데이터베이스 & 클라우드 동기화 아키텍처](#5-데이터베이스--클라우드-동기화-아키텍처)
-6. [보안 및 암호화 모델 (Zero-Knowledge AES-256)](#6-보안-및-암호화-모델-zero-knowledge-aes-256)
-7. [로컬 개발 환경 셋업 & 빌드/배포 가이드](#7-로컬-개발-환경-셋업--빌드배포-가이드)
-8. [모바일(iOS/Android) PWA 최적화 & UX 특이사항](#8-모바일iosandroid-pwa-최적화--ux-특이사항)
-9. [향후 로드맵 & 인계 시 주의점](#9-향후-로드맵--인계-시-주의점)
+## 2026-10-21 후속 인증 배포 — 현재 우선 기준
 
----
+현재 기준 주소는 **[Life OS](https://life-os-563cd.firebaseapp.com/)**와 **[모바일/웹 리뷰](https://life-os-563cd.firebaseapp.com/review)**입니다. Firebase 프로젝트 `life-os-563cd`의 서울 Firestore(`asia-northeast3`)와 UID 규칙은 앞선 설정에서 배포했습니다. iPhone에서 계정 선택 후 로그인되지 않는 문제에 대해 앱과 `/__/auth` 도우미를 같은 Firebase Hosting 출처로 제공하도록 바꿨습니다. 최초 Hosting 배포와 앱·리뷰·manifest·SW·인증 handler/iframe/init JSON의 HTTP 200을 확인했습니다. 실제 Chromium OAuth는 첫 시도에 네트워크 오류가 있었고 두 번째 시도에서 계정 선택→복귀→계정 표시·새로고침 유지·클라우드 승인까지 확인했습니다. 합성 메모 1개의 Firebase→별도 GitHub 390×844 프레임 표시·수정→Firebase 반영도 확인했습니다. 동일 브라우저의 두 출처 검증이며 실제 iPhone과 PC/iPhone 두 기기 결과는 아직 별도 확인 대상입니다.
 
-## 1. 프로젝트 비전 및 핵심 기획
+`auth-flow.ts`가 출처·프레임·기기에 따라 경로를 정합니다. 다른 공개 출처와 iframe에서는 독립 앱으로 이동하며 같은 출처의 모바일은 redirect, 데스크톱은 popup을 사용합니다. 팝업 앞의 `await setPersistence()`를 제거하고 SDK 기본 인증 지속성을 사용합니다. 리디렉션 표식은 15분 유효한 세션 시각만 저장하며 결과가 없으면 명시적으로 오류를 표시합니다. 서비스 워커는 `/__/`를 가로채지 않습니다.
 
-### 1.1 배경 및 철학
-현대인은 개인정보(계좌, 주민번호, 여권 등), 하루 일기, 습관(루틴), 가계부 지출, 자산 현황, 각종 비밀번호, 헬스 운동 기록(턱걸이, 1RM, 체중), 사진 등이 10개 이상의 서로 다른 앱에 쪼개져 있습니다.  
-**Life-OS**는 이를 **단 하나의 개인 전용 슈퍼앱(Single View Personal Operating System)**으로 통합하여:
-- **원터치 1초 접근성:** 필요할 때 즉시 복사/조회
-- **지독한 실행력 강제:** 일기를 쓸 때까지 멈추지 않는 알람/진동 시스템
-- **데이터 주권 및 영지식 보안:** 클라우드와 로컬 저장소 동시 보관 + 민감 정보 AES-256 암호화
-- **모바일 네이티브 감성:** 모던 블랙 스퀴클 UI, 제로 텍스트 밀림, PWA 홈 화면 바로가기 지원
+GitHub Pages 주소는 보존하며 로그인은 새 출처로 안내합니다. 기존 브라우저 기록을 자동 이관하거나 삭제하지 않았습니다. 명시적 백업·계정별 가져오기가 필요합니다. **로컬 지속 캐시와 전송 대기열은 현재도 있으며, 사용자가 요청한 서버 전용 저장은 아직 미구현입니다.** 현재 포맷·타입·73개 일반 테스트·추가 CSV/일기/암호화 검사·일반 및 `build:firebase` 빌드가 통과했습니다. 이전 59개/규칙 9개와 실제 기기 검증을 구분하세요.
 
-### 1.2 사용자 페르소나 및 핵심 타깃
-- 40대 남성 / 1인 비즈니스맨 / 자기관리 철저한 프리미엄 사용자
-- 매일 아침 수영 및 퇴근 후 턱걸이(풀업) 루틴을 수행하며 점진적 과부하 추적
-- 결제 문자를 복사해 지출을 기록하고 순자산을 관리
-- 가족/금융/업무/운전 관련 고유 번호를 일상에서 신속히 복사해 제출해야 함
+처음 인계받았다면 [바로 시작하기](HANDOVER_START_HERE.md) → 이 문서 → [날짜별 작업 스냅샷](docs/HANDOVER_SNAPSHOT_2026-10-18.md)을 읽으세요. 오래된 문서와 충돌할 때 현재 코드와 이 날짜의 검증 범위를 우선합니다. 인증값, 실제 일기·금융·가족 정보, 금고 비밀번호는 인계 문서에 복제하지 않았습니다.
 
----
+## 1. 지금 가장 중요한 상태
 
-## 2. 기술 스택 및 인프라 구조
+2026-10-20–21 사용성 검증에 이어 모바일 인증 구조를 변경했습니다. [기존 검증 기록](docs/QA_2026-10-21.md)은 입력·백업·규칙 검사 이력이며, 최신 인증·배포 근거는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)과 [현재 상태](PROJECT_STATE.md)를 우선합니다.
 
-| 레이어 | 기술 스택 | 설명 |
-| :--- | :--- | :--- |
-| **Framework** | **Next.js 15.2.4** (App Router) | 최신 React 19 호환 및 Static HTML Export (`output: "export"`) |
-| **Language** | **TypeScript 5.x** | 전역 엄격 모드 (`strict: true`), 무결점 인터페이스 정의 |
-| **Styling** | **Tailwind CSS v4** + Lucide React | 반응형 다크 모드 (`#090a0f`), 모바일 Safe Area 완벽 대응 |
-| **Database** | **Google Cloud Firestore** (NoSQL) | 실시간 동기화 (`onSnapshot`), 양방향 병합 머지 엔진 |
-| **Authentication** | **Firebase Auth** + Custom Master ID | 구글 팝업/리다이렉트 로그인 및 1초 즉시 이메일 매핑 |
-| **Security** | **Web Crypto API (SubtleCrypto)** | 클라이언트 단 AES-GCM 256-bit 영지식(Zero-Knowledge) 암호화 |
-| **Hosting & CI/CD** | **GitHub Actions + GitHub Pages** | `master` 브랜치 push 시 자동 빌드 & 무중단 정적 배포 |
-| **Mobile PWA** | Web App Manifest + Capacitor Ready | 모던 SVG 엠블럼, Standalone 모드 지원, 진동(Vibration API) 연동 |
+| 구분             | 확인된 상태                                                                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 개발 브랜치      | `codex/life-os-v2`                                                                                                                            |
+| 검증된 구현      | 최신 인증 변경의 커밋·배포 근거는 인증 수정 기록 확인. `078ebcc`는 이전 사용성 기준                                                           |
+| 최신 기능        | 기억의 모바일 메인 탐색, Firebase 클라우드 연결, 같은 출처/독립 화면 인증 경로                                                                |
+| 원격 소스        | [pikurate-ai/life-os](https://github.com/pikurate-ai/life-os), `codex/life-os-v2`. 최신 커밋과 로컬 diff 확인                                 |
+| 검토 PR          | [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1). 최신 로컬 변경 반영 여부를 확인하고 갱신할 것                                    |
+| 기존 서비스      | [life-os](https://pikurate-ai.github.io/life-os/). 최신 v2 변경의 운영 배포가 확인된 주소가 아님                                              |
+| 현재 앱/리뷰     | [Firebase 앱](https://life-os-563cd.firebaseapp.com/) / [리뷰](https://life-os-563cd.firebaseapp.com/review). 초기 Hosting 배포·HTTP 200 확인 |
+| 기존 별도 주소   | [life-os-preview](https://pikurate-ai.github.io/life-os-preview/) 보존. 로그인은 Firebase 앱으로 안내                                         |
+| 최신 로컬 검사   | 포맷·타입·73개 자동 테스트·추가 CSV/일기/암호화 검사 통과. 규칙 9개 통과는 이전 별도 검사 이력                                                |
+| 최신 전체 빌드   | 일반 정적 빌드와 Firebase Hosting 루트 빌드 통과                                                                                              |
+| 실제 계정·동기화 | 새 프로젝트·서울 DB·UID 규칙 배포. Chromium OAuth 복귀·새로고침 유지·두 출처 합성 메모 생성/수정 동기화 확인. 실제 iPhone·두 기기 미완료      |
+| 사용성 평가      | 합성 시나리오 1–6 일부와 후속 7–10 주요 흐름 검사. 실제 사람 10명 평가가 아님                                                                 |
 
----
+**다른 PC에서는 master가 아닌 `codex/life-os-v2` 브랜치를 받으세요.** 최신 커밋·인증 수정 기록·로컬 diff를 확인하고 이전 `078ebcc`로 돌아가지 마세요. `.env.local`·개인 백업·원본 CSV·인증 토큰은 소스와 분리하고 사용자 데이터는 별도 앱 백업으로 옮깁니다.
 
-## 3. 프로젝트 디렉터리 구조도
+## 2. 제품의 목적과 사용자 맥락
 
-```
-life-os/
-├── .github/
-│   └── workflows/
-│       └── nextjs.yml              # GitHub Pages 자동 배포 CI/CD 파이프라인
-├── public/
-│   ├── favicon.svg                 # 브라우저 탭 파비콘 (신규 모던 엠블럼)
-│   ├── manifest.json               # PWA 설치 메니페스트 (이름, 테마, 아이콘)
-│   └── icons/
-│       ├── icon-192.svg            # 모바일 홈 바로가기 192x192 SVG
-│       └── icon-512.svg            # 고해상도 512x512 SVG (텍스트 제거 & 엠블럼 확대)
-├── src/
-│   ├── app/
-│   │   ├── favicon.ico / icon.svg  # Next.js App Router 자동 파비콘 라우트
-│   │   ├── globals.css             # Tailwind v4 기본 스타일 및 폰트 설정
-│   │   ├── layout.tsx              # 루트 레이아웃 (메타데이터, 뷰포트, 다크모드)
-│   │   └── page.tsx                # 단일 메인 컨트롤러 (탭 전환 및 localStorage 기억)
-│   ├── components/
-│   │   ├── auth/
-│   │   │   └── GoogleAuthModal.tsx # 클라우드 동기화 모달 (계정 연동, Firestore 매핑)
-│   │   ├── dashboard/
-│   │   │   └── DashboardOverview.tsx # 종합 대시보드 뷰
-│   │   ├── diary/
-│   │   │   └── RuthlessDiarySkeleton.tsx # 일기장, 지독한 알람, 5점 기분 척도, 루틴 스트릭
-│   │   ├── essential-info/
-│   │   │   └── QuickCopyManager.tsx # '기억' 탭: 필수 정보 1초 복사 & LRU 상단 승격
-│   │   ├── finance/
-│   │   │   ├── FinanceHub.tsx      # 가계/자산 서브탭 스위처
-│   │   │   ├── SmsLedgerParser.tsx # SMS/알림톡 0.1초 파싱 가계부
-│   │   │   └── AssetDashboard.tsx  # 순자산, 총자산 vs 부채, 포트폴리오 차트
-│   │   ├── gallery/
-│   │   │   └── LifePhotoGallery.tsx # 인생샷 앨범, 폴더별 분류, 모바일/웹 사진 업로드
-│   │   ├── health/
-│   │   │   ├── HealthHub.tsx       # 헬스 허브 탭 스위처
-│   │   │   ├── Workout1RMTracker.tsx # 턱걸이 세트별 기록기 + 3대 운동 1RM 계산기
-│   │   │   └── BodyMetricsCard.tsx # 체중 히어로/히스토리 + 애플건강 실제 수치 직접 수정
-│   │   ├── layout/
-│   │   │   ├── Header.tsx          # 상단 헤더 (타이틀, 싱크 센터, 로그인 상태)
-│   │   │   └── BottomNav.tsx       # 하단 5대 탭 네비게이션바 (Safe-area 최적화)
-│   │   ├── memo/
-│   │   │   └── GeneralMemoManager.tsx # 자유 일반 메모장 (색상 라벨, 고정, LRU 이동)
-│   │   └── sync/
-│   │       └── DataSyncHub.tsx     # 구글시트/닥스/로컬파일 직접 업로드 & 엑셀 메일 백업
-│   └── lib/
-│       ├── firebase/
-│       │   └── client.ts           # Firebase 초기화, Auth, Firestore CRUD & 실시간 리스너
-│       ├── healthkit/
-│       │   └── healthKitBridge.ts  # 애플 건강 데이터 인터페이스 & 로컬/클라우드 브릿지
-│       ├── notifications/
-│       │   └── ruthlessAlarm.ts    # Web Audio 사운드 합성 차임벨 & 햅틱 진동 엔진
-│       ├── parser/
-│       │   └── kakaoParser.ts      # 카카오톡 대화 텍스트 로우데이터 파서
-│       ├── security/
-│       │   └── crypto.ts           # Web Crypto AES-GCM 256 암복호화 엔진
-│       ├── sync/
-│       │   ├── googleDriveSync.ts  # 구글 시트/문서 파싱 및 카테고리 자동 추론 엔진
-│       │   └── universalBackup.ts  # UTF-8 BOM Excel CSV 생성 & 메일 전송
-│       └── utils.ts                # tailwind-merge 및 clsx 유틸
-├── next.config.ts                  # 정적 배포 basePath (`/life-os`) 및 옵션
-├── package.json                    # 프로젝트 의존성 및 실행 스크립트
-├── tsconfig.json                   # TypeScript 환경설정
-└── PROJECT_HANDOVER.md             # 본 인계 문서
+Life OS는 일상을 기록하고 다시 꺼내 보며, 다음 행동을 작게 이어가는 개인 운영 도구입니다. 일·공부·독서·운동·가족·재정·일기·디지털 계정을 한곳에서 관리합니다. 기능 수보다 **빠른 기록, 쉬운 재검색, 안정적인 보존, 부담 없는 지속**이 우선입니다.
+
+주 사용자는 AI 및 스타트업 경험이 있는 두 자녀의 아버지입니다. AI·클라우드 학습과 자격 취득, 장기적인 해외 취업 준비, 수영·턱걸이·달리기, 재정 재정비, 가족의 기억을 함께 관리하려 합니다. 신앙과 성찰도 본인이 원하는 방식으로 남길 수 있어야 합니다. 세부 가족 식별 정보·법적/금융 상황을 데모나 공개 소스에 넣지 않습니다.
+
+핵심 흐름은 **오늘 확인 → 바로 기록 → 필요할 때 검색 → 다음 행동 확인**입니다. 작은 기록을 격려하되 강제 반복 알람이나 죄책감을 유도하지 않습니다. 실제 기록 없이 스트릭·건강 수치·진척도를 만들어내지 않습니다.
+
+사용자는 상용 유료 앱에 준하는 디자인·안정성·계정 관리와 PC/모바일 동기화를 원합니다. 기존 상용 앱의 익숙한 탐색·편집 관례를 참고하되 브랜드·화면 자산을 그대로 복제하지 않습니다. 세부 목적은 [제품 기획](docs/PRODUCT_BRIEF.md)에 있습니다.
+
+### 유지해야 할 설계 결정
+
+- 첫 화면은 오늘의 할 일·루틴·최근 기록을 연결하는 대시보드입니다.
+- 기존 5개 영역을 오늘·목표·읽기·사진·설정으로 확장했습니다. 사진은 운동에서 독립했습니다.
+- 가짜 Apple Health 연결·이메일 문자열을 인증으로 취급하는 경로·강제 일기 알람은 새 앱에 연결하지 않습니다.
+- 스트릭은 실제 날짜별 기록에서 계산합니다. 사용자가 수치를 직접 조작하는 기능을 복원하지 않습니다.
+- 외부 계정의 자동 수집과 파일 가져오기는 구분합니다. 연결되지 않은 서비스를 연결 완료로 표시하지 않습니다.
+- 기록이 없으면 빈 상태와 다음 행동을 보여줍니다. 실제 기록으로 오인할 예시를 섞지 않습니다.
+
+## 3. 기술 스택과 실행
+
+| 항목           | 현재 기준                                                                            |
+| -------------- | ------------------------------------------------------------------------------------ |
+| 런타임         | **Node.js 24**, npm / `package-lock.json` 사용                                       |
+| 앱             | Next.js **15.5.28**, App Router, React 19, TypeScript strict                         |
+| 스타일         | Tailwind CSS 4 의존성, 공유 CSS 토큰·CSS Modules·Lucide 아이콘                       |
+| 출력           | Next static export → `out/`, API 서버 없이 정적 호스팅                               |
+| 계정/원격 저장 | Firebase JS SDK 12 계열, Google OAuth, Firestore                                     |
+| 오프라인 저장  | LocalStorage 공간별 캐시·지속 전송 큐, service worker 앱 셸                          |
+| 금고           | Web Crypto, AES-GCM 256, PBKDF2 SHA-256 600,000회                                    |
+| 품질 도구      | TypeScript, Node test runner, 별도 CJS 암호화/가져오기 검사, Prettier                |
+| 규칙 검사      | firebase-tools 15.34.0, rules-unit-testing 5.0.2, Java 21 전용 emulator에서 9개 통과 |
+| 과거 의존성    | Capacitor/Supabase 파일·패키지가 남아 있음. 현재 v2 인증/저장은 Firebase 모듈 사용   |
+
+정확한 설치 버전은 lockfile을 따릅니다. 원래 인계에 있던 Next 15.2.4·PBKDF2 10만 회·단일 사용자 문서 구조는 현재 v2 사양이 아닙니다.
+
+```sh
+npm ci
+npm run dev
+# 기본 로컬 앱: http://localhost:3000/
+# 레이아웃 리뷰: http://localhost:3000/review
 ```
 
----
+```sh
+npm run format:check
+npm run typecheck
+npm test
+# 개발 서버를 종료한 다음 실행
+npm run build
+npm run preview
+```
 
-## 4. 주요 5대 탭 및 핵심 기능 명세
+개발 서버와 빌드는 Next 출력 디렉터리를 공유하므로 동시에 실행하지 않습니다. `npm run preview`/현재 `npm start`는 `scripts/serve.cjs`로 정적 산출물을 서비스합니다. `next start`는 static export에 맞지 않습니다. 프로세스가 떠 있다고 최신 소스 빌드가 검증된 것은 아닙니다.
 
-### 탭 1: 기억 (`quickcopy`)
-- **담당 컴포넌트:** [QuickCopyManager.tsx](file:///C:/Users/JU/life-os/src/components/essential-info/QuickCopyManager.tsx) + [GeneralMemoManager.tsx](file:///C:/Users/JU/life-os/src/components/memo/GeneralMemoManager.tsx)
-- **주요 기능:**
-  1. **필수 정보 1초 복사:** 주민등록번호, 계좌번호, 운전면허번호, 사업자번호 등을 터치 1번에 클립보드에 복사.
-  2. **LRU 최상단 자동 승격:** 어떤 항목이든 클릭/복사하면 해당 카드가 **무조건 0번 인덱스(최상단)**로 즉시 재배치되어 자주 쓰는 정보가 자연스럽게 맨 위에 노출.
-  3. **자유 일반 메모장 전환:** 탭 상단 토글로 일반 메모장 진입. 메모 고정(Pin), 6가지 색상 테마, 실시간 검색, 전체 복사 지원.
+경로는 빌드 시 결정됩니다. `GITHUB_PAGES=true`는 `/life-os`, `npm run build:iphone`은 `/life-os-preview`, `npm run build:firebase`는 현재 Firebase Hosting의 `/`를 사용합니다. `build:iphone`은 현재 클라우드를 강제로 끄지 않습니다. 정적 앱에서는 Firebase 설정 변경 후 재빌드가 필요합니다.
 
-### 탭 2: 일기 (`diary`)
-- **담당 컴포넌트:** [RuthlessDiarySkeleton.tsx](file:///C:/Users/JU/life-os/src/components/diary/RuthlessDiarySkeleton.tsx)
-- **주요 기능:**
-  1. **지독한 알람 (Ruthless Alarm):** 목표 시간(기본 밤 23:00)까지 일기를 작성하지 않으면 5분 간격으로 Web Audio 사이렌과 진동 패턴이 무한 반복. 일기를 한 줄이라도 저장해야만 해제됨.
-  2. **5점 척도 하루 기분:** 1점(매우 힘듦) ~ 5점(최고/성취)의 직관적 5단계 스케일 선택.
-  3. **날짜 네비게이션 & 과거 일기 검색:** 이전/다음 일자 이동, 오늘로 원클릭 이동, 과거 일기 전문 검색 타임라인.
-  4. **데일리 루틴 & 스트릭:** 연속 실천 일수(Streak) 표시 및 사용자 직접 편집(수정/추가/삭제) 가능.
+## 4. 코드 지도와 책임
 
-### 탭 3: 가계/자산 (`finance`)
-- **담당 컴포넌트:** [FinanceHub.tsx](file:///C:/Users/JU/life-os/src/components/finance/FinanceHub.tsx) ([SmsLedgerParser.tsx](file:///C:/Users/JU/life-os/src/components/finance/SmsLedgerParser.tsx) + [AssetDashboard.tsx](file:///C:/Users/JU/life-os/src/components/finance/AssetDashboard.tsx))
-- **주요 기능:**
-  1. **문자 파싱 가계부:** 카드 결제 문자나 카카오톡 알림톡을 붙여넣으면 0.1초 만에 `금액`, `가맹점`, `일시`, `결제수단`을 자동 추출하여 저장.
-  2. **순자산 대시보드:** 자산(예금, 주식, 부동산 등)과 부채(대출, 카드대금)를 등록하여 `순자산 = 총자산 - 부채`와 부채비율(%)을 실시간 산출 및 포트폴리오 비중 시각화.
+```text
+src/app/
+  page.tsx                    앱 진입
+  layout.tsx                  메타데이터·전역 레이아웃
+  globals.css                 디자인 토큰·공통 UI·모바일 대응
+  review/page.tsx, review.css  모바일/웹 선택 리뷰 화면
+src/components/life-os/
+  LifeOS.tsx                  Provider·작업 공간·탐색·검색·빠른 기록
+  TodayView.tsx               오늘·할 일·루틴·주간 요약
+  DiaryView.tsx               일기·기분·가져오기
+  MemoryView.tsx              자주 꺼낼 정보·메모
+  HealthView.tsx              운동·체중·기록 편집
+  FinanceView.tsx             거래·자산·문자 초안
+  LibraryView.tsx             읽을 링크·태그
+  GalleryView.tsx             압축 사진·설명
+  GoalsView.tsx               목표·단계·진행
+  VaultView.tsx               잠금·암호화·CSV·비밀번호 생성
+  SettingsView.tsx            계정·동기화·백업·이전
+  ui.tsx                     공유 버튼·모달·필드·배지 등
+  domain.module.css           여러 도메인의 공통 레이아웃
+  domain-utils.tsx            도메인 공통 도우미
+  health-diary-vault.css      해당 세 도메인의 세부 UI
+src/lib/life-os/
+  types.ts                    기록·페이지·로컬 날짜 계약
+  records.ts                  검증·결정적 병합·백업·승인 버전
+  store.tsx                   로컬 저장·계정·원격 전송·리스너
+  firebase.ts                 named Firebase app·설정 검사
+  storage.ts                  운영/preview 저장 키 분리
+  demo.ts                     현재 날짜 기준의 가상 기록
+  editing.ts                  편집 시 이전 메타데이터 보존
+  search.ts                   전체 검색·민감 정보 처리
+  imports.ts                  CSV·일기 파일 파싱
+  legacy.ts, legacy-photo.ts  명시적 구버전 변환·사진 압축
+  backup.ts                   v1/v2 백업 검사·변경분 보존 [신규]
+  vault-crypto.ts              키 파생·인증 암호화·난수
+  vault-model.ts               금고 내용·키 연결·검증
+  scroll-lock.ts               중첩 UI 스크롤 잠금 [신규]
+scripts/
+  build-config.cjs             경로·테스트 빌드 공통 계약
+  build-iphone.cjs             GitHub 별도 주소 경로 빌드
+  build-firebase.cjs           같은 출처 인증용 Firebase Hosting 루트 빌드
+  generate-icons.cjs           SVG/PNG 아이콘 생성
+  serve.cjs                   정적 산출물 서버
+  test-health-vault.cjs        도메인·암호화 추가 검사
+public/                       manifest·service worker·설치 아이콘
+tests/                        자동 테스트·합성 fixture
+.github/workflows/            PR 품질 검사·master Pages 배포
+firestore.rules               UID별 접근·필드·삭제 규칙
+firestore.indexes.json        범용 큰 data 색인 제외 설정
+firebase.rules-test.json      격리된 규칙 에뮬레이터 설정 [신규]
+docs/                         기획·아키텍처·디자인·QA·배포
+```
 
-### 탭 4: 암호금고 (`vault`)
-- **담당 컴포넌트:** [PasswordVaultManager.tsx](file:///C:/Users/JU/life-os/src/components/vault/PasswordVaultManager.tsx)
-- **주요 기능:**
-  1. **AES-256 Zero-Knowledge Vault:** 오직 사용자 머릿속의 마스터 비밀번호로만 복호화 가능. 서버 관리자나 DB 탈취자도 절대 평문 확인 불가.
-  2. **랜덤 비밀번호 생성기:** 영문 대소문자, 숫자, 특수문자를 조합한 16~32자리 강력 비밀번호 생성.
-  3. **구글 크롬/라스트패스 CSV 임포트:** 기존에 쓰던 비밀번호 CSV 일괄 암호화 저장.
+앱 진입은 `src/app/page.tsx` → `LifeOS.tsx` → `LifeProvider` → 계정 범위에 keyed된 `WorkspaceShell`입니다. 화면은 `useLife`를 사용하며 각자 Firebase를 초기화하거나 별도의 도메인 LocalStorage를 만들지 않습니다. 계정 전환 시 화면의 모달·초안도 재생성하여 이전 계정 내용이 남지 않게 합니다.
 
-### 탭 5: 헬스1RM (`health`)
-- **담당 컴포넌트:** [HealthHub.tsx](file:///C:/Users/JU/life-os/src/components/health/HealthHub.tsx) ([Workout1RMTracker.tsx](file:///C:/Users/JU/life-os/src/components/health/Workout1RMTracker.tsx), [BodyMetricsCard.tsx](file:///C:/Users/JU/life-os/src/components/health/BodyMetricsCard.tsx), [LifePhotoGallery.tsx](file:///C:/Users/JU/life-os/src/components/gallery/LifePhotoGallery.tsx))
-- **주요 기능:**
-  1. **턱걸이(Pull-up) 전용 트래커 (최상단):** 세트별 횟수를 넉넉한 1열 행 구조와 36px 대형 `[-]` `[+]` 터치 버튼으로 기록. 당일 총 반복 횟수(볼륨), 역대 최고 세트 기록, 날짜별 성장 히스토리 타임라인 자동 집계.
-  2. **3대 운동 1RM 계산기:** Epley 공식을 적용하여 스쿼트, 벤치프레스, 데드리프트 1RM 산출 및 3대 500 달성 게이지 바 표시.
-  3. **신체 체중 히어로 & 히스토리:** 측정 일시(연월일 시분)를 기록하고, 최신 체중과 직전 대비 증감(±kg)을 대형 카드로 표시.
-  4. **애플 건강(HealthKit) 실제 수치 직접 수정:** Safari 브라우저의 보안 제약(웹에서 비공개 네이티브 건강 DB 직접 읽기 불가)을 솔직히 안내하고, **[수치 수정]** 버튼을 통해 사용자가 오늘 실제 확인한 수영 칼로리/시간/거리, 총 활동 칼로리, 심박수, 걸음수를 직접 입력하여 영구 저장.
-  5. **인생샷 앨범:** 바디프로필, 여행, 가족 등 폴더별 분류, 모바일 카메라 즉시 촬영 및 갤러리 업로드 지원.
+과거 `src/components/auth`, `diary`, `health`, `finance`, `src/lib/firebase/client.ts`, Supabase·iOS 코드는 역사적 자료입니다. 새 기능의 기준은 `src/components/life-os/`와 `src/lib/life-os/`입니다. 루트의 `sheet1.csv`, `sheet2.csv`는 현재 UI 작업과 무관한 과거 원본으로, 열거나 예시·백업에 포함하지 않습니다.
 
-### 부가 기능: 데이터 싱크 센터 & 월간 백업
-- **담당 컴포넌트:** [DataSyncHub.tsx](file:///C:/Users/JU/life-os/src/components/sync/DataSyncHub.tsx) (상단 헤더의 DB 아이콘 클릭 시 진입)
-- **주요 기능:**
-  1. **로우 데이터 직접 파일 업로드:** `.xlsx`, `.csv`, `.docx`, `.pdf`, `.txt` 파일을 기기에서 직접 선택해 업로드하면 로우 데이터를 파싱하여 1초 복사 항목으로 자동 등록.
-  2. **월 1회 엑셀 백업 & 이메일 발송:** 한글 깨짐이 없는 **UTF-8 BOM CSV 파일**을 생성하여 다운로드하고 `imidoing@naver.com`으로 원클릭 메일 발송 지원.
+## 5. 화면별 구현과 최근 개선
 
----
+| 공간          | 동작과 목적                                        | 현재 로컬의 최근 개선                                                             |
+| ------------- | -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 오늘          | 날짜별 할 일·루틴·일기·주간 운동·목표·자료 요약    | 선택 날짜의 일기로 이동, 운동 분·초 요약, 루틴 삭제 확인, 입력 오류 표시          |
+| 기억과 메모   | 생활·가족·업무·공부 정보, 고정·검색·복사·민감 표시 | 전체 본문 읽기, 긴 URL 처리, 가림 유지, 저장 후 필터 복구                         |
+| 하루 일기     | 날짜·기분 1–5·본문·감사, 검색·파일 가져오기        | 선택한 과거 날짜 전달, 새 일기/기존 일기 구분, 짧은 회고 안내, 중복 가져오기 안내 |
+| 건강과 운동   | 수영·달리기·턱걸이·선택적 근력·매일 체중           | 분·초 입력, 거리 단위 명시, 종목 변경 시 거리 초기화, 저장한 기록 노출            |
+| 가계와 자산   | 월 수입·지출·자산·부채·순자산, 문자에서 거래 초안  | 기존 사용자 분류 보존, 0원 자산 허용, 저장한 월/필터로 이동                       |
+| 나중에 읽기   | URL·메모·태그·읽음·즐겨찾기                        | 잘못된 URL 거부, 저장 후 검색 해제, 모바일 검색 폭 수정, 원문 새 탭               |
+| 소중한 순간   | 날짜·분류·설명의 압축 사진                         | 같은 파일 재선택, 옛 링크 사진 설명 편집, 용량을 늘리지 않는 수정 허용            |
+| 목표와 성장   | 분류·기한·단계·완료 상태                           | 재개 시 단계 보존, 동일 이름 단계의 완료 중복 방지                                |
+| 암호금고      | 마스터 암호·생성·복사·CSV·자동 잠금                | 가져오기 중 중복 동작 차단, 암호화 중 입력 잠금, 잠금 시 평문 초안 참조 정리      |
+| 설정과 데이터 | 실제 계정·저장/동기화 상태·백업·이전               | v1/v2 파일 미리보기, 대상 공간 표시, 변경분 비파괴 보존, 미리보기 승인 토큰       |
 
-## 5. 데이터베이스 & 클라우드 동기화 아키텍처
+모든 새 폼은 초안 변경 후 닫을 때 버리기 확인을 적용하는 방향으로 정리했습니다. X·취소·Escape·배경 클릭이 같은 닫기 계약을 사용합니다. 확인 UI는 같은 모달에 표시하여 초안을 보존합니다. 신규 변경의 실기기 검증은 아직 남아 있습니다.
 
-### 5.1 Firestore 데이터 모델
-- **루트 컬렉션:** `life_os_users`
-- **사용자 문서 ID (`docId`):** `getSyncUserId(email)` 함수를 통해 생성
-  - 예: `imidoing@naver.com` ➡️ `usr_imidoing_naver_com`
-  - 또는 Google OAuth 로그인 시의 `usr_<uid>`
-- **문서 필드 구조 (단일 NoSQL Document):**
-```json
-{
-  "updatedAt": "2026-10-16T12:00:00.000Z",
-  "essential_info": [ /* 필수 정보 카드 배열 */ ],
-  "general_memos": [ /* 자유 메모 배열 */ ],
-  "diaries": [ /* 날짜별 일기 객체 배열 */ ],
-  "financial_logs": [ /* 파싱된 가계부 거래 내역 */ ],
-  "assets": [ /* 자산 및 부채 항목 */ ],
-  "vault_entries": [ /* AES-256 암호화된 비밀번호 항목 */ ],
-  "workouts": [ /* 3대 운동 1RM 기록 */ ],
-  "pullup_records": [ /* 턱걸이 일자별 세트/총횟수 */ ],
-  "health_metrics": [ /* 체중 및 신체 지표 히스토리 */ ],
-  "healthkit_summary": { /* 애플 건강 데일리 요약 */ },
-  "photos": [ /* 인생샷 사진 데이터 (Base64) */ ]
+### 운동 단위
+
+달리기 거리 `km`, 수영 거리 `m`, 저장 시간 `분`, 턱걸이 세트 `반복 횟수 배열`, 근력 하중과 체중 `kg`입니다. 최신 UI의 분/초는 `분 + 초/60`으로 저장합니다. 달리기 페이스는 시간/거리에서 계산합니다. 거리 숫자만으로 종목을 바꾸면 의미가 달라지므로 종목 변경 시 입력값을 재확인합니다.
+
+### 사진 범위
+
+선택한 사진을 작은 JPEG 사본으로 압축합니다. 단일 사본 최대 약 120KB, 현재 갤러리 총량 2MB 제한을 사용합니다. 실제 코드를 변경할 때 상수와 저장 용량을 함께 검토하세요. 원본 앨범·iCloud 동기화가 아니며 HEIC는 변환한 JPEG/PNG가 필요할 수 있습니다. 향후 원본 보관은 인증된 Object Storage와 업로드·삭제·보관 정책으로 분리해야 합니다.
+
+## 6. 데이터 모델·캐시·동기화 계약
+
+```ts
+interface LifeRecord {
+  id: string;
+  type: RecordKind;
+  title: string;
+  body: string;
+  date: string; // 사용자의 로컬 날짜 YYYY-MM-DD
+  updatedAt: string; // 밀리초를 포함한 UTC ISO 문자열
+  deletedAt?: string;
+  data: Record<string, string | number | boolean | string[] | number[] | null>;
 }
 ```
 
-### 5.2 지능형 오프라인 우선(Offline-First) & 실시간 병합(Merge) 엔진
-- [client.ts](file:///C:/Users/JU/life-os/src/lib/firebase/client.ts)의 `mergeItemsById<T>(local, cloud)` 함수:
-  - 기기 로컬스토리지에 항상 1차 저장되어 비행기 모드나 오프라인에서도 즉시 구동.
-  - 네트워크 연결 및 로그인 시 클라우드 데이터와 ID 기반으로 합집합 병합 후 `updatedAt`이 최신인 데이터를 반영.
-  - Firestore의 `onSnapshot` 실시간 리스너를 통해 PC 웹에서 수정한 내용이 모바일 화면에 새로고침 없이 즉각 실시간 반영.
+| 종류        | 대표 data 필드                                                         |
+| ----------- | ---------------------------------------------------------------------- |
+| task        | completed, category, time                                              |
+| routine     | completedDates, icon, target                                           |
+| memory      | category, pinned, 민감 표시 관련 메타데이터                            |
+| diary       | mood, gratitude, 가져오기 출처 메타데이터                              |
+| workout     | activity, distance, duration, sets, exercise, load, reps               |
+| weight      | kg, 가져온 부가 수치                                                   |
+| transaction | direction: income/expense, amount, category                            |
+| asset       | direction: asset/liability, amount, category                           |
+| bookmark    | url, tags, read, favorite                                              |
+| photo       | image, category, bytes 또는 보존된 이전 링크                           |
+| goal        | category, steps, completedSteps, targetDate, status                    |
+| vault       | role, version, iv, ciphertext, config의 salt/iterations, entry의 keyId |
 
----
+`data`는 자유로운 중첩 JSON 저장소가 아닙니다. `validateRecord`의 종류별 계약·용량 제한을 통과해야 합니다. 새 레코드 ID는 안전한 UUID, 구버전 변환 ID는 결정적 ID입니다. 편집은 `preserveRecordData`를 사용해 출처·가져온 부가 정보를 유지합니다. 금액은 KRW 정수입니다. 날짜는 `localDate()`를 사용하며 UTC 날짜를 잘라 로컬 날짜로 쓰지 않습니다.
 
-## 6. 보안 및 암호화 모델 (Zero-Knowledge AES-256)
+현재 한 레코드 최대 **650,000바이트**, 백업 최대 **25MiB**, 공간 최대 **10,000개**입니다. 브라우저의 실제 LocalStorage quota는 별도입니다. 미래 24시간을 넘는 갱신 시각 등 오염된 데이터는 거부합니다. 자세한 경계 검증은 `records.ts`가 기준입니다.
 
-- **구현 파일:** [crypto.ts](file:///C:/Users/JU/life-os/src/lib/security/crypto.ts)
-- **알고리즘:** AES-GCM (Key Length: 256-bit, IV: 12-byte random per encryption)
-- **키 파생(KDF):** PBKDF2 with SHA-256, 100,000 iterations, 16-byte random salt
-- **영지식(Zero-Knowledge) 원칙:**
-  - 마스터 비밀번호는 서버나 로컬스토리지 어디에도 영구 저장되지 않으며 메모리에서만 일시 유지.
-  - 암호화된 `ciphertext`, `iv`, `salt`만 Base64 형태로 Firestore에 보관되므로 제3자나 데이터베이스 관리자도 복호화가 불가능합니다.
+### 작업 공간과 저장 위치
 
----
+- `demo`: 가상 체험 기록.
+- `guest`: 로그인 전 이 기기의 개인 기록.
+- `uid:<Firebase UID>`: 인증 계정별 기록.
+- 일반 캐시 키: `life-os:v2:workspace:${encodeURIComponent(scope)}`.
+- 테스트 빌드: `life-os:preview:${encodeURIComponent(basePath)}:v2:...` 이름 공간.
+- 리뷰 보기 선택은 별도 `life-os:layout-review:view` 키이며 사용자 기록이 아닙니다.
 
-## 7. 로컬 개발 환경 셋업 & 빌드/배포 가이드
+캐시 envelope는 version·scope·records·pending·acknowledged를 가집니다. 다른 공간의 캐시를 해당 키에 복사해도 scope 검사로 거부합니다. demo/guest 기록을 로그인 계정에 자동 합치지 않습니다. 로그인/로그아웃은 브라우저 디스크의 기존 계정 캐시 삭제와 같은 의미가 아닙니다.
 
-### 7.1 요구 사양
-- Node.js 18.17.0 이상 (권장: Node 20.x LTS)
-- npm 9.x 이상 또는 yarn
+### 저장부터 클라우드 승인까지
 
-### 7.2 로컬 개발 시작
-```bash
-# 1. 저장소 클론
-git clone https://github.com/pikurate-ai/life-os.git
-cd life-os
+1. 새 기록을 검증하고 단조 증가하는 갱신 시각을 만듭니다.
+2. 현재 공간의 디스크 상태를 다시 읽어 다른 탭의 변경과 병합합니다.
+3. 기록과 pending 큐를 **먼저 지속 저장**합니다. quota/security 실패 시 성공 표시를 하지 않습니다.
+4. 로그인·온라인 상태면 Firestore `users/{uid}/records/{id}` 트랜잭션으로 전송합니다.
+5. 서버와 버전을 비교해 더 오래된 오프라인 수정이 새 기록을 덮지 않게 합니다.
+6. 정확히 승인된 버전만 큐에서 제거하고 승인 버전을 저장합니다. 캐시 snapshot만으로 클라우드 성공을 표시하지 않습니다.
+7. `onSnapshot`과 브라우저 storage 이벤트로 원격/다른 탭을 병합하고, 재연결 시 대기분을 재시도합니다.
+8. 비동기 결과마다 현재 UID와 scope를 확인합니다. 전환 중에는 이전 공간 목록을 노출하지 않습니다.
 
-# 2. 의존성 설치
-npm install
+충돌 해결은 **레코드 단위의 결정적 Last Write Wins**입니다. 같은 시각에는 삭제 우선과 결정적 비교를 사용합니다. 필드별 공동 편집·무손실 이력·CRDT가 아닙니다. 시계 오차와 동시 수정에 대한 실기기 통합 검증이 필요합니다. 삭제는 내용을 지운 tombstone으로 전달하며 자동으로 지우거나 옛 백업으로 되살리지 않습니다.
 
-# 3. 환경 변수 파일 (.env.local) 설정
-# 프로젝트 루트에 .env.local 생성 후 Firebase 프로젝트 설정 기입:
-# NEXT_PUBLIC_FIREBASE_API_KEY=...
-# NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
-# NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
-# NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
-# NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-# NEXT_PUBLIC_FIREBASE_APP_ID=...
+## 7. 계정·보안·금고
 
-# 4. 개발 서버 구동
-npm run dev
-# 접속: http://localhost:3000/
+### 실제 로그인 전제
+
+새 Firebase 앱 이름은 `life-os-v2`입니다. 다음 6개 빌드 환경 값이 모두 유효해야 실제 로그인/클라우드 경로를 켭니다. 값 자체는 이 문서에 기록하지 않습니다.
+
+```text
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
 ```
 
-### 7.3 프로덕션 빌드 및 정적 익스포트
-```bash
-# 타입 체크 및 빌드
-npm run build
+웹 설정은 관리자 서비스 계정 키가 아닙니다. 접근 통제는 Firebase Auth와 Firestore 규칙이 담당합니다. 환경 값의 존재만으로 Google 공급자·허용 도메인·운영 규칙이 설정되었다고 보지 않습니다. 과거 하드코딩 fallback과 이메일 문자열 로그인은 재사용하지 않습니다.
 
-# 결과물: out/ 폴더에 완전한 정적 HTML/CSS/JS 번들 생성
+사용자가 새 프로젝트와 서울 리전을 선택한 뒤 `life-os-563cd`의 웹 앱·Google 공급자·서울 Firestore·UID 규칙을 앞선 설정에서 준비했습니다. 현재 앱과 인증 도우미는 `life-os-563cd.firebaseapp.com`에서 함께 서비스합니다. 이전 프로젝트 조회 실패는 과거 이력이며 새 프로젝트 선택을 다시 기다리지 않습니다. 실제 Chromium OAuth 복귀·로그인 유지·두 출처 합성 기록 동기화는 확인했고 실제 iPhone 동기화는 남아 있습니다. OAuth URL의 상태값·코드·CLI 토큰을 문서에 복사하지 않습니다.
+
+### 금고 암호화
+
+마스터 암호로 PBKDF2 SHA-256 **600,000회**, 랜덤 16바이트 salt를 사용해 AES-GCM 256 키를 파생합니다. 암호화마다 랜덤 12바이트 IV와 `life-os-vault-v2` 인증 추가 데이터를 사용합니다. 서비스명·계정·URL·비밀번호 등 금고 메타데이터와 자격 증명은 암호화하고, 바깥 레코드에는 일반 제목과 필요한 암호문/연결 필드만 둡니다.
+
+마스터 암호와 복호화 객체는 지속 저장하거나 로그에 남기지 않습니다. 화면 해제·백그라운드 전환·유휴 잠금 경로와 평문 초안 정리가 있습니다. 기본 새 마스터 입력은 12자 이상입니다. 마스터 암호 분실 복구는 구현되어 있지 않습니다. CSV는 브라우저에서 파싱하고 암호화하여 저장합니다. 다른 서비스의 실제 비밀번호를 바꾸는 기능은 아닙니다.
+
+금고 외 일반 일기·금융·사진은 브라우저 캐시에 평문으로 저장됩니다. 일반 기록 전체가 종단간 암호화되었다고 안내하면 안 됩니다. 금고 전용 보안 감사, 계정 삭제, 캐시 제거 UI, XSS 방어 검토·운영 모니터링은 상용 출시 작업으로 남습니다.
+
+### Firestore 규칙 전환
+
+제공 규칙은 v2 UID별 경로만 허용하고 클라이언트 hard delete를 막습니다. 기존 프로젝트의 v1 컬렉션 접근은 허용하지 않습니다. **기존 운영 프로젝트에 그대로 배포하면 v1 사용이 중단될 수 있습니다.** 원래 규칙·데이터를 백업하고 별도 v2 테스트 프로젝트 또는 검증된 전환 계획을 먼저 준비하세요. 규칙 소스 존재는 운영 배포나 공격/권한 테스트 통과를 의미하지 않습니다.
+
+## 8. 기존 데이터·외부 자료·백업
+
+### 지원되는 가져오기
+
+| 원본                                             | 현재 방식                                                     | 미구현 범위                             |
+| ------------------------------------------------ | ------------------------------------------------------------- | --------------------------------------- |
+| Google Docs의 예전 일기                          | 사용자가 내보낸 지원 TXT/Markdown/JSON, 날짜별 분리·중복 검사 | Google 계정 OAuth로 문서 일괄 자동 수집 |
+| LastPass/Google Password Manager/Excel 관리 암호 | 내보낸 CSV, 미리보기·검사 후 금고 암호화                      | 서비스 직접 접속, XLSX 바이너리 해석    |
+| 예전 Life OS                                     | 같은 브라우저의 명시적 이전 기록 가져오기 또는 v1 전체 JSON   | 다른 origin의 LocalStorage 자동 읽기    |
+| 사진                                             | 사용자가 선택한 파일·지원하는 이전 이미지/링크                | iPhone/iCloud 앨범 자동 동기화          |
+| 은행·Apple Health                                | 직접 기록/지원되는 수동 자료                                  | 은행/HealthKit 자동 연동                |
+
+브라우저 LocalStorage는 **origin 단위**입니다. `localhost`, `127.0.0.1`, GitHub Pages는 각각 다른 저장소입니다. 같은 GitHub Pages origin 아래 경로는 저장소를 공유하므로 preview namespace로 구분합니다. 기기·프로필·Safari와 홈 화면 앱의 저장 공간 차이도 고려하고 이동 전 JSON 백업을 확보하세요.
+
+### v2 전체 백업
+
+```ts
+{
+  format: 'life-os',
+  version: 2,
+  exportedAt: 'UTC ISO timestamp',
+  workspace: 'demo' | 'guest' | 'account',
+  records: [] // 삭제 tombstone과 금고 암호문 포함
+}
 ```
 
-### 7.4 GitHub Pages 배포 방식
-- `.github/workflows/nextjs.yml` 워크플로우에 의해 `master` 브랜치로 `git push`가 일어나면 GitHub Actions가 자동으로 `npm run build`를 수행하고 GitHub Pages로 배포합니다.
-- `next.config.ts`에서 `GITHUB_PAGES === "true"` 환경변수를 감지하여 `basePath`를 `/life-os`로 자동 조정합니다.
+UID·이메일 식별자를 전체 백업 envelope에 담지 않습니다. 일반 기록은 백업에서도 평문이므로 안전한 곳에 보관합니다. 금고는 암호문을 보존하며 원래 마스터 암호가 필요합니다. 파일 전체를 검증한 뒤 병합합니다.
 
----
+### 최신 v1/v2 미리보기와 안전한 적용
 
-## 8. 모바일(iOS/Android) PWA 최적화 & UX 특이사항
+새 `backup.ts`는 정확한 v1 `app:'Life-OS', version:'1.0.0', exportedAt, data`와 v2만 받습니다. v1의 7개 필수 배열은 essentialInfo, financialLogs, assets, encryptedVault, workout1RM, healthMetrics, archivedDiaries입니다. 실제 로컬 키/별칭 변환 계약은 [아키텍처의 구버전 표](docs/ARCHITECTURE.md#audited-legacy-migration-contract)에 있습니다.
 
-1. **텍스트 밀림 방지 전수 적용:**
-   - 모든 버튼과 핵심 뱃지에 `whitespace-nowrap shrink-0` 및 최소 터치 규격(36~40px) 강제.
-   - iOS 한글 입력 시 자음/모음 분리나 글자 세로 꺾임 방지를 위해 `break-keep` 스타일 일괄 적용.
-2. **홈 화면 바로가기 갱신 방법:**
-   - 웹앱 내부 코드는 새로고침이나 앱 재실행 시 즉시 최신 버전이 반영됩니다.
-   - 스마트폰 바탕화면의 "아이콘 이미지 그림" 자체는 OS(특히 iOS)의 보안 정책상 캐시되므로, 새 아이콘으로 바꾸려면 **기존 바로가기를 삭제하고 브라우저에서 [공유 ➡️ 홈 화면에 추가]**를 다시 1회 수행해야 합니다.
-3. **사용자 계정 영구 기억:**
-   - 모바일 환경에서 마지막 로그인한 사용자 이름과 이메일은 `localStorage` (`life_os_last_auth_name`, `life_os_last_auth_email`)에 영구 보존되어 세션 만료 시에도 임의의 이름으로 바뀌지 않습니다.
-4. **최근 방문 탭 복원:**
-   - 사용자가 마지막으로 열어둔 탭을 기억하여 다음 실행 시 해당 탭이 기본으로 열립니다 (기본값: '기억' 탭).
+v1 전체 백업은 원래 사진·일반 메모·턱걸이 세트·루틴을 포함하지 않았습니다. 이 누락을 복구 완료로 오인시키지 않으며 원본 브라우저의 명시적 이전 기능을 별도로 안내합니다. 예전 암호문과 새 금고는 형식이 달라 자동 해독을 약속하지 않습니다.
 
----
+설정 화면의 `previewBackup(file)`은 출처·대상 공간·활성/삭제/중복/충돌 수를 보여줍니다. 실제 `importBackup(file, token)`은 같은 File, 현재 세션·scope, 변경되지 않은 기록 버전을 요구합니다. 취소·새 파일·계정 전환 시 승인을 무효화합니다.
 
-## 9. 향후 로드맵 & 인계 시 주의점
+반복 v1 가져오기에서 같은 ID의 내용이 바뀌었다면 기존 기록을 덮지 않고 확인용 memory 사본과 검증된 `importSnapshot`을 남깁니다. 거래·운동 통계를 중복 합산하지 않기 위한 정책입니다. 금고 사본은 암호문 형식을 유지합니다. 동일 변경의 재가져오기는 중복을 만들지 않고, 삭제 기록도 되살리지 않습니다. 이 경로의 자동 검사와 v1/v2 미리보기→적용·오류 차단·재가져오기 중복 표시를 브라우저에서 확인했습니다. 변경 사본의 모든 경계와 실기기 다운로드는 추가 검증이 필요합니다.
 
-### 9.1 다음 개발자가 유의할 점
-- **절대 `Sparkles` 아이콘을 무분별하게 추가하지 마세요:** 사용자가 AI스러운 별표 아이콘을 지양하고 깔끔한 기능 중심 아이콘을 선호합니다.
-- **`1인 전용` 뱃지나 불필요한 PWA 설치 유도 배너를 다시 넣지 마세요:** 화면 공간 확보가 최우선입니다.
-- **날짜 입력 피커(Date Input) 레이아웃:** iOS Safari의 `<input type="date">`는 기본 130~150px을 차지하므로 한 줄에 버튼들과 함께 배치할 때 flex-wrap 또는 모바일 분리 배치를 유지해야 글자 꺾임이 발생하지 않습니다.
-- **애플 건강 데이터:** Web API의 보안 한계를 이해하고, 시뮬레이션 데이터보다는 사용자가 직접 수치를 수정/보존할 수 있는 UI 플로우를 유지해야 합니다.
+**개인 데이터 백업과 코드 인계는 별개입니다.** 실제 웹에서 저장한 기록이 소스 폴더나 Git에 들어 있다고 가정하지 마세요. 이번 인계 문서 작성에서 개인 브라우저 기록·Firebase 데이터 전체를 수집하거나 백업하지 않았습니다.
 
-### 9.2 향후 확장 권장 사항
-1. **iOS 네이티브 패키징 (Capacitor):**
-   - 현재 코드베이스는 Capacitor 호환 구조로 설계되어 있으므로, `npx cap add ios`를 통해 Xcode 프로젝트를 빌드하면 네이티브 HealthKit API에 직접 권한을 요청하여 자동 동기화 앱으로 App Store 배포가 가능합니다.
-2. **Apple Shortcuts(단축어) 웹훅 연동:**
-   - 아이폰 단축어 앱에서 오늘 수영 및 피트니스 데이터를 읽어 Life-OS URL Scheme이나 Firebase REST API로 1클릭 전송하는 자동화 스크립트 연동.
-3. **오프라인 이미지 압축 최적화:**
-   - 인생샷 앨범 업로드 시 Canvas API 기반 1080p 해상도 자동 리사이징 및 WebP 변환을 적용하여 Firestore 용량 최적화.
+## 9. 디자인 시스템·모바일 레이아웃
 
----
-*본 인계 문서는 Life-OS의 모든 소스 코드와 설계 의도를 완벽히 보증합니다.*
+기준은 [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md), 실제 토큰은 `globals.css`, UI는 `ui.tsx`입니다. 차분한 그린 배경·백색 카드·OS 기본 한글 글꼴을 사용합니다.
+
+| 역할                         | 기준                                               |
+| ---------------------------- | -------------------------------------------------- |
+| 배경 / 표면                  | `#f6f7f5` / `#ffffff`                              |
+| 주요 글자 / 브랜드           | `#293b32` / `#386750`                              |
+| 테두리                       | `#e6e9e3`                                          |
+| 카드 / 입력 모서리           | 14–16px / 8px                                      |
+| 모바일 입력                  | 글자 16px 이상                                     |
+| 최신 모바일 주요·아이콘 동작 | 44px 이상을 기준으로 조정                          |
+| 아이콘                       | 독립적인 8방향 꽃/별 SVG와 설치 PNG, 기능은 Lucide |
+
+새 grid는 `minmax(0,1fr)`, flex 본문은 `min-width:0`, 긴 URL은 의도적으로 줄바꿈합니다. 버튼 레이블은 함께 유지하고 액션 그룹이 별도 행으로 내려갑니다. Safe area·하단 탐색 여백·감소된 모션·사용자 확대·접근 가능한 이름을 유지합니다.
+
+### iPhone 입력창 이탈 제보에 대한 현재 변경
+
+사용자는 실제 iPhone 13 Pro에서 일기 입력이 화면 밖으로 벗어난다고 제보했습니다. 날짜/time/month 입력의 네이티브 최소 폭을 제어하고 필드 자식의 폭을 제한했습니다. 모달은 VisualViewport 크기·오프셋 변화에 맞춰 가용 높이/폭을 갱신하고 내부를 스크롤합니다. 모바일에서는 입력 자동 포커스로 키보드를 먼저 열지 않습니다.
+
+초안 버리기 확인은 원래 폼을 unmount하지 않습니다. 포커스 복귀는 연결된 요소인지 확인하고 대체 빠른 기록 동작으로 복귀합니다. drawer→modal 전환의 스크롤 잠금은 참조 계수로 관리합니다. 매우 긴 모달 제목은 폼 높이를 모두 차지하지 않도록 제한합니다.
+
+Chromium 390×500 모의 화면에서 모달 366×476, 입력 폭 326px·글자 16px·내부 스크롤을 확인했습니다. **이는 실제 iOS Safari 날짜 선택기·키보드 검증을 대신하지 않습니다.** 실제 iPhone에서 같은 일기 폼을 재검사해야 합니다.
+
+### 오른쪽 리뷰 화면 사용
+
+`/review`에서 모바일/웹을 직접 선택합니다. 선택값은 저장되며 모바일 iframe은 **390×844**, 웹은 **1440×900**입니다. 모바일 가로·짧은 높이 모의도 있습니다. 패널 폭에 따라 바깥 표시 배율만 조정하며 iframe의 CSS 픽셀 폭을 바꾸지 않습니다. iframe 경로는 컴파일된 basePath를 사용합니다.
+
+이 화면은 레이아웃 주석용 도구입니다. 실제 iPhone Safari 엔진·키보드·홈 화면 설치를 에뮬레이션하지 않습니다. 표시 배율로 작아 보이는 것과 내부 반응형 폭을 구분하세요.
+
+## 10. Git·배포·공개 주소
+
+| 주소/대상                                                        | 의미                                   |
+| ---------------------------------------------------------------- | -------------------------------------- |
+| [원본 저장소](https://github.com/pikurate-ai/life-os)            | master 기존 운영, 기능 브랜치 v2 개발  |
+| [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)      | 검토용, merge/운영 배포와 별도         |
+| [기존 서비스](https://pikurate-ai.github.io/life-os/)            | v2가 운영 배포된 주소가 아님           |
+| [현재 앱](https://life-os-563cd.firebaseapp.com/)                | 같은 출처 Google 로그인 기준 주소      |
+| [모바일/웹 리뷰](https://life-os-563cd.firebaseapp.com/review)   | 레이아웃 검토, 인증은 독립 앱에서 수행 |
+| [기존 별도 주소](https://pikurate-ai.github.io/life-os-preview/) | 보존하며 로그인은 현재 앱으로 안내     |
+| [테스트 저장소](https://github.com/pikurate-ai/life-os-preview)  | 소스 대신 `out/` 정적 파일 게시        |
+
+현재 Firebase Hosting 초기 배포와 앱·리뷰·정적 파일·예약 인증 경로의 HTTP 200을 확인했습니다. 최종 소스 커밋·배포·실제 브라우저 검증 범위는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 따릅니다. 앞선 공개 preview 소스 `078ebcc`/정적 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`, [Pages 실행 39504064724](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724), [소스 CI 39503884788](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)는 이전 사용성 배포 이력입니다. `649b020`/`b408294`는 2026-10-17 이력입니다.
+
+GitHub 별도 주소는 main/루트의 Pages 브랜치 배포, HTTPS 강제입니다. API의 build_type `legacy`는 Pages 설정 명칭입니다. 현재 `build:iphone`은 Firebase가 켜진 Pages 경로 빌드이지만 로그인은 다른 출처에서 완료하지 않고 Firebase 앱으로 안내합니다. 현재 Hosting 재배포는 `npm run build:firebase` 후 대상을 명시한 Hosting 배포를 사용합니다. 두 빌드는 `out/`을 공유하므로 배포 대상과 산출물의 경로를 반드시 맞춥니다.
+
+기존 `deploy.yml`은 master push/수동 배포에서 Firebase 6개 값을 확인하고 Pages 경로로 빌드합니다. 값이 없으면 중단합니다. rules 배포는 별개입니다. 사용자가 승인한 공개 테스트 배포와 기능 브랜치 push/PR 갱신을 수행했습니다. master merge·기존 운영 DB/규칙 변경은 수행하지 않았습니다.
+
+배포 재개 시 [DEPLOYMENT.md](docs/DEPLOYMENT.md)를 읽고 로컬 변경 보존 → 코드/데이터 전환 검토 → 검사 → 기능 브랜치 일반 push/PR → 적합한 대상 배포 → 실제 HTTPS·로그인·두 기기 검증을 진행합니다. `.git` 초기화·강제 push·원격 이력 덮어쓰기는 하지 않습니다.
+
+## 11. 검증 근거와 알려진 미완료
+
+### 현재 인증 변경 자동 검사 — 2026-10-21
+
+포맷·타입·일반 테스트 **73개**·추가 CSV/일기/암호화 검사와 일반 정적 빌드·`build:firebase`가 통과했습니다. Hosting 배포·HTTP 확인과 실제 사용자 OAuth/iPhone 확인은 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)에서 구분합니다.
+
+### 이전 사용성 자동 검사 이력 — 2026-10-20–21 초기
+
+- `npm run format:check`, `npm run typecheck`: 통과.
+- `npm test`: **59개 통과, 실패 0개**, 후속 CSV·일기·암호화 검사 통과.
+- `npm run test:rules`: **9개 통과, 실패 0개**. 일반 59개와 별도인 합성 emulator 검사.
+- `npm run build`: 일반 정적 export 통과. 기본 sandbox의 spawn EPERM 후 허용된 실행 권한으로 완료.
+- Node의 MODULE_TYPELESS_PACKAGE_JSON은 알려진 안내이며 테스트 실패가 아님.
+
+규칙 검사는 `demo-life-os-qa`, `127.0.0.1:8085`만 사용합니다. `.tools`에 공식 체크섬을 확인한 portable Java 21을 준비했고 시스템/전역 설정을 바꾸지 않았습니다. CI는 Java 21을 설치합니다. 실제 운영 규칙을 배포하거나 사용자 DB를 대상으로 검사하지 않았습니다.
+
+### 규칙 검사 연결 완료와 한계
+
+이전에 없던 `test:rules`를 연결했고, 예약 ID를 Firestore 자체가 거부하는 invalid-argument와 규칙의 permission-denied를 구분하도록 테스트를 바로잡았습니다. owner/다른 사용자/익명, 이전 경로, 금고 평문 차단, tombstone, 오래된 갱신 거부를 로컬에서 확인했습니다. CI 성공과 운영 배포·실계정 권한 검증은 별개로 확인해야 합니다.
+
+### 실제로 수행한 브라우저 검사
+
+이전 기본 빌드에서는 320–1440px 화면·모달·긴 문자열·운동 저장/수정/삭제·로컬 별도 창·사진 압축·오프라인 앱 셸을 확인했습니다. 공개 preview는 HTML/manifest/SW/아이콘/스크립트 HTTP 200과 달리기 저장·새로고침을 확인했습니다. 상세는 [QA.md](docs/QA.md)에 날짜별로 구분합니다.
+
+최근 합성 사용자 시나리오는 별도 localhost **demo 공간**에서 일기·운동·금고·메모·가계·읽기 일부를 실제 버튼으로 검사했습니다. 0.5km/2분30초→5′00″/km, 수정 3분15초→6′30″/km, 수영 500m/15분, 0원 자산 저장, 긴 메모·URL, 잘못된 URL 거부, 필터 복구를 확인했습니다. 읽기 화면의 검색 폭 축소 문제를 발견해 수정 후 가로 넘침을 재측정했습니다.
+
+2026-10-18에는 사진 업로드 직전 도구 크레딧 제한으로 검증이 중단됐습니다. 2026-10-20–21에 재개하여 합성 아이콘 사진 압축·저장·재열기, 목표 재개/중복 이름 단계 보존, 빠른 기록 초안·키보드, v1/v2 백업 적용/오류 차단/중복 표시와 작은 화면을 추가 확인했습니다. IAB 내보내기 완료 알림은 있었으나 download 이벤트가 없어 실제 파일 다운로드는 미확인입니다. 최신 범위는 [검증 기록](docs/QA_2026-10-21.md)을 확인하세요. 일부 합성 기록은 별도 3100 포트 demo에 남아 있으며 실제 사용자 기록을 테스트용으로 옮기거나 지우지 않았습니다.
+
+현재 Chromium 실계정 OAuth와 두 출처 합성 메모 동기화의 성공·최초 네트워크 오류는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 따릅니다. 실제 사람 10명의 인터뷰·별점·후기, 실제 iPhone 13 Pro Safari 날짜/키보드·로그인, 두 실계정의 운영 권한 격리, 데스크톱+iPhone 동기화는 아직 확인되지 않았습니다.
+
+## 12. 다음 개발자가 이어갈 순서
+
+1. **현재 작업본 보존:** 기능 브랜치·최신 커밋·diff·신규 파일 확인. 개인 기록 백업은 소스와 분리하고 과거 clone으로 덮지 않기.
+2. **검사 재현:** 포맷·타입·현재 73개 테스트·일반 및 Firebase 빌드의 근거 확인. 이전 규칙 9개 검사와 현재 실제 운영 검증을 구분.
+3. **남은 사용성 경계:** 완료한 7–10 주요 흐름 외 최신 금고 CSV·백업 변경 사본·저장 실패·접근성, 긴 한글/URL와 좁은 화면 추가 검사.
+4. **실제 iPhone 재현:** Safari/홈 화면에서 일기 날짜 입력·키보드·스크롤·닫기·포커스·사진 선택. 우측 리뷰 결과와 실제 기기 결과를 별도 기록.
+5. **같은 출처 인증 확인:** 현재 Firebase 주소의 실제 Google 복귀·계정 표시·새로고침 유지와 Safari/홈 화면 앱 확인. 새 프로젝트·서울 DB·UID 규칙을 다시 만들지 않기.
+6. **두 기기·두 계정 검증:** 같은 계정의 생성/수정/삭제·오프라인 재연결·충돌·새로고침, 다른 계정/익명 접근 거부, 오래된 탭 큐, 계정 전환 초안 정리 확인.
+7. **기록 보존과 서버 전용 저장:** 이전 출처의 로컬 기록은 명시적 백업·가져오기로 이전. 로컬 캐시를 제거하는 사용자 요청은 미구현이므로 저장·오프라인·복구 계약을 설계한 뒤 진행.
+8. **상용 출시 범위 확정:** 계정 삭제/보관·개인정보 정책·캐시 제거·관측/비용 경보·복구 훈련·접근성·대용량 미디어. 결제/구독·스토어 네이티브 앱·외부 OAuth 수집은 별도 제품 결정.
+
+사용자는 기본 구현·검사·수정·공개 배포를 요청했습니다. 이미 허용된 가역적 개발 작업마다 재승인을 요구하지 않습니다. 유료 서비스 선택, 기존 운영 데이터에 영향을 주는 전환, 네이티브 계정/서명 등 실제 선택이 필요한 경우 구체적인 선택지와 영향을 준비해 질문합니다. 기능 확대보다 기록 보존·편집 신뢰·모바일 입력 안정성을 먼저 완성합니다.
+
+## 13. 인계 문서와 작업 재개 프롬프트
+
+| 문서                                                  | 용도                                                    |
+| ----------------------------------------------------- | ------------------------------------------------------- |
+| [HANDOVER_START_HERE.md](HANDOVER_START_HERE.md)      | 새 작업자/AI의 시작 순서와 즉시 재개 프롬프트           |
+| [PROJECT_STATE.md](PROJECT_STATE.md)                  | 현재 완료/미완료 상태 요약                              |
+| [현재 인증 수정 근거](docs/AUTH_FIX_2026-10-21.md)    | 같은 출처 배포·73개 검사·실제 OAuth·두 출처 동기화·한계 |
+| [이전 사용성 검증](docs/QA_2026-10-21.md)             | 후속 수정·59+9 검사·브라우저 근거·과거 계정 접근 제한   |
+| [날짜별 스냅샷](docs/HANDOVER_SNAPSHOT_2026-10-18.md) | 미커밋 파일·사용성 시나리오·남은 검사                   |
+| [PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md)             | 기획 의도·사용 맥락·정보 구조                           |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)               | 데이터·병합·구버전 변환 상세                            |
+| [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)             | 지속 가능한 UI 규칙                                     |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md)                   | 환경·배포·실기기 검증 절차                              |
+| [QA.md](docs/QA.md)                                   | 날짜별 검사 근거·이전 화면                              |
+| [IPHONE_TEST_GUIDE.md](docs/IPHONE_TEST_GUIDE.md)     | 기존 공개 테스트 빌드의 사용 안내                       |
+| [AGENTS.md](AGENTS.md)                                | 저장소 개발 규칙                                        |
+
+```text
+Life OS v2를 현재 작업본에서 이어서 개발해 주세요.
+HANDOVER_START_HERE.md, PROJECT_HANDOVER.md, PROJECT_STATE.md,
+docs/HANDOVER_SNAPSHOT_2026-10-18.md, docs/PRODUCT_BRIEF.md,
+docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/DEPLOYMENT.md,
+AGENTS.md를 먼저 읽으세요.
+
+현재 작업은 codex/life-os-v2의 최신 인증 변경입니다.
+docs/AUTH_FIX_2026-10-21.md와 최신 커밋·로컬 변경을 확인하세요.
+목표는 개인의 일상 기록·검색·회복을 돕는 상용 수준의 차분한 Life OS입니다.
+현재 v2 모듈과 디자인 토큰을 사용하고 demo/guest/UID를 분리하세요.
+지속 로컬 저장과 원격 승인, 삭제 tombstone, 금고 암호화를 보존하세요.
+개인 데이터·.env.local·토큰·마스터 암호를 출력/커밋하지 마세요.
+
+포맷·타입·73개 일반 테스트·추가 검사·일반 및 Firebase 빌드는 통과했습니다.
+최신 검증 문서를 읽고 남은 금고 CSV·백업 다운로드·실제 iPhone 검사를 진행하세요.
+그 다음 실제 OAuth·권한 규칙·두 기기 동기화·최신 공개 배포를 완성하세요.
+현재 앱은 https://life-os-563cd.firebaseapp.com/ 이며 인증 도우미와 같은 출처입니다.
+새 프로젝트의 서울 DB와 UID 규칙은 배포됐습니다.
+Chromium OAuth 복귀·로그인 유지·두 출처 합성 메모 동기화는 확인했습니다.
+최초 네트워크 오류와 실제 iPhone/두 기기 미검증 한계도 함께 인계하세요.
+이전 출처 기록을 자동 이관하거나 지우지 말고 명시적 백업·가져오기를 사용하세요.
+지속 로컬 캐시가 남아 있어 서버 전용 저장 요청은 미구현임을 유의하세요.
+실제 사람 10명 평가나 실제 기기 검증을 합성 검사로 대체해 완료라 표현하지 마세요.
+기록 보존을 우선하며 구현·검증·배포 상태를 각각 근거와 함께 갱신하세요.
+```

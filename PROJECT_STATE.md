@@ -1,45 +1,55 @@
-# 🚀 Life-OS (인생 Super App) — Project State & Context Transfer Master
+# Life OS v2 — 현재 상태
 
-> **목적**: 이 문서는 AI 어시스턴트(Antigravity) 세션 및 계정 전환 시에도 컨텍스트 손실 없이 완벽하게 개발을 이어갈 수 있도록 프로젝트의 현황, 아키텍처, 데이터베이스 스키마, 향후 로드맵을 실시간으로 동기화하는 마스터 문서입니다.
+갱신: **2026-10-21 / 같은 출처 인증 변경**. [인증 수정 근거](docs/AUTH_FIX_2026-10-21.md)와 [종합 인계](PROJECT_HANDOVER.md)를 우선합니다. 2026-10-18 스냅샷·초기 2026-10-21의 cloud-off 배포는 과거 이력입니다.
 
----
+## 현재 구현
 
-## 📌 1. 프로젝트 기본 정보
-- **프로젝트 명**: Life-OS (인생 Super App) — 1인 전용 개인 운영체제
-- **위치**: `C:\Users\JU\life-os` (기존 `quote-memo`와 분리된 전용 독립 디렉토리)
-- **공식 영구 배포 URL (24시간 전세계 어디서든 접속 가능)**: 
-  👉 **`https://pikurate-ai.github.io/life-os/`**
-- **GitHub 공식 저장소**: `https://github.com/pikurate-ai/life-os` (GitHub Actions 자동 배포 파이프라인 탑재)
-- **로컬 개발 서버**: `http://localhost:3000` (동일 Wi-Fi 접속: `http://192.168.0.2:3000`)
-- **인증 및 클라우드 DB**: Firebase Google OAuth 팝업/리다이렉트 + 1인 전용 마스터 계정 즉시 연동 + Cloud Firestore 8대 도메인 실시간 동기화 (`users_essential_info`, `users_general_memos`, `users_financial_logs`, `users_assets`, `users_encrypted_vault`, `users_workout_1rm`, `users_health_metrics`, `users_archived_diaries`, `users_life_photos`)
+현재 앱은 **[https://life-os-563cd.firebaseapp.com/](https://life-os-563cd.firebaseapp.com/)**, 레이아웃 리뷰는 **[같은 주소의 /review](https://life-os-563cd.firebaseapp.com/review)**입니다. 프로젝트 `life-os-563cd`의 서울 Firestore(`asia-northeast3`), Google 공급자, UID별 규칙은 앞선 설정에서 준비·배포했습니다.
 
----
+모바일에서 Google 계정 선택 후 인증이 사라지는 문제에 대응해 앱과 `/__/auth` 도우미를 같은 출처로 제공하는 Firebase Hosting을 추가했습니다. 다른 공개 출처나 리뷰 iframe에서는 독립 앱으로 안내하고, 해당 앱의 모바일은 리디렉션·데스크톱은 팝업을 사용합니다. 팝업 앞의 비동기 저장 방식 변경을 제거하고 Firebase SDK 기본 인증 지속성을 사용합니다. 리디렉션 표식에는 세션 시각만 보관하며 결과가 없으면 명시적인 오류를 표시합니다. 서비스 워커는 예약 인증 경로를 가로채지 않습니다.
 
-## 📱 2. 아이폰 13 Pro (390px) 화면 및 버튼 전수 최적화 완료 내역
-1. **메모 & 1초복사 카드 2단 전체 폭(Full-Width) 구조 혁신**:
-   - 기존: 우측 액션 버튼 3개([수정], [삭제], [복사])가 본문과 한 줄에 있어 긴 텍스트(주소, 계좌번호 등)가 약 150px로 쪼그라들던 문제 해결.
-   - 변경: 상단 헤더 줄(태그, 제목, 컴팩트 액션 버튼) + 본문 전용 100% 가로 폭 컨테이너(`w-full break-all font-mono`)로 시원하게 표시.
-2. **모든 버튼 전수 조사 및 텍스트 밀림 방지**:
-   - `Header.tsx`: [앱받기], [싱크], 프로필 텍스트의 `shrink-0`, `whitespace-nowrap` 적용.
-   - `BottomNav.tsx`: 6개 탭(홈, 1초복사, 일기, 가계/자산, 암호금고, 헬스1RM) 모바일 화면 줄바꿈 방지.
-   - `PasswordVaultManager.tsx`, `BodyMetricsCard.tsx`, `SmsLedgerParser.tsx`, `AssetDashboard.tsx`, `DataSyncHub.tsx`, `GeneralMemoManager.tsx`의 모든 버튼에 `shrink-0 whitespace-nowrap` 적용.
+오늘·기억·일기·건강·가계/자산·목표·읽기·사진·금고·설정, 날짜별 운동·체중, 명시적 백업과 가져오기, demo/guest/UID 분리를 유지합니다. 기억은 모바일 하단에서 바로 열 수 있습니다. 리뷰는 모바일 390×844·웹 1440×900 선택을 유지하는 레이아웃 도구입니다.
 
----
+## 검증 결과
 
-## 🛠️ 3. 구글 로그인 및 영구 배포 솔루션
-- **영구 배포 (밖이나 회사 어디서든 접속)**:
-  - GitHub Actions CI/CD를 구축하여 `https://pikurate-ai.github.io/life-os/`로 영구 배포 완료 (서버 꺼짐/만료 없음, 24/7 가동).
-- **구글 로그인 장애 해결**:
-  1. **1인 전용 내 계정 즉시 연동 (1초 해결)**: 복잡한 도메인 승인 절차 없이, 본인의 이름과 구글 이메일만으로 터치 한 번에 모든 인증 상태를 활성화(`GoogleAuthModal.tsx`).
-  2. **Firebase 도메인 1클릭 복사**: 현재 접속 중인 도메인을 원클릭으로 복사하여 Firebase Console 승인 도메인에 즉시 추가 가능.
+| 항목                           | 현재 상태                                                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 포맷 / 타입                    | 통과                                                                                                       |
+| 일반 자동 테스트               | 73개 통과, 추가 CSV·일기·암호화 검사 통과                                                                  |
+| 일반 / Firebase Hosting 빌드   | `npm run build`, `npm run build:firebase` 통과                                                             |
+| 최초 Firebase Hosting 배포     | 성공                                                                                                       |
+| 실제 HTTPS 응답                | 앱·리뷰·manifest·SW·`/__/auth/handler`·`/__/auth/iframe`·`/__/firebase/init.json` HTTP 200                 |
+| 실제 브라우저 OAuth 복귀       | Chromium 첫 시도 네트워크 오류, 두 번째 시도에서 계정 선택·복귀·계정 표시·새로고침 유지·클라우드 승인 확인 |
+| 같은 브라우저의 두 출처 동기화 | 합성 메모 1개 생성, GitHub 390×844 프레임에서 확인·수정, Firebase 앱으로 반영·승인 확인                    |
+| 실제 iPhone·PC 동기화          | 검증 대기                                                                                                  |
+| 기존 규칙 검사                 | 이전 전용 합성 emulator 9개 통과 이력. 이번 실제 기기 결과와 별개                                          |
 
----
+이전 59개 테스트·사진/목표/백업·320–1440px 검사와 별도 규칙 검사는 [기존 QA](docs/QA_2026-10-21.md)에 보존했습니다. 실제 사람 10명 평가나 iOS 키보드·설치 검증이 아닙니다. IAB의 이전 내보내기 알림만으로 다운로드된 파일까지 확인한 것으로 보지 않습니다.
 
-## 🗺️ 4. 주요 모듈 및 기능 요약
-1. **자유 일반 메모장 (`GeneralMemoManager.tsx`)**: 클릭 시 최상단 자동 점프, 6가지 컬러, 1초 복사.
-2. **필수 정보 1초 복사 (`QuickCopyManager.tsx`)**: 2단 전체 폭 구조로 계좌, 사업자, 주소 등 클립보드 원클릭 복사.
-3. **가계부 & 자산 대시보드 (`SmsLedgerParser.tsx`, `AssetDashboard.tsx`)**: 카드 결제 문자/카톡 0.1초 파싱 및 순자산 관리.
-4. **암호 금고 (`PasswordVaultManager.tsx`)**: Zero-Knowledge AES-256 클라이언트 암호화 및 CSV 임포트.
-5. **헬스 & 1RM (`BodyMetricsCard.tsx`, `Workout1RMCalculator.tsx`)**: Apple HealthKit 실시간 연동 및 3대 운동 1RM 계산기.
-6. **로우 데이터 통합 싱크 & 적재 센터 (`DataSyncHub.tsx`)**: 구글 시트/드라이브, 카톡 텍스트 파서, 전체 백업 & 복원.
-7. **아이폰 PWA 앱 설치 (`IosInstallGuideModal.tsx`)**: Safari [공유] → [홈 화면에 추가]로 앱스토어 없이 네이티브 앱 구동.
+## 데이터 보존과 미완료 요구
+
+사용자는 새 프로젝트와 서울 리전을 이미 선택했습니다. 프로젝트 선택을 다시 기다리는 상태가 아닙니다. 기존 v1 DB에 대한 자동 데이터 이관은 수행하지 않았으며 기존 기록·브라우저 데이터를 지우지 않았습니다. 주소가 달라지면 브라우저 저장소도 분리됩니다. 예전 주소에만 있는 기록은 해당 공간에서 JSON 백업한 뒤 새 주소의 로그인 계정으로 명시적으로 가져옵니다. demo/guest 데이터를 계정에 자동 업로드하지 않습니다.
+
+**서버 전용 기록 저장 요청은 아직 구현하지 않았습니다.** 현재 저장은 성공한 로컬 지속 쓰기 후 Firestore에 전송하는 캐시·대기열 구조입니다. 일반 기록은 평문 캐시이고 금고만 별도 암호화합니다. 로그아웃은 캐시 삭제가 아닙니다. 인증 구조 변경·Hosting 배포를 로컬 저장 제거로 설명하면 안 됩니다.
+
+## Git와 공개 배포
+
+인증 수정 구현 소스는 `d382ae4`이며 [소스 CI](https://github.com/pikurate-ai/life-os/actions/runs/39614851757)가 성공했습니다. Firebase Hosting 배포와 공개 자산 14개 응답을 확인했습니다. GitHub 주소도 정적 `a9fc6ae`로 갱신했고 [Pages 배포](https://github.com/pikurate-ai/life-os-preview/actions/runs/39614890550)가 성공했습니다. 이후 문서 커밋과 실제 검증된 구현 커밋을 구분합니다.
+
+기능 브랜치는 `codex/life-os-v2`, 검토 대상은 [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)입니다. 최신 변경을 이 브랜치에 보존하며 master를 덮어쓰지 않습니다.
+
+최신 소스·배포 커밋과 최종 브라우저 근거는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 확인합니다. Firebase Hosting은 `firebase.json`의 site `life-os-563cd` / `out/` 루트 빌드를 게시합니다. [배포 절차](docs/DEPLOYMENT.md)를 따르고 GitHub 경로용 산출물을 Firebase 루트에 혼용하지 않습니다.
+
+기존 [GitHub Pages 주소](https://pikurate-ai.github.io/life-os-preview/)는 보존하고 로그인 링크는 Firebase 앱을 엽니다. 이전 `078ebcc`/`d0db06e`와 해당 CI·Pages 성공은 기기 저장 빌드의 이력이며 현재 인증 배포 버전이 아닙니다.
+
+기존 [master 서비스](https://pikurate-ai.github.io/life-os/)를 최신 v2 배포로 간주하지 않습니다. master 자동 배포·새 Firebase Hosting·별도 Pages 주소는 구분합니다. `build:iphone`은 현재 클라우드 강제 비활성화 빌드가 아닙니다.
+
+## 다음 작업
+
+1. 실제 iPhone Safari와 홈 화면 앱의 Google 복귀·계정 표시·새로고침 유지 확인. 완료한 Chromium/두 출처 검사와 구분.
+2. 같은 계정 PC/iPhone의 생성·수정·삭제·오프라인·충돌, 다른 계정/익명 차단 확인.
+3. 기존 출처에만 있는 기록을 사용자 확인과 백업으로 명시적으로 이전. 원본 보존.
+4. 서버 전용 저장의 온라인 저장 실패·오프라인·복구 계약을 설계하고 미이관 캐시를 보존한 채 전환.
+5. 실제 iOS 날짜·키보드·사진·다운로드·설치, 접근성, 계정 삭제·개인정보·관측·복구 정책 완성.
+
+기존 v1 프로젝트에 v2 규칙을 무검토 배포하지 않습니다. App Store 네이티브 출시·결제·외부 Docs/앨범/HealthKit/은행 직접 연동·대용량 원본 미디어 저장소는 별도 개발 범위입니다.

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 export default function GlobalError({
   error,
@@ -8,13 +8,36 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html>
-      <body className="bg-[#090a0f] text-white flex flex-col items-center justify-center min-h-screen p-4">
-        <h2 className="text-xl font-bold mb-2">오류가 발생했습니다</h2>
-        <p className="text-xs text-zinc-400 mb-4">{error.message || "알 수 없는 오류"}</p>
+    <html lang="ko">
+      <body
+        style={{
+          background: '#f6f7f5',
+          color: '#293b32',
+          fontFamily: 'system-ui, sans-serif',
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          gap: 16,
+        }}
+      >
+        <h2>나의 공간을 불러오지 못했어요</h2>
+        <p style={{ color: '#74806e', fontSize: 14, maxWidth: 420, textAlign: 'center' }}>
+          잠시 후 다시 시도해 주세요. 저장된 기록은 그대로 보관됩니다.
+        </p>
         <button
           onClick={() => reset()}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold"
+          style={{
+            border: 0,
+            borderRadius: 9,
+            padding: '12px 22px',
+            background: '#386750',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: 14,
+          }}
         >
           다시 시도
         </button>

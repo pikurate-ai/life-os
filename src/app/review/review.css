@@ -1,0 +1,117 @@
+.review-page {
+  min-height: 100dvh;
+  background: #e9ede8;
+  color: #293b32;
+}
+.review-toolbar {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 20px;
+  background: #fffffff2;
+  border-bottom: 1px solid #dfe6de;
+}
+.review-toolbar > div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+.review-toolbar strong {
+  font-size: 15px;
+}
+.review-toolbar span {
+  color: #607168;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.review-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  max-width: 100%;
+  border: 1px solid #dfe6de;
+  border-radius: 10px;
+  background: #f6f8f5;
+}
+.review-switch button,
+.review-options button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #42584a;
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.review-switch button.active,
+.review-options button[aria-pressed='true'] {
+  background: #386750;
+  color: white;
+}
+.review-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 10px 16px;
+  color: #53675a;
+  font-size: 12px;
+}
+.review-options a {
+  color: #386750;
+  padding: 10px 4px;
+}
+.review-stage {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 32px;
+  min-width: 0;
+}
+.review-canvas {
+  position: relative;
+  flex: 0 0 auto;
+}
+.review-device {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 8px solid #26322d;
+  border-radius: 32px;
+  overflow: hidden;
+  transform-origin: top left;
+  background: #fff;
+  box-shadow: 0 18px 50px #293b321c;
+}
+.review-stage.desktop .review-device {
+  border-radius: 12px;
+}
+.review-device iframe {
+  display: block;
+  max-width: none;
+  border: 0;
+  background: #f6f7f5;
+}
+@media (max-width: 440px) {
+  .review-toolbar {
+    padding: 12px;
+  }
+  .review-switch {
+    width: 100%;
+  }
+  .review-switch button {
+    flex: 1;
+  }
+  .review-stage {
+    padding-inline: 8px;
+  }
+}
