@@ -1,6 +1,24 @@
 # 배포와 운영 인계
 
-## 2026-10-21 재개 결과
+## 현재 배포 — 2026-10-21 인증 구조 변경
+
+현재 앱 주소는 **[https://life-os-563cd.firebaseapp.com/](https://life-os-563cd.firebaseapp.com/)**, 레이아웃 리뷰는 **[같은 호스트의 /review](https://life-os-563cd.firebaseapp.com/review)**입니다. 앱과 Firebase의 `/__/auth` 도우미를 같은 출처로 제공하기 위해 Firebase Hosting을 추가했습니다. 프로젝트 `life-os-563cd`, 서울 Firestore `asia-northeast3`, UID별 보안 규칙은 앞선 설정에서 생성·배포했습니다. 기존 v1 프로젝트를 이 설정으로 덮어쓴 것은 아닙니다.
+
+현재 소스의 포맷·타입·일반 테스트 **73개**·추가 CSV/일기/암호화 검사와 `npm run build`, `npm run build:firebase`가 통과했습니다. 최초 Hosting 배포가 성공했고 앱·리뷰·manifest·SW·`/__/auth/handler`·`/__/auth/iframe`·`/__/firebase/init.json`의 HTTP 200을 확인했습니다. 실제 Chromium OAuth는 첫 시도에서 네트워크 오류가 있었고 두 번째 시도에서 계정 선택→복귀→로그인 계정·새로고침 유지·동기화 완료를 확인했습니다. 합성 메모 1개의 Firebase→별도 GitHub 390×844 프레임 표시→수정→Firebase 반영도 확인했습니다. **동일 브라우저의 두 출처 검증이며 실제 iPhone·두 기기 검증은 아직 남아 있습니다.** 최종 배포와 브라우저 근거는 [인증 수정 기록](AUTH_FIX_2026-10-21.md)을 우선합니다.
+
+```sh
+# 개발 서버를 종료한 상태에서 실행
+npm run build:firebase
+firebase deploy --only hosting --project life-os-563cd
+```
+
+`scripts/build-firebase.cjs`는 대상 프로젝트와 `authDomain=life-os-563cd.firebaseapp.com`을 확인하고 루트 경로·클라우드 활성 상태로 빌드합니다. `firebase.json`의 Hosting site는 `life-os-563cd`, 게시 폴더는 `out/`입니다. 일반 앱 HTML·manifest·SW의 캐시 정책과 해시 정적 파일 정책을 구분하고 서비스 워커는 `/__/` 인증 경로를 가로채지 않습니다. Hosting 배포와 Firestore 규칙 배포는 별개입니다.
+
+[기존 GitHub 주소](https://pikurate-ai.github.io/life-os-preview/)는 보존하며 로그인 링크가 새 앱을 독립 창으로 엽니다. 현재 `build:iphone`은 `/life-os-preview/` 경로 빌드이며 더 이상 cloud-off를 강제하지 않습니다. 아래의 cloud-off·별도 설치 이름 안내는 과거 빌드 이력입니다. 기존 주소에만 저장한 기록은 자동으로 이동하거나 삭제하지 않습니다. 사용자가 해당 주소에서 백업하고 새 계정으로 명시적으로 가져옵니다.
+
+브라우저 지속 캐시와 대기열은 현재도 사용합니다. **서버 전용 저장 요청은 미구현**이며, 로그인 성공이나 Hosting 이전만으로 로컬 기록 저장이 사라지지 않습니다. SDK 기본 인증 지속성을 사용하고 팝업 호출 앞의 `await setPersistence()`는 제거했습니다. 프레임에서 OAuth를 진행하지 않고 같은 출처의 독립 앱으로 안내합니다.
+
+## 이전 검증 이력 — 2026-10-20–21 초기
 
 **공개 테스트 갱신 완료:** 소스 `078ebcc` / 정적 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`. [소스 CI](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)와 [Pages](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724)가 성공했습니다. [테스트 앱](https://pikurate-ai.github.io/life-os-preview/)의 최신 HTML·리뷰·manifest·SW·설치 아이콘·스크립트/CSS와 390px 일기 입력을 확인했습니다. 자세한 측정은 [최신 QA](QA_2026-10-21.md)에 있습니다. 기존 master 서비스·DB·규칙은 변경하지 않았고 cloud-off 정책을 유지합니다.
 
@@ -8,7 +26,7 @@
 
 CLI Google 관리자 로그인은 성공했지만 접근 가능한 프로젝트 목록이 0개이고 기존 환경의 프로젝트 조회가 실패했습니다. 기존 프로젝트 접근 계정 또는 새 v2 프로젝트 중 사용자 선택을 기다립니다. 앱 사용자 로그인·도메인/공급자·운영 권한·두 기기 동기화 완료와는 다릅니다. 최신 소스/정적 배포 커밋과 CI는 [현재 상태](../PROJECT_STATE.md)를 확인하세요. 아래 이전 연결 미완료 기록은 날짜별 이력입니다.
 
-## 2026-10-18 현재 작업본 주의사항
+## 이전 작업본 이력 — 2026-10-18
 
 최신 소스는 로컬 `codex/life-os-v2`의 `117bf4d`와 이후 미커밋/신규 파일입니다. 마지막 확인한 원격 소스는 `d036f3e`, [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)이며 공개 preview는 아래 `649b020` 기준입니다. 이번 인계 작업에서 원격 상태를 새로 조회하거나 배포하지 않았습니다.
 
@@ -47,7 +65,7 @@ npm run build
 firebase deploy --only firestore:rules,firestore:indexes --project YOUR_PROJECT_ID
 ```
 
-Firebase CLI 및 관리자의 프로젝트 권한이 필요한 명령입니다. 이번 작업에서 관리 콘솔 설정, 실제 Google 로그인, 운영 규칙 배포는 수행하지 않았습니다. `firebase.json`의 에뮬레이터 포트는 테스트용 설정이며 브라우저 앱을 에뮬레이터에 자동 연결하지 않습니다.
+Firebase CLI 및 관리자의 프로젝트 권한이 필요한 명령입니다. 현재 v2 프로젝트의 DB·규칙 배포 상태는 문서 상단을 따릅니다. 규칙 파일이 있다는 것과 실제 브라우저 OAuth·두 기기 검증 완료는 다릅니다. `firebase.json`의 에뮬레이터 포트는 테스트용 설정이며 브라우저 앱을 에뮬레이터에 자동 연결하지 않습니다.
 
 기존 Firebase 프로젝트를 재사용할 때는 현재 운영 규칙을 먼저 보존하고 호환성을 검토해야 합니다. 포함된 v2 규칙은 `users/{uid}/records/{id}`만 허용하므로, 그대로 배포하면 v1의 `users_general_memos`, `users_financial_logs` 등 이전 컬렉션 접근이 차단될 수 있습니다. 별도 v2 테스트 프로젝트에서 먼저 검증하거나, 기존 서비스와 자료 이전을 포함한 규칙 전환 계획을 확정한 뒤 배포하세요. 로컬 웹 환경 값이 존재하는 것만으로 실제 공급자·허용 도메인·규칙·기기 간 동기화의 검증이 끝난 것은 아닙니다.
 
@@ -65,7 +83,7 @@ Firebase CLI 및 관리자의 프로젝트 권한이 필요한 명령입니다. 
 
 공개 Firebase 웹 설정 값은 repository variables에 둘 수 있습니다. 기존 secrets가 있다면 대체 값으로 사용합니다. Pages Source는 GitHub Actions로 설정합니다. 실제 Firestore 규칙 배포는 이 workflow와 별도 단계입니다.
 
-## iPhone용 별도 테스트 사이트
+## 이전 iPhone용 별도 테스트 사이트 이력 — 2026-10-17
 
 운영의 Firebase 필수 배포 절차와 별개로, [life-os-preview 저장소](https://github.com/pikurate-ai/life-os-preview)에 `out/` 정적 산출물만 게시했습니다. 실제 주소는 **[Life OS 테스트](https://pikurate-ai.github.io/life-os-preview/)**입니다. Pages는 `main` 브랜치의 루트에서 배포하며 API의 `build_type`은 `legacy`이고 HTTPS를 강제합니다. 이는 Pages의 브랜치 배포 설정을 뜻하며 이전 앱 코드를 사용한다는 뜻은 아닙니다.
 
@@ -83,12 +101,12 @@ npm run preview
 
 2026-10-17 설정 안내를 포함한 포맷·타입·49개 자동 테스트·암호화/가져오기 검사·일반 및 iPhone 빌드가 통과했습니다. manifest·아이콘과 절대 에셋 경로 18개의 `/life-os-preview/` 일치를 확인했고 실제 HTTPS의 HTML·manifest·service worker·설치 PNG 3종·스크립트 12개 모두 HTTP 200을 확인했습니다. 공개 Chromium의 390×844 동작은 [QA](QA.md)에 기록했습니다. 실제 아이폰의 홈 화면 설치·사용은 [테스트 가이드](IPHONE_TEST_GUIDE.md)에 따라 별도로 검증합니다.
 
-### 테스트 사이트 재배포
+### GitHub 별도 사이트 재배포 절차
 
 1. 소스 기능 브랜치에서 검사 후 `npm run build:iphone`으로 `out/`을 다시 만듭니다. 개발 서버와 빌드는 동시에 실행하지 않습니다.
 2. 별도 `life-os-preview` 저장소의 `main` 작업본에 `out/`의 정적 파일만 반영합니다. `.git`은 보존하고 `.nojekyll`을 포함합니다. 소스·개인 파일·환경 변수·백업은 올리지 않습니다.
 3. 변경을 검토하고 일반 커밋·push를 진행합니다. 강제 push하지 않습니다. Pages의 `main`/루트 설정과 HTTPS 강제를 유지합니다.
-4. Pages 실행 성공 후 HTML·manifest·PNG·service worker·스크립트의 실제 응답과 테스트 안내·로컬 저장을 다시 확인합니다. 소스 커밋과 정적 커밋, 검증 날짜를 이 문서와 QA에 남깁니다.
+4. Pages 실행 성공 후 HTML·manifest·PNG·service worker·스크립트의 실제 응답과 새 Firebase 앱으로 향하는 로그인 링크를 확인합니다. 소스 커밋과 정적 커밋, 검증 날짜를 남깁니다. 현재 로그인·동기화 검증의 기준 주소는 문서 상단의 Firebase Hosting입니다.
 
 ## 실제 기기 검증
 

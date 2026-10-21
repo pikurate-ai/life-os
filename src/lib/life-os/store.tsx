@@ -10,14 +10,14 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  browserLocalPersistence,
   GoogleAuthProvider,
   getRedirectResult,
   onAuthStateChanged,
-  setPersistence,
   signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
+  type Auth,
+  type UserCredential,
 } from 'firebase/auth';
 import { collection, doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import type { LifeRecord, NewRecord } from './types';
@@ -38,7 +38,18 @@ import {
   type WorkspaceEnvelope,
 } from './records';
 import { demoRecords } from './demo';
-import { firebaseConfigured, getLifeFirebase, type FirebaseServices } from './firebase';
+import {
+  firebaseAuthDomain,
+  firebaseConfigured,
+  getLifeFirebase,
+  type FirebaseServices,
+} from './firebase';
+import {
+  completeGoogleRedirect,
+  consumeRedirectAttempt,
+  getGoogleSignInPlan,
+  markRedirectAttempt,
+} from './auth-flow';
 import { readLegacy } from './legacy';
 import { storageKey } from './storage';
 import {
@@ -69,7 +80,8 @@ interface LifeContextValue {
   syncStatus: string;
   syncError: string | null;
   configured: boolean;
-  signIn: () => Promise<void>;
+  authReady: boolean;
+  signIn: (method?: 'redirect') => Promise<void>;
   signOut: () => Promise<void>;
   exportBackup: () => void;
   previewBackup: (file: File) => Promise<BackupImportPreview>;
@@ -81,9 +93,12 @@ interface LifeContextValue {
 
 const MODE_KEY = storageKey('mode');
 const LifeContext = createContext<LifeContextValue | null>(null);
+const redirectResults = new WeakMap<Auth, Promise<UserCredential | null>>();
 function errorMessage(error: unknown): string {
   const code =
     typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+  if (code === 'auth/redirect-result-missing')
+    return 'Google에서 돌아왔지만 로그인 정보를 받지 못했어요. 같은 화면에서 다시 로그인해 주세요.';
   if (code.includes('popup-closed') || code.includes('cancelled-popup'))
     return '로그인이 취소되었습니다.';
   if (code.includes('popup-blocked'))
@@ -194,6 +209,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let unsubscribe = () => {};
+    let cancelled = false;
     try {
       setDemoState(localStorage.getItem(MODE_KEY) !== 'personal');
     } catch {
@@ -207,29 +223,43 @@ export function LifeProvider({ children }: { children: ReactNode }) {
         setAuthReady(true);
         return;
       }
-      // Resolve a mobile redirect before the listener loads the account workspace.
-      // This also surfaces Safari/embedded-browser redirect failures as a visible error.
-      getRedirectResult(firebase.auth)
-        .then((result) => {
-          if (!result?.user) return;
-          setDemo(false);
-          setUser({
-            uid: result.user.uid,
-            email: result.user.email,
-            displayName: result.user.displayName,
-          });
-          setAuthReady(true);
-        })
-        .catch((error) => {
+      // Firebase restores the authenticated user during initialization. Resolve once
+      // across Strict Mode remounts; a lost redirect must not silently look logged out.
+      let redirect = redirectResults.get(firebase.auth);
+      if (!redirect) {
+        let attempted = false;
+        try {
+          attempted = consumeRedirectAttempt(sessionStorage);
+        } catch (error) {
           authError.current = errorMessage(error);
-          setAuthReady(true);
-          refreshStatus();
-          notify(errorMessage(error));
-        });
+        }
+        redirect = completeGoogleRedirect(
+          getRedirectResult(firebase.auth),
+          () => Boolean(firebase.auth.currentUser),
+          attempted,
+        );
+        redirectResults.set(firebase.auth, redirect);
+      }
+      redirect.catch((error) => {
+        if (cancelled) return;
+        authError.current = errorMessage(error);
+        setAuthReady(true);
+        refreshStatus();
+        notify(errorMessage(error));
+      });
       unsubscribe = onAuthStateChanged(
         firebase.auth,
         (current) => {
-          if (current) setDemo(false);
+          if (cancelled) return;
+          if (current) {
+            authError.current = null;
+            setDemoState(false);
+            try {
+              localStorage.setItem(MODE_KEY, 'personal');
+            } catch (error) {
+              authError.current = errorMessage(error);
+            }
+          }
           setUser(
             current
               ? { uid: current.uid, email: current.email, displayName: current.displayName }
@@ -249,6 +279,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       refreshStatus();
     }
     return () => {
+      cancelled = true;
       unsubscribe();
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
@@ -506,41 +537,61 @@ export function LifeProvider({ children }: { children: ReactNode }) {
     [commit, requireWorkspace],
   );
 
-  const signIn = useCallback(async () => {
-    try {
-      const firebase = services.current;
-      if (!firebase)
-        throw new Error(
-          'Google 로그인을 사용하려면 Firebase 환경 변수와 인증 도메인을 먼저 설정해 주세요.',
-        );
-      await setPersistence(firebase.auth, browserLocalPersistence);
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const embedded = typeof window !== 'undefined' && window.top !== window.self;
-      if (embedded) {
-        await signInWithRedirect(firebase.auth, provider);
-        return;
-      }
+  const signIn = useCallback(
+    async (method?: 'redirect') => {
       try {
-        await signInWithPopup(firebase.auth, provider);
-      } catch (error) {
-        const code = String((error as { code?: string })?.code || '');
-        if (code.includes('popup-blocked') || code.includes('operation-not-supported')) {
-          await signInWithRedirect(firebase.auth, provider);
+        const firebase = services.current;
+        if (!firebase)
+          throw new Error(
+            'Google 로그인을 사용하려면 Firebase 환경 변수와 인증 도메인을 먼저 설정해 주세요.',
+          );
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const plan = getGoogleSignInPlan({
+          origin: window.location.origin,
+          authDomain: firebaseAuthDomain,
+          embedded: window.top !== window.self,
+          mobile:
+            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+            (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent)),
+          basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+        });
+        if (plan.method === 'external') {
+          throw new Error('안정적인 로그인을 위해 아래의 독립 로그인 화면을 열어 주세요.');
+        }
+        const redirect = () => {
+          markRedirectAttempt(sessionStorage);
+          return signInWithRedirect(firebase.auth, provider);
+        };
+        if (
+          plan.method === 'redirect' ||
+          (method === 'redirect' && window.location.hostname === firebaseAuthDomain)
+        ) {
+          await redirect();
           return;
         }
+        try {
+          await signInWithPopup(firebase.auth, provider);
+        } catch (error) {
+          const code = String((error as { code?: string })?.code || '');
+          if (code === 'auth/popup-blocked' && window.location.hostname === firebaseAuthDomain) {
+            await redirect();
+            return;
+          }
+          throw error;
+        }
+        authError.current = null;
+        setDemo(false);
+        notify('로그인했습니다. 이 계정의 기록을 불러옵니다.');
+      } catch (error) {
+        authError.current = errorMessage(error);
+        refreshStatus();
+        notify(errorMessage(error));
         throw error;
       }
-      authError.current = null;
-      setDemo(false);
-      notify('로그인했습니다. 이 계정의 기록을 불러옵니다.');
-    } catch (error) {
-      authError.current = errorMessage(error);
-      refreshStatus();
-      notify(errorMessage(error));
-      throw error;
-    }
-  }, [notify, refreshStatus, setDemo]);
+    },
+    [notify, refreshStatus, setDemo],
+  );
   const signOut = useCallback(async () => {
     try {
       if (services.current) await firebaseSignOut(services.current.auth);
@@ -726,6 +777,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
         syncStatus,
         syncError,
         configured: firebaseConfigured,
+        authReady,
         signIn,
         signOut,
         exportBackup,

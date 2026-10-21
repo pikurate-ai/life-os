@@ -90,7 +90,7 @@ export default function ReviewPage() {
               title="Life OS 레이아웃 미리보기"
               src={`${base}/`}
               style={{ width, height }}
-              allow="clipboard-read; clipboard-write; storage-access-by-user-activation"
+              allow="clipboard-write"
             />
           </div>
         </div>

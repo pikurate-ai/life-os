@@ -1,7 +1,7 @@
 /* Cache application assets only. Firebase requests and user records never enter CacheStorage. */
 const root = new URL('./', self.location.href).pathname;
 const CACHE_PREFIX = `life-os-shell:${encodeURIComponent(root)}:`;
-const CACHE = `${CACHE_PREFIX}v2.0.1`;
+const CACHE = `${CACHE_PREFIX}v2.0.2`;
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
@@ -42,6 +42,7 @@ self.addEventListener('fetch', (event) => {
   if (
     request.method !== 'GET' ||
     url.origin !== self.location.origin ||
+    url.pathname.startsWith('/__/') ||
     !url.pathname.startsWith(root)
   )
     return;

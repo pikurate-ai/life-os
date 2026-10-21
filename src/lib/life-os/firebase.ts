@@ -21,6 +21,7 @@ export const firebaseConfigured =
   Object.values(config).every((value) =>
     Boolean(value && !/your-|placeholder|example/i.test(value)),
   );
+export const firebaseAuthDomain = config?.authDomain || '';
 export interface FirebaseServices {
   app: FirebaseApp;
   auth: Auth;

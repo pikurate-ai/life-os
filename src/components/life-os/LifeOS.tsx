@@ -170,7 +170,10 @@ function Shell() {
   }
   useEffect(() => {
     try {
-      const last = localStorage.getItem(PAGE_KEY) as PageId;
+      const last =
+        new URLSearchParams(window.location.search).get('page') === 'settings'
+          ? 'settings'
+          : (localStorage.getItem(PAGE_KEY) as PageId);
       if (last && Object.hasOwn(pageTitles, last)) setPage(last);
     } catch {}
   }, []);

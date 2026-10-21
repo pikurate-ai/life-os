@@ -8,6 +8,7 @@
     "prebuild": "node scripts/generate-icons.cjs",
     "build": "next build",
     "build:iphone": "node scripts/build-iphone.cjs",
+    "build:firebase": "node scripts/build-firebase.cjs",
     "start": "node scripts/serve.cjs",
     "preview": "node scripts/serve.cjs",
     "typecheck": "tsc --noEmit",

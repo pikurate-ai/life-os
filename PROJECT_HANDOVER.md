@@ -2,30 +2,38 @@
 
 기준일: **2026-10-21 / Asia·Seoul**. 대상 작업 폴더: `E:\코덱스 프로젝트\라이프 오에스`.
 
-이 문서는 현재 로컬 소스, 제품 의도, 설계 결정, 검증 근거와 미완료 작업을 함께 인계합니다. **검증된 구현 소스 `078ebcc`을 기능 브랜치에 push했고, 별도 공개 테스트는 정적 `d0db06e`로 갱신했습니다.** 상용 판매 준비·실제 iPhone 검증·기기 간 클라우드 동기화 완료를 선언하는 문서가 아닙니다.
+이 문서는 현재 로컬 소스, 제품 의도, 설계 결정, 검증 근거와 미완료 작업을 함께 인계합니다. **2026-10-21 후속 인증 변경은 아래 현재 상태와 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 우선합니다.** 과거 `078ebcc`/`d0db06e`는 기기 저장 빌드의 검증 이력이며 현재 인증 배포 기준이 아닙니다. 상용 판매 준비·실제 iPhone·두 기기 동기화 완료를 선언하는 문서는 아닙니다.
+
+## 2026-10-21 후속 인증 배포 — 현재 우선 기준
+
+현재 기준 주소는 **[Life OS](https://life-os-563cd.firebaseapp.com/)**와 **[모바일/웹 리뷰](https://life-os-563cd.firebaseapp.com/review)**입니다. Firebase 프로젝트 `life-os-563cd`의 서울 Firestore(`asia-northeast3`)와 UID 규칙은 앞선 설정에서 배포했습니다. iPhone에서 계정 선택 후 로그인되지 않는 문제에 대해 앱과 `/__/auth` 도우미를 같은 Firebase Hosting 출처로 제공하도록 바꿨습니다. 최초 Hosting 배포와 앱·리뷰·manifest·SW·인증 handler/iframe/init JSON의 HTTP 200을 확인했습니다. 실제 Chromium OAuth는 첫 시도에 네트워크 오류가 있었고 두 번째 시도에서 계정 선택→복귀→계정 표시·새로고침 유지·클라우드 승인까지 확인했습니다. 합성 메모 1개의 Firebase→별도 GitHub 390×844 프레임 표시·수정→Firebase 반영도 확인했습니다. 동일 브라우저의 두 출처 검증이며 실제 iPhone과 PC/iPhone 두 기기 결과는 아직 별도 확인 대상입니다.
+
+`auth-flow.ts`가 출처·프레임·기기에 따라 경로를 정합니다. 다른 공개 출처와 iframe에서는 독립 앱으로 이동하며 같은 출처의 모바일은 redirect, 데스크톱은 popup을 사용합니다. 팝업 앞의 `await setPersistence()`를 제거하고 SDK 기본 인증 지속성을 사용합니다. 리디렉션 표식은 15분 유효한 세션 시각만 저장하며 결과가 없으면 명시적으로 오류를 표시합니다. 서비스 워커는 `/__/`를 가로채지 않습니다.
+
+GitHub Pages 주소는 보존하며 로그인은 새 출처로 안내합니다. 기존 브라우저 기록을 자동 이관하거나 삭제하지 않았습니다. 명시적 백업·계정별 가져오기가 필요합니다. **로컬 지속 캐시와 전송 대기열은 현재도 있으며, 사용자가 요청한 서버 전용 저장은 아직 미구현입니다.** 현재 포맷·타입·73개 일반 테스트·추가 CSV/일기/암호화 검사·일반 및 `build:firebase` 빌드가 통과했습니다. 이전 59개/규칙 9개와 실제 기기 검증을 구분하세요.
 
 처음 인계받았다면 [바로 시작하기](HANDOVER_START_HERE.md) → 이 문서 → [날짜별 작업 스냅샷](docs/HANDOVER_SNAPSHOT_2026-10-18.md)을 읽으세요. 오래된 문서와 충돌할 때 현재 코드와 이 날짜의 검증 범위를 우선합니다. 인증값, 실제 일기·금융·가족 정보, 금고 비밀번호는 인계 문서에 복제하지 않았습니다.
 
 ## 1. 지금 가장 중요한 상태
 
-2026-10-20–21 개발을 재개했습니다. [최신 검증 기록](docs/QA_2026-10-21.md)에 사진·목표·빠른 기록·백업·작은 화면·규칙 검사 결과를 추가했습니다. Git/공개 배포의 최종 커밋과 남은 선택은 [현재 상태](PROJECT_STATE.md)를 우선합니다.
+2026-10-20–21 사용성 검증에 이어 모바일 인증 구조를 변경했습니다. [기존 검증 기록](docs/QA_2026-10-21.md)은 입력·백업·규칙 검사 이력이며, 최신 인증·배포 근거는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)과 [현재 상태](PROJECT_STATE.md)를 우선합니다.
 
-| 구분             | 확인된 상태                                                                                                          |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 개발 브랜치      | `codex/life-os-v2`                                                                                                   |
-| 검증된 구현 커밋 | `078ebccffb32d4f8a84d41923c65ee584f1a900b` — 후속 검증 문서 커밋과 구분                                              |
-| 최신 기능        | 사용성·입력·백업·모달·규칙 검사 개선을 커밋하고 원격 기능 브랜치에 반영                                              |
-| 원격 소스        | [pikurate-ai/life-os](https://github.com/pikurate-ai/life-os), `codex/life-os-v2`의 구현 기준 `078ebcc`              |
-| 검토 PR          | [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1). 최신 로컬 변경 반영 여부를 확인하고 갱신할 것           |
-| 기존 서비스      | [life-os](https://pikurate-ai.github.io/life-os/). 최신 v2 변경의 운영 배포가 확인된 주소가 아님                     |
-| 공개 테스트      | [life-os-preview](https://pikurate-ai.github.io/life-os-preview/), 소스 `078ebcc` / 정적 `d0db06e`. 클라우드 OFF     |
-| 최신 로컬 검사   | 포맷·타입·59개 자동 테스트·추가 CSV/일기/암호화 검사 통과. 별도 규칙 통합 9개 통과                                   |
-| 포맷 검사        | 기존 5개 서식 오류 정리 후 통과                                                                                      |
-| 최신 전체 빌드   | 일반·iPhone 테스트 정적 빌드 통과, 소스 CI와 공개 Pages/HTTPS 확인                                                   |
-| 실제 계정·동기화 | CLI 관리자 로그인 성공. 현재 계정의 프로젝트 목록 0개/기존 프로젝트 조회 실패. 앱 사용자 OAuth·두 기기 검증은 미완료 |
-| 사용성 평가      | 합성 시나리오 1–6 일부와 후속 7–10 주요 흐름 검사. 실제 사람 10명 평가가 아님                                        |
+| 구분             | 확인된 상태                                                                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 개발 브랜치      | `codex/life-os-v2`                                                                                                                            |
+| 검증된 구현      | 최신 인증 변경의 커밋·배포 근거는 인증 수정 기록 확인. `078ebcc`는 이전 사용성 기준                                                           |
+| 최신 기능        | 기억의 모바일 메인 탐색, Firebase 클라우드 연결, 같은 출처/독립 화면 인증 경로                                                                |
+| 원격 소스        | [pikurate-ai/life-os](https://github.com/pikurate-ai/life-os), `codex/life-os-v2`. 최신 커밋과 로컬 diff 확인                                 |
+| 검토 PR          | [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1). 최신 로컬 변경 반영 여부를 확인하고 갱신할 것                                    |
+| 기존 서비스      | [life-os](https://pikurate-ai.github.io/life-os/). 최신 v2 변경의 운영 배포가 확인된 주소가 아님                                              |
+| 현재 앱/리뷰     | [Firebase 앱](https://life-os-563cd.firebaseapp.com/) / [리뷰](https://life-os-563cd.firebaseapp.com/review). 초기 Hosting 배포·HTTP 200 확인 |
+| 기존 별도 주소   | [life-os-preview](https://pikurate-ai.github.io/life-os-preview/) 보존. 로그인은 Firebase 앱으로 안내                                         |
+| 최신 로컬 검사   | 포맷·타입·73개 자동 테스트·추가 CSV/일기/암호화 검사 통과. 규칙 9개 통과는 이전 별도 검사 이력                                                |
+| 최신 전체 빌드   | 일반 정적 빌드와 Firebase Hosting 루트 빌드 통과                                                                                              |
+| 실제 계정·동기화 | 새 프로젝트·서울 DB·UID 규칙 배포. Chromium OAuth 복귀·새로고침 유지·두 출처 합성 메모 생성/수정 동기화 확인. 실제 iPhone·두 기기 미완료      |
+| 사용성 평가      | 합성 시나리오 1–6 일부와 후속 7–10 주요 흐름 검사. 실제 사람 10명 평가가 아님                                                                 |
 
-**다른 PC에서는 master가 아닌 `codex/life-os-v2` 브랜치를 받으세요.** 검증된 구현 커밋은 `078ebcc`이며 이후에는 검증 문서 갱신 커밋이 있을 수 있습니다. 로컬 추가 변경이 있는지 Git 상태도 확인하세요. `.env.local`·개인 백업·원본 CSV·인증 토큰은 소스와 분리하고 사용자 데이터는 별도 앱 백업으로 옮깁니다.
+**다른 PC에서는 master가 아닌 `codex/life-os-v2` 브랜치를 받으세요.** 최신 커밋·인증 수정 기록·로컬 diff를 확인하고 이전 `078ebcc`로 돌아가지 마세요. `.env.local`·개인 백업·원본 CSV·인증 토큰은 소스와 분리하고 사용자 데이터는 별도 앱 백업으로 옮깁니다.
 
 ## 2. 제품의 목적과 사용자 맥락
 
@@ -81,7 +89,7 @@ npm run preview
 
 개발 서버와 빌드는 Next 출력 디렉터리를 공유하므로 동시에 실행하지 않습니다. `npm run preview`/현재 `npm start`는 `scripts/serve.cjs`로 정적 산출물을 서비스합니다. `next start`는 static export에 맞지 않습니다. 프로세스가 떠 있다고 최신 소스 빌드가 검증된 것은 아닙니다.
 
-Pages 경로는 빌드 시 결정됩니다. `GITHUB_PAGES=true`는 `/life-os`, `npm run build:iphone`은 `/life-os-preview`를 사용합니다. 로컬 일반 개발은 `/`가 기준입니다. 정적 앱에서는 Firebase 설정 변경 후 재빌드가 필요합니다.
+경로는 빌드 시 결정됩니다. `GITHUB_PAGES=true`는 `/life-os`, `npm run build:iphone`은 `/life-os-preview`, `npm run build:firebase`는 현재 Firebase Hosting의 `/`를 사용합니다. `build:iphone`은 현재 클라우드를 강제로 끄지 않습니다. 정적 앱에서는 Firebase 설정 변경 후 재빌드가 필요합니다.
 
 ## 4. 코드 지도와 책임
 
@@ -124,7 +132,8 @@ src/lib/life-os/
   scroll-lock.ts               중첩 UI 스크롤 잠금 [신규]
 scripts/
   build-config.cjs             경로·테스트 빌드 공통 계약
-  build-iphone.cjs             클라우드 OFF 별도 테스트 빌드
+  build-iphone.cjs             GitHub 별도 주소 경로 빌드
+  build-firebase.cjs           같은 출처 인증용 Firebase Hosting 루트 빌드
   generate-icons.cjs           SVG/PNG 아이콘 생성
   serve.cjs                   정적 산출물 서버
   test-health-vault.cjs        도메인·암호화 추가 검사
@@ -241,7 +250,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID
 
 웹 설정은 관리자 서비스 계정 키가 아닙니다. 접근 통제는 Firebase Auth와 Firestore 규칙이 담당합니다. 환경 값의 존재만으로 Google 공급자·허용 도메인·운영 규칙이 설정되었다고 보지 않습니다. 과거 하드코딩 fallback과 이메일 문자열 로그인은 재사용하지 않습니다.
 
-Firebase CLI 관리자 Google 로그인은 완료했습니다. 다만 현재 계정의 프로젝트 목록이 0개이고 기존 프로젝트 조회도 실패했습니다. 기존 프로젝트 접근 계정으로 연결할지 별도 v2 프로젝트로 이전할지 사용자 선택을 기다립니다. 앱 사용자 로그인·운영 관리 권한이 모두 검증된 상태는 아닙니다. OAuth URL의 상태값·코드·CLI 토큰을 문서에 복사하지 않습니다.
+사용자가 새 프로젝트와 서울 리전을 선택한 뒤 `life-os-563cd`의 웹 앱·Google 공급자·서울 Firestore·UID 규칙을 앞선 설정에서 준비했습니다. 현재 앱과 인증 도우미는 `life-os-563cd.firebaseapp.com`에서 함께 서비스합니다. 이전 프로젝트 조회 실패는 과거 이력이며 새 프로젝트 선택을 다시 기다리지 않습니다. 실제 Chromium OAuth 복귀·로그인 유지·두 출처 합성 기록 동기화는 확인했고 실제 iPhone 동기화는 남아 있습니다. OAuth URL의 상태값·코드·CLI 토큰을 문서에 복사하지 않습니다.
 
 ### 금고 암호화
 
@@ -327,17 +336,19 @@ Chromium 390×500 모의 화면에서 모달 366×476, 입력 폭 326px·글자 
 
 ## 10. Git·배포·공개 주소
 
-| 주소/대상                                                       | 의미                                  |
-| --------------------------------------------------------------- | ------------------------------------- |
-| [원본 저장소](https://github.com/pikurate-ai/life-os)           | master 기존 운영, 기능 브랜치 v2 개발 |
-| [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)     | 검토용, merge/운영 배포와 별도        |
-| [기존 서비스](https://pikurate-ai.github.io/life-os/)           | v2가 운영 배포된 주소가 아님          |
-| [공개 테스트](https://pikurate-ai.github.io/life-os-preview/)   | 2026-10-21 기기 저장 테스트 빌드      |
-| [테스트 저장소](https://github.com/pikurate-ai/life-os-preview) | 소스 대신 `out/` 정적 파일 게시       |
+| 주소/대상                                                        | 의미                                   |
+| ---------------------------------------------------------------- | -------------------------------------- |
+| [원본 저장소](https://github.com/pikurate-ai/life-os)            | master 기존 운영, 기능 브랜치 v2 개발  |
+| [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)      | 검토용, merge/운영 배포와 별도         |
+| [기존 서비스](https://pikurate-ai.github.io/life-os/)            | v2가 운영 배포된 주소가 아님           |
+| [현재 앱](https://life-os-563cd.firebaseapp.com/)                | 같은 출처 Google 로그인 기준 주소      |
+| [모바일/웹 리뷰](https://life-os-563cd.firebaseapp.com/review)   | 레이아웃 검토, 인증은 독립 앱에서 수행 |
+| [기존 별도 주소](https://pikurate-ai.github.io/life-os-preview/) | 보존하며 로그인은 현재 앱으로 안내     |
+| [테스트 저장소](https://github.com/pikurate-ai/life-os-preview)  | 소스 대신 `out/` 정적 파일 게시        |
 
-2026-10-21 공개 preview의 소스는 `078ebcc`, 정적 커밋은 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`입니다. [Pages 실행 39504064724](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724)의 build/deploy가 성공했고, 실제 HTTPS의 최신 HTML·리뷰·manifest·SW·설치 아이콘·스크립트/CSS를 확인했습니다. [소스 CI 실행 39503884788](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)의 validate와 Firestore 규칙 job도 성공했습니다. 이전 `649b020`/`b408294` 배포는 2026-10-17 이력입니다.
+현재 Firebase Hosting 초기 배포와 앱·리뷰·정적 파일·예약 인증 경로의 HTTP 200을 확인했습니다. 최종 소스 커밋·배포·실제 브라우저 검증 범위는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 따릅니다. 앞선 공개 preview 소스 `078ebcc`/정적 `d0db06e1ffabe2593119bfa6d3e1c09207c78187`, [Pages 실행 39504064724](https://github.com/pikurate-ai/life-os-preview/actions/runs/39504064724), [소스 CI 39503884788](https://github.com/pikurate-ai/life-os/actions/runs/39503884788)는 이전 사용성 배포 이력입니다. `649b020`/`b408294`는 2026-10-17 이력입니다.
 
-preview는 main/루트의 Pages 브랜치 배포, HTTPS 강제입니다. API의 build_type `legacy`는 Pages 설정 명칭이며 v1 앱 사용이라는 뜻이 아닙니다. `build:iphone`은 Firebase 웹 값을 비우고 앱에서도 강제로 클라우드를 끕니다. **이 명령으로 PC·iPhone 동기화 출시를 시도하면 안 됩니다.** 실제 클라우드 검증에는 Firebase가 켜진 별도 빌드가 필요합니다.
+GitHub 별도 주소는 main/루트의 Pages 브랜치 배포, HTTPS 강제입니다. API의 build_type `legacy`는 Pages 설정 명칭입니다. 현재 `build:iphone`은 Firebase가 켜진 Pages 경로 빌드이지만 로그인은 다른 출처에서 완료하지 않고 Firebase 앱으로 안내합니다. 현재 Hosting 재배포는 `npm run build:firebase` 후 대상을 명시한 Hosting 배포를 사용합니다. 두 빌드는 `out/`을 공유하므로 배포 대상과 산출물의 경로를 반드시 맞춥니다.
 
 기존 `deploy.yml`은 master push/수동 배포에서 Firebase 6개 값을 확인하고 Pages 경로로 빌드합니다. 값이 없으면 중단합니다. rules 배포는 별개입니다. 사용자가 승인한 공개 테스트 배포와 기능 브랜치 push/PR 갱신을 수행했습니다. master merge·기존 운영 DB/규칙 변경은 수행하지 않았습니다.
 
@@ -345,7 +356,11 @@ preview는 main/루트의 Pages 브랜치 배포, HTTPS 강제입니다. API의 
 
 ## 11. 검증 근거와 알려진 미완료
 
-### 최신 로컬 자동 검사 — 2026-10-20–21
+### 현재 인증 변경 자동 검사 — 2026-10-21
+
+포맷·타입·일반 테스트 **73개**·추가 CSV/일기/암호화 검사와 일반 정적 빌드·`build:firebase`가 통과했습니다. Hosting 배포·HTTP 확인과 실제 사용자 OAuth/iPhone 확인은 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)에서 구분합니다.
+
+### 이전 사용성 자동 검사 이력 — 2026-10-20–21 초기
 
 - `npm run format:check`, `npm run typecheck`: 통과.
 - `npm test`: **59개 통과, 실패 0개**, 후속 CSV·일기·암호화 검사 통과.
@@ -367,36 +382,37 @@ preview는 main/루트의 Pages 브랜치 배포, HTTPS 강제입니다. API의 
 
 2026-10-18에는 사진 업로드 직전 도구 크레딧 제한으로 검증이 중단됐습니다. 2026-10-20–21에 재개하여 합성 아이콘 사진 압축·저장·재열기, 목표 재개/중복 이름 단계 보존, 빠른 기록 초안·키보드, v1/v2 백업 적용/오류 차단/중복 표시와 작은 화면을 추가 확인했습니다. IAB 내보내기 완료 알림은 있었으나 download 이벤트가 없어 실제 파일 다운로드는 미확인입니다. 최신 범위는 [검증 기록](docs/QA_2026-10-21.md)을 확인하세요. 일부 합성 기록은 별도 3100 포트 demo에 남아 있으며 실제 사용자 기록을 테스트용으로 옮기거나 지우지 않았습니다.
 
-실제 사람 10명의 인터뷰·별점·후기, 실제 iPhone 13 Pro Safari의 날짜/키보드, 실계정 OAuth, 운영 Firestore 권한, 데스크톱+iPhone 동기화는 아직 확인되지 않았습니다.
+현재 Chromium 실계정 OAuth와 두 출처 합성 메모 동기화의 성공·최초 네트워크 오류는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 따릅니다. 실제 사람 10명의 인터뷰·별점·후기, 실제 iPhone 13 Pro Safari 날짜/키보드·로그인, 두 실계정의 운영 권한 격리, 데스크톱+iPhone 동기화는 아직 확인되지 않았습니다.
 
 ## 12. 다음 개발자가 이어갈 순서
 
 1. **현재 작업본 보존:** 기능 브랜치·최신 커밋·diff·신규 파일 확인. 개인 기록 백업은 소스와 분리하고 과거 clone으로 덮지 않기.
-2. **검사 재현:** 포맷·타입·59개 테스트·규칙 9개·일반 빌드의 최신 근거와 CI 확인. 새 변경이 있을 때 관련 검사를 갱신.
+2. **검사 재현:** 포맷·타입·현재 73개 테스트·일반 및 Firebase 빌드의 근거 확인. 이전 규칙 9개 검사와 현재 실제 운영 검증을 구분.
 3. **남은 사용성 경계:** 완료한 7–10 주요 흐름 외 최신 금고 CSV·백업 변경 사본·저장 실패·접근성, 긴 한글/URL와 좁은 화면 추가 검사.
 4. **실제 iPhone 재현:** Safari/홈 화면에서 일기 날짜 입력·키보드·스크롤·닫기·포커스·사진 선택. 우측 리뷰 결과와 실제 기기 결과를 별도 기록.
-5. **클라우드 운영 설정:** 소유자 권한 확인, Google 공급자·허용 도메인·Firestore·규칙 전환 계획, CI 환경 값 등록. 구버전 서비스 영향 검토 후 진행.
+5. **같은 출처 인증 확인:** 현재 Firebase 주소의 실제 Google 복귀·계정 표시·새로고침 유지와 Safari/홈 화면 앱 확인. 새 프로젝트·서울 DB·UID 규칙을 다시 만들지 않기.
 6. **두 기기·두 계정 검증:** 같은 계정의 생성/수정/삭제·오프라인 재연결·충돌·새로고침, 다른 계정/익명 접근 거부, 오래된 탭 큐, 계정 전환 초안 정리 확인.
-7. **최신 버전 공개 배포:** 정상 빌드와 HTTPS 에셋·PWA 갱신 확인, 소스/정적 커밋·검증 날짜 기록. preview의 cloud-off 한계를 계속 명시.
+7. **기록 보존과 서버 전용 저장:** 이전 출처의 로컬 기록은 명시적 백업·가져오기로 이전. 로컬 캐시를 제거하는 사용자 요청은 미구현이므로 저장·오프라인·복구 계약을 설계한 뒤 진행.
 8. **상용 출시 범위 확정:** 계정 삭제/보관·개인정보 정책·캐시 제거·관측/비용 경보·복구 훈련·접근성·대용량 미디어. 결제/구독·스토어 네이티브 앱·외부 OAuth 수집은 별도 제품 결정.
 
 사용자는 기본 구현·검사·수정·공개 배포를 요청했습니다. 이미 허용된 가역적 개발 작업마다 재승인을 요구하지 않습니다. 유료 서비스 선택, 기존 운영 데이터에 영향을 주는 전환, 네이티브 계정/서명 등 실제 선택이 필요한 경우 구체적인 선택지와 영향을 준비해 질문합니다. 기능 확대보다 기록 보존·편집 신뢰·모바일 입력 안정성을 먼저 완성합니다.
 
 ## 13. 인계 문서와 작업 재개 프롬프트
 
-| 문서                                                  | 용도                                             |
-| ----------------------------------------------------- | ------------------------------------------------ |
-| [HANDOVER_START_HERE.md](HANDOVER_START_HERE.md)      | 새 작업자/AI의 시작 순서와 즉시 재개 프롬프트    |
-| [PROJECT_STATE.md](PROJECT_STATE.md)                  | 현재 완료/미완료 상태 요약                       |
-| [최신 검증](docs/QA_2026-10-21.md)                    | 후속 수정·59+9 검사·브라우저 근거·계정 접근 제한 |
-| [날짜별 스냅샷](docs/HANDOVER_SNAPSHOT_2026-10-18.md) | 미커밋 파일·사용성 시나리오·남은 검사            |
-| [PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md)             | 기획 의도·사용 맥락·정보 구조                    |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)               | 데이터·병합·구버전 변환 상세                     |
-| [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)             | 지속 가능한 UI 규칙                              |
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md)                   | 환경·배포·실기기 검증 절차                       |
-| [QA.md](docs/QA.md)                                   | 날짜별 검사 근거·이전 화면                       |
-| [IPHONE_TEST_GUIDE.md](docs/IPHONE_TEST_GUIDE.md)     | 기존 공개 테스트 빌드의 사용 안내                |
-| [AGENTS.md](AGENTS.md)                                | 저장소 개발 규칙                                 |
+| 문서                                                  | 용도                                                    |
+| ----------------------------------------------------- | ------------------------------------------------------- |
+| [HANDOVER_START_HERE.md](HANDOVER_START_HERE.md)      | 새 작업자/AI의 시작 순서와 즉시 재개 프롬프트           |
+| [PROJECT_STATE.md](PROJECT_STATE.md)                  | 현재 완료/미완료 상태 요약                              |
+| [현재 인증 수정 근거](docs/AUTH_FIX_2026-10-21.md)    | 같은 출처 배포·73개 검사·실제 OAuth·두 출처 동기화·한계 |
+| [이전 사용성 검증](docs/QA_2026-10-21.md)             | 후속 수정·59+9 검사·브라우저 근거·과거 계정 접근 제한   |
+| [날짜별 스냅샷](docs/HANDOVER_SNAPSHOT_2026-10-18.md) | 미커밋 파일·사용성 시나리오·남은 검사                   |
+| [PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md)             | 기획 의도·사용 맥락·정보 구조                           |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)               | 데이터·병합·구버전 변환 상세                            |
+| [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)             | 지속 가능한 UI 규칙                                     |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md)                   | 환경·배포·실기기 검증 절차                              |
+| [QA.md](docs/QA.md)                                   | 날짜별 검사 근거·이전 화면                              |
+| [IPHONE_TEST_GUIDE.md](docs/IPHONE_TEST_GUIDE.md)     | 기존 공개 테스트 빌드의 사용 안내                       |
+| [AGENTS.md](AGENTS.md)                                | 저장소 개발 규칙                                        |
 
 ```text
 Life OS v2를 현재 작업본에서 이어서 개발해 주세요.
@@ -405,17 +421,22 @@ docs/HANDOVER_SNAPSHOT_2026-10-18.md, docs/PRODUCT_BRIEF.md,
 docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/DEPLOYMENT.md,
 AGENTS.md를 먼저 읽으세요.
 
-검증된 구현은 codex/life-os-v2의 078ebcc로 원격에 반영됐습니다.
-최신 문서 커밋·로컬 변경과 master를 구분해 확인하세요.
+현재 작업은 codex/life-os-v2의 최신 인증 변경입니다.
+docs/AUTH_FIX_2026-10-21.md와 최신 커밋·로컬 변경을 확인하세요.
 목표는 개인의 일상 기록·검색·회복을 돕는 상용 수준의 차분한 Life OS입니다.
 현재 v2 모듈과 디자인 토큰을 사용하고 demo/guest/UID를 분리하세요.
 지속 로컬 저장과 원격 승인, 삭제 tombstone, 금고 암호화를 보존하세요.
 개인 데이터·.env.local·토큰·마스터 암호를 출력/커밋하지 마세요.
 
-포맷·타입·59개 테스트·규칙 9개와 일반 빌드는 통과했습니다.
+포맷·타입·73개 일반 테스트·추가 검사·일반 및 Firebase 빌드는 통과했습니다.
 최신 검증 문서를 읽고 남은 금고 CSV·백업 다운로드·실제 iPhone 검사를 진행하세요.
 그 다음 실제 OAuth·권한 규칙·두 기기 동기화·최신 공개 배포를 완성하세요.
-preview는 cloud-off이고 소스 078ebcc / 정적 d0db06e 기준임을 유의하세요.
+현재 앱은 https://life-os-563cd.firebaseapp.com/ 이며 인증 도우미와 같은 출처입니다.
+새 프로젝트의 서울 DB와 UID 규칙은 배포됐습니다.
+Chromium OAuth 복귀·로그인 유지·두 출처 합성 메모 동기화는 확인했습니다.
+최초 네트워크 오류와 실제 iPhone/두 기기 미검증 한계도 함께 인계하세요.
+이전 출처 기록을 자동 이관하거나 지우지 말고 명시적 백업·가져오기를 사용하세요.
+지속 로컬 캐시가 남아 있어 서버 전용 저장 요청은 미구현임을 유의하세요.
 실제 사람 10명 평가나 실제 기기 검증을 합성 검사로 대체해 완료라 표현하지 마세요.
 기록 보존을 우선하며 구현·검증·배포 상태를 각각 근거와 함께 갱신하세요.
 ```

@@ -21,6 +21,8 @@ import {
 import { useLife } from '@/lib/life-os/store';
 import { Badge, Button, Modal, ModalCloseButton, SectionHeader } from './ui';
 import type { BackupImportPreview } from '@/lib/life-os/backup';
+import { firebaseAuthDomain } from '@/lib/life-os/firebase';
+import { getGoogleSignInPlan } from '@/lib/life-os/auth-flow';
 
 const previewBuild = process.env.NEXT_PUBLIC_LIFE_OS_PREVIEW === 'true';
 
@@ -28,6 +30,7 @@ export function SettingsView() {
   const {
     user,
     configured,
+    authReady,
     syncStatus,
     syncError,
     demo,
@@ -52,6 +55,22 @@ export function SettingsView() {
   const [inspectionAttempt, setInspectionAttempt] = useState(0);
   const [confirmLegacy, setConfirmLegacy] = useState(false);
   const [install, setInstall] = useState(false);
+  const [loginLink, setLoginLink] = useState<string | null>(null);
+  const [changesOrigin, setChangesOrigin] = useState(false);
+  const [canRedirect, setCanRedirect] = useState(false);
+  useEffect(() => {
+    if (!configured) return;
+    const plan = getGoogleSignInPlan({
+      origin: window.location.origin,
+      authDomain: firebaseAuthDomain,
+      embedded: window.self !== window.top,
+      mobile: false,
+      basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+    });
+    setLoginLink(plan.method === 'external' ? plan.url || null : null);
+    setChangesOrigin(Boolean(plan.url && new URL(plan.url).origin !== window.location.origin));
+    setCanRedirect(plan.method !== 'external' && window.location.hostname === firebaseAuthDomain);
+  }, [configured]);
   useEffect(() => {
     let cancelled = false;
     setBackupPreview(null);
@@ -155,15 +174,28 @@ export function SettingsView() {
                 <LogOut size={16} />
                 로그아웃
               </Button>
+            ) : loginLink ? (
+              <a
+                className="button button-primary"
+                href={loginLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Google 로그인 화면 열기
+                <ExternalLink size={16} />
+              </a>
             ) : (
-              <Button disabled={pending || !configured} onClick={() => action(signIn)}>
+              <Button
+                disabled={pending || !configured || !authReady}
+                onClick={() => action(signIn)}
+              >
                 <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
                     d="M21.8 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.5a4.8 4.8 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6ZM12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.6c-.9.6-2.1 1-3.4 1-2.6 0-4.9-1.8-5.7-4.2H2.9v2.7A10 10 0 0 0 12 22Zm-5.7-8.2a6 6 0 0 1 0-3.6V7.5H2.9a10 10 0 0 0 0 9l3.4-2.7ZM12 6c1.5 0 2.8.5 3.9 1.5l2.9-2.9A9.7 9.7 0 0 0 12 2a10 10 0 0 0-9.1 5.5l3.4 2.7C7.1 7.8 9.4 6 12 6Z"
                   />
                 </svg>
-                {pending ? '연결 중…' : 'Google로 로그인'}
+                {pending ? '연결 중…' : !authReady ? '로그인 준비 중…' : 'Google로 로그인'}
               </Button>
             ))}
           {demo && (
@@ -177,6 +209,27 @@ export function SettingsView() {
             </Button>
           )}
         </div>
+        {!user && canRedirect && authReady && (
+          <Button
+            variant="ghost"
+            disabled={pending}
+            onClick={() => action(() => signIn('redirect'))}
+          >
+            같은 창에서 로그인
+          </Button>
+        )}
+        {!user && loginLink && (
+          <div className="setting-note">
+            독립 화면에서 Google 로그인을 진행해 주세요. PC와 아이폰 모두 같은 로그인 주소를
+            사용합니다.
+            {changesOrigin && (
+              <p>
+                클라우드에 저장된 기록은 같은 계정으로 불러옵니다. 이 주소에만 저장한 기록은 그대로
+                남아 있으니, 아래에서 백업한 뒤 새 주소의 계정으로 가져와 주세요.
+              </p>
+            )}
+          </div>
+        )}
         {previewBuild && (
           <div className="setting-note">
             로그인 전 기록은 이 브라우저에만 저장돼요. 중요한 기록은 백업 파일로 보관하고, 다른

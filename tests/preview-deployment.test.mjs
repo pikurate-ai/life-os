@@ -22,11 +22,10 @@ test('preview paths and install metadata share one explicit base without changin
   }
 });
 
-function worker() {
+function worker(root = '/life-os-preview/') {
   const handlers = {},
     deleted = [],
     opened = [];
-  const root = '/life-os-preview/';
   const prefix = `life-os-shell:${encodeURIComponent(root)}:`;
   const cached = new Response('preview shell');
   runInNewContext(readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8'), {
@@ -38,7 +37,7 @@ function worker() {
     },
     self: {
       location: {
-        href: 'https://example.test/life-os-preview/sw.js',
+        href: `https://example.test${root}sw.js`,
         origin: 'https://example.test',
       },
       addEventListener: (type, fn) => {
@@ -50,7 +49,7 @@ function worker() {
     caches: {
       keys: async () => [
         `${prefix}old`,
-        `${prefix}v2.0.1`,
+        `${prefix}v2.0.2`,
         'life-os-shell:%2Flife-os%2F:v2.0.0',
         'another-app',
       ],
@@ -94,5 +93,15 @@ test('offline preview navigation reads only its own cache and leaves other URL p
     },
   });
   assert.equal(await (await response).text(), 'preview shell');
-  assert.deepEqual(opened, [`${prefix}v2.0.1`]);
+  assert.deepEqual(opened, [`${prefix}v2.0.2`]);
+});
+
+test('Firebase reserved auth helpers are never intercepted or replaced by the offline app shell', () => {
+  const { handlers } = worker('/');
+  for (const route of ['/__/auth/handler', '/__/auth/iframe', '/__/firebase/init.json']) {
+    handlers.fetch({
+      request: { method: 'GET', url: `https://example.test${route}`, mode: 'navigate' },
+      respondWith: () => assert.fail(`intercepted authentication endpoint ${route}`),
+    });
+  }
 });
