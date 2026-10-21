@@ -216,6 +216,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       unsubscribe = onAuthStateChanged(
         firebase.auth,
         (current) => {
+          if (current) setDemo(false);
           setUser(
             current
               ? { uid: current.uid, email: current.email, displayName: current.displayName }
