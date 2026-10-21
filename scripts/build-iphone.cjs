@@ -6,19 +6,8 @@ const previewEnv = {
   ...process.env,
   GITHUB_PAGES: 'true',
   LIFE_OS_BASE_PATH: '/life-os-preview',
-  LIFE_OS_PREVIEW: 'true',
+  LIFE_OS_PREVIEW: 'false',
 };
-// Existing .env.local values must never enable cloud in this published test build.
-for (const key of [
-  'API_KEY',
-  'AUTH_DOMAIN',
-  'PROJECT_ID',
-  'STORAGE_BUCKET',
-  'MESSAGING_SENDER_ID',
-  'APP_ID',
-]) {
-  previewEnv[`NEXT_PUBLIC_FIREBASE_${key}`] = '';
-}
 for (const args of [
   [path.join(__dirname, 'generate-icons.cjs')],
   [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'build'],
