@@ -34,6 +34,8 @@
 
 ## Git와 공개 배포
 
+인증 수정 구현 소스는 `d382ae4`이며 [소스 CI](https://github.com/pikurate-ai/life-os/actions/runs/39614851757)가 성공했습니다. Firebase Hosting 배포와 공개 자산 14개 응답을 확인했습니다. GitHub 주소도 정적 `a9fc6ae`로 갱신했고 [Pages 배포](https://github.com/pikurate-ai/life-os-preview/actions/runs/39614890550)가 성공했습니다. 이후 문서 커밋과 실제 검증된 구현 커밋을 구분합니다.
+
 기능 브랜치는 `codex/life-os-v2`, 검토 대상은 [초안 PR #1](https://github.com/pikurate-ai/life-os/pull/1)입니다. 최신 변경을 이 브랜치에 보존하며 master를 덮어쓰지 않습니다.
 
 최신 소스·배포 커밋과 최종 브라우저 근거는 [인증 수정 기록](docs/AUTH_FIX_2026-10-21.md)을 확인합니다. Firebase Hosting은 `firebase.json`의 site `life-os-563cd` / `out/` 루트 빌드를 게시합니다. [배포 절차](docs/DEPLOYMENT.md)를 따르고 GitHub 경로용 산출물을 Firebase 루트에 혼용하지 않습니다.
