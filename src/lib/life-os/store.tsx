@@ -12,6 +12,7 @@ import {
 import {
   browserLocalPersistence,
   GoogleAuthProvider,
+  getRedirectResult,
   onAuthStateChanged,
   setPersistence,
   signInWithPopup,
@@ -206,6 +207,12 @@ export function LifeProvider({ children }: { children: ReactNode }) {
         setAuthReady(true);
         return;
       }
+      // Resolve a mobile redirect before the listener loads the account workspace.
+      // This also surfaces Safari/embedded-browser redirect failures as a visible error.
+      getRedirectResult(firebase.auth).catch((error) => {
+        authError.current = errorMessage(error);
+        refreshStatus();
+      });
       unsubscribe = onAuthStateChanged(
         firebase.auth,
         (current) => {

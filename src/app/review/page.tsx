@@ -86,7 +86,12 @@ export default function ReviewPage() {
             className="review-device"
             style={{ width: width + 16, height: height + 16, transform: `scale(${scale})` }}
           >
-            <iframe title="Life OS 레이아웃 미리보기" src={`${base}/`} style={{ width, height }} />
+            <iframe
+              title="Life OS 레이아웃 미리보기"
+              src={`${base}/`}
+              style={{ width, height }}
+              allow="clipboard-read; clipboard-write; storage-access-by-user-activation"
+            />
           </div>
         </div>
       </section>
