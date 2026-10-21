@@ -516,10 +516,8 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       await setPersistence(firebase.auth, browserLocalPersistence);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const mobile =
-        typeof navigator !== 'undefined' &&
-        (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1);
-      if (mobile) {
+      const embedded = typeof window !== 'undefined' && window.top !== window.self;
+      if (embedded) {
         await signInWithRedirect(firebase.auth, provider);
         return;
       }
