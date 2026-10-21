@@ -209,10 +209,23 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       }
       // Resolve a mobile redirect before the listener loads the account workspace.
       // This also surfaces Safari/embedded-browser redirect failures as a visible error.
-      getRedirectResult(firebase.auth).catch((error) => {
-        authError.current = errorMessage(error);
-        refreshStatus();
-      });
+      getRedirectResult(firebase.auth)
+        .then((result) => {
+          if (!result?.user) return;
+          setDemo(false);
+          setUser({
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+          });
+          setAuthReady(true);
+        })
+        .catch((error) => {
+          authError.current = errorMessage(error);
+          setAuthReady(true);
+          refreshStatus();
+          notify(errorMessage(error));
+        });
       unsubscribe = onAuthStateChanged(
         firebase.auth,
         (current) => {
@@ -239,7 +252,7 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       unsubscribe();
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
-  }, [refreshStatus]);
+  }, [notify, refreshStatus]);
 
   useEffect(() => {
     if (!booted || (!demo && !authReady)) return;
