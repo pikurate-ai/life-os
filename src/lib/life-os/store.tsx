@@ -15,6 +15,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { collection, doc, onSnapshot, runTransaction } from 'firebase/firestore';
@@ -494,7 +495,23 @@ export function LifeProvider({ children }: { children: ReactNode }) {
       await setPersistence(firebase.auth, browserLocalPersistence);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(firebase.auth, provider);
+      const mobile =
+        typeof navigator !== 'undefined' &&
+        (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1);
+      if (mobile) {
+        await signInWithRedirect(firebase.auth, provider);
+        return;
+      }
+      try {
+        await signInWithPopup(firebase.auth, provider);
+      } catch (error) {
+        const code = String((error as { code?: string })?.code || '');
+        if (code.includes('popup-blocked') || code.includes('operation-not-supported')) {
+          await signInWithRedirect(firebase.auth, provider);
+          return;
+        }
+        throw error;
+      }
       authError.current = null;
       setDemo(false);
       notify('로그인했습니다. 이 계정의 기록을 불러옵니다.');

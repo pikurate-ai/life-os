@@ -16,7 +16,7 @@ test('preview paths and install metadata share one explicit base without changin
   assert.equal(preview.basePath, '/life-os-preview');
   assert.equal(preview.scope, '/life-os-preview/');
   assert.equal(preview.preview, true);
-  assert.equal(preview.appName, 'Life OS 테스트');
+  assert.equal(preview.appName, 'Life OS');
   for (const path of ['https://example.test', '//other-site', '/life-os/../production']) {
     assert.throws(() => resolveBuildConfig({ LIFE_OS_BASE_PATH: path }));
   }

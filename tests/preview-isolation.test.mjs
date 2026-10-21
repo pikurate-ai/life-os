@@ -99,12 +99,12 @@ test('workspaceKey applies the compiled preview namespace rather than changing r
     else process.env.NEXT_PUBLIC_BASE_PATH = previousBase;
   }
 });
-test('preview never initializes Firebase even when all local environment credentials exist', () => {
-  const { api, initializations } = loadFirebase(true, true);
-  assert.equal(api.firebaseConfigured, false);
-  assert.equal(api.getLifeFirebase(), null);
-  assert.equal(api.getLifeFirebase(), null);
-  assert.equal(initializations(), 0);
+test('the public mobile build initializes Firebase for authenticated cross-device sync', () => {
+  const { api, initializations } = loadFirebase(false, true);
+  assert.equal(api.firebaseConfigured, true);
+  assert.equal(api.getLifeFirebase().app.name, 'life-os-v2');
+  api.getLifeFirebase();
+  assert.equal(initializations(), 1);
 });
 test('nonpreview Firebase still requires complete configuration and initializes the named app once', () => {
   const disabled = loadFirebase(false, false);
